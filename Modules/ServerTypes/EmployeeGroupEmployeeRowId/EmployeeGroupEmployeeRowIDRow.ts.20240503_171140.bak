@@ -1,0 +1,26 @@
+﻿import { fieldsProxy } from "@serenity-is/corelib/q";
+
+export interface EmployeeGroupEmployeeRowIdRow {
+    Id?: number;
+    EmployeeRowId?: number;
+    EmployeeGroupId?: number;
+    InsertUserId?: number;
+    InsertDate?: string;
+    UpdateUserId?: number;
+    UpdateDate?: string;
+    DeleteUserId?: number;
+    DeleteDate?: string;
+    IsActive?: number;
+}
+
+export abstract class EmployeeGroupEmployeeRowIdRow {
+    static readonly idProperty = 'Id';
+    static readonly isActiveProperty = 'IsActive';
+    static readonly localTextPrefix = 'EmployeeGroupEmployeeRowId.EmployeeGroupEmployeeRowId';
+    static readonly deletePermission = 'Administration:HumanResource';
+    static readonly insertPermission = 'Administration:HumanResource';
+    static readonly readPermission = 'Administration:HumanResource';
+    static readonly updatePermission = 'Administration:HumanResource';
+
+    static readonly Fields = fieldsProxy<EmployeeGroupEmployeeRowIdRow>();
+}

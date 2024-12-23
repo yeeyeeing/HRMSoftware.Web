@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Modules/ServerTypes/Administration/PermissionKeys.ts"],
+  "sourcesContent": ["\uFEFFexport namespace PermissionKeys {\n    export const Security = \"Administration:Security\";\n    export const Translation = \"Administration:Translation\";\n    export const Tenants = \"Administration:Tenants\";\n    export const HumanResources = \"Administration:HumanResources\";\n    export const Employee = \"Administration:Employee\";\n    export const ViewSalary = \"Administration:ViewSalary\";\n    export const OtApproval = \"Administration:OtApproval\";\n    export const LeaveApproval = \"Administration:LeaveApproval\";\n    export const Appraisal = \"Administration:Appraisal\";\n    export const Training = \"Administration:Training\";\n    export const MoneyClaiming = \"Administration:MoneyClaiming\";\n}"],
+  "mappings": "AAAQ,IAAUA,OACDA,EAAA,SAAW,0BACXA,EAAA,YAAc,6BACdA,EAAA,QAAU,yBACVA,EAAA,eAAiB,gCACjBA,EAAA,SAAW,0BACXA,EAAA,WAAa,4BACbA,EAAA,WAAa,4BACbA,EAAA,cAAgB,+BAChBA,EAAA,UAAY,2BACZA,EAAA,SAAW,0BACXA,EAAA,cAAgB,iCAXfA,MAAA",
+  "names": ["PermissionKeys"]
+}

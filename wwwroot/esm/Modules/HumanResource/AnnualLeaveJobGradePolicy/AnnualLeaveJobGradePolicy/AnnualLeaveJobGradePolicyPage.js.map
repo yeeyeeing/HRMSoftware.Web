@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../Modules/HumanResource/AnnualLeaveJobGradePolicy/AnnualLeaveJobGradePolicy/AnnualLeaveJobGradePolicyPage.ts"],
+  "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\nimport { AnnualLeaveJobGradePolicyEditor } from './AnnualLeaveJobGradePolicyEditor';\n\nexport default function pageInit() {\n    initFullHeightGridPage(new AnnualLeaveJobGradePolicyEditor($('#GridDiv')).element);\n}"],
+  "mappings": "8NAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAgC,EAAE,UAAU,CAAC,EAAE,OAAO,CACrF,CAFwBC,EAAAF,EAAA",
+  "names": ["import_q", "pageInit", "AnnualLeaveJobGradePolicyEditor", "__name"]
+}

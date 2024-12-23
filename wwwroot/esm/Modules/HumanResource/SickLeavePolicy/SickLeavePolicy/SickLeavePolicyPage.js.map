@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../Modules/HumanResource/SickLeavePolicy/SickLeavePolicy/SickLeavePolicyPage.ts"],
+  "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\nimport { SickLeavePolicyEditor } from './SickLeavePolicyEditor';\n\nexport default function pageInit() {\n    initFullHeightGridPage(new SickLeavePolicyEditor($('#GridDiv')).element);\n}"],
+  "mappings": "8NAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAsB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC3E,CAFwBC,EAAAF,EAAA",
+  "names": ["import_q", "pageInit", "SickLeavePolicyEditor", "__name"]
+}

@@ -1,0 +1,2 @@
+import{g as p,k as R}from"./chunk-L3ECGIWB.js";var r=p(R(),1),s;(e=>(e.baseUrl="OrganisationHierarchy/Department",e.Methods={Create:"OrganisationHierarchy/Department/Create",Update:"OrganisationHierarchy/Department/Update",Delete:"OrganisationHierarchy/Department/Delete",Retrieve:"OrganisationHierarchy/Department/Retrieve",List:"OrganisationHierarchy/Department/List"},["Create","Update","Delete","Retrieve","List"].forEach(t=>{e[t]=function(n,i,a){return(0,r.serviceRequest)(e.baseUrl+"/"+t,n,i,a)}})))(s||(s={}));export{s as a};
+//# sourceMappingURL=chunk-TIB4BNCY.js.map

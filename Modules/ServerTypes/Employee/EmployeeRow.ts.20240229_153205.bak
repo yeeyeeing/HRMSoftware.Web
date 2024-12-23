@@ -1,0 +1,71 @@
+﻿import { fieldsProxy } from "@serenity-is/corelib/q";
+
+export interface EmployeeRow {
+    Id?: number;
+    EmployeeName?: string;
+    EmployeeId?: string;
+    Nric?: string;
+    WorkerType?: string;
+    Age?: number;
+    LastPaymentDate?: string;
+    RecruitmentDate?: string;
+    ResignationDate?: string;
+    Birthday?: string;
+    EmployeeEmail?: string;
+    EpfAccountNumber?: string;
+    ProbationPeriod?: number;
+    NoticePeriod?: number;
+    Address1?: string;
+    Address2?: string;
+    Address3?: string;
+    PostalCode?: string;
+    TelNumber1?: string;
+    TelNumber2?: string;
+    PassportNumber?: string;
+    PassportIssueDate?: string;
+    PassportValidPeriod?: number;
+    PassportExpiryDate?: string;
+    BonusFactor?: number;
+    BasicSalary?: number;
+    SalaryIncrement?: number;
+    TotalWage?: number;
+    InsertDate?: string;
+    UpdateDate?: string;
+    DeleteDate?: string;
+    RaceId?: number;
+    EmployeeType?: number;
+    Sex?: number;
+    DepartmentId?: number;
+    IsActive?: number;
+    InsertUserId?: number;
+    UpdateUserId?: number;
+    DeleteUserId?: number;
+    DivisionId?: number;
+    SectionId?: number;
+    JobGradeId?: number;
+    NationalityId?: number;
+    OccupationId?: number;
+    BankId?: number;
+    ShiftId?: number;
+    Race?: string;
+    DepartmentDept?: string;
+    Division?: string;
+    Section?: string;
+    JobGrade?: string;
+    Nationality?: string;
+    Occupation?: string;
+    Bank?: string;
+    ShiftName?: string;
+}
+
+export abstract class EmployeeRow {
+    static readonly idProperty = 'Id';
+    static readonly nameProperty = 'EmployeeName';
+    static readonly localTextPrefix = 'Employee.Employee';
+    static readonly deletePermission = 'Administration:General';
+    static readonly insertPermission = 'Administration:General';
+    static readonly readPermission = 'Administration:General';
+    static readonly updatePermission = 'Administration:General';
+
+    static readonly Fields = fieldsProxy<EmployeeRow>();
+}

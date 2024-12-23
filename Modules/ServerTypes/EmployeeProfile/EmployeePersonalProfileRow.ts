@@ -1,0 +1,86 @@
+﻿import { fieldsProxy } from "@serenity-is/corelib/q";
+
+export interface EmployeePersonalProfileRow {
+    Id?: number;
+    EmployeeName?: string;
+    EmployeeId?: string;
+    Nric?: string;
+    Age?: number;
+    LastPaymentDate?: string;
+    RecruitmentDate?: string;
+    Birthday?: string;
+    EmployeeEmail?: string;
+    EpfAccountNumber?: string;
+    ProbationPeriodEnd?: string;
+    ProbationPeriod?: number;
+    NoticePeriod?: number;
+    Address?: string;
+    TelNumber1?: string;
+    TelNumber2?: string;
+    PassportNumber?: string;
+    PassportIssueDate?: string;
+    PassportValidPeriod?: number;
+    PassportExpiryDate?: string;
+    BonusFactor?: number;
+    BasicSalary?: number;
+    Allowance?: number;
+    InsertDate?: string;
+    UpdateDate?: string;
+    DeleteDate?: string;
+    RaceId?: number;
+    EmployeeType?: number;
+    Sex?: number;
+    DepartmentId?: number;
+    IsActive?: number;
+    InsertUserId?: number;
+    UpdateUserId?: number;
+    DeleteUserId?: number;
+    DivisionId?: number;
+    SectionId?: number;
+    JobGradeId?: number;
+    OccupationId?: number;
+    BankId?: number;
+    BankAccountNumber?: string;
+    CityId?: number;
+    StateId?: number;
+    EmployeeImg?: string;
+    NationalityId?: number;
+    MaritalStatus?: number;
+    GrantHrPrivilege?: number;
+    CreateUser?: number;
+    PayByHour?: number;
+    PayByMonth?: number;
+    PayByDay?: number;
+    OtPayEntitlement?: number;
+    DailyWorkingMinutes?: number;
+    UserPassword?: string;
+    UserRowId?: number;
+    UserName?: string;
+    ResignationDate?: string;
+    LeaveDate?: string;
+    Terminated?: number;
+    Resigned?: number;
+    EpfContribution?: number;
+    Race?: string;
+    DepartmentName?: string;
+    DivisionName?: string;
+    SectionName?: string;
+    JobGradeName?: string;
+    OccupationName?: string;
+    BankName?: string;
+    CityName?: string;
+    StateName?: string;
+    NationalityName?: string;
+}
+
+export abstract class EmployeePersonalProfileRow {
+    static readonly idProperty = 'Id';
+    static readonly nameProperty = 'EmployeeName';
+    static readonly localTextPrefix = 'EmployeeProfile.EmployeePersonalProfile';
+    static readonly deletePermission = 'Administration:HumanResources';
+    static readonly insertPermission = 'Administration:HumanResources';
+    static readonly readPermission = 'Administration:HumanResources';
+    static readonly updatePermission = 'Administration:HumanResources';
+
+    static readonly Fields = fieldsProxy<EmployeePersonalProfileRow>();
+}

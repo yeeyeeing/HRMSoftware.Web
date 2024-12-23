@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Modules/HumanResource/OTApplication/OTApplication/ApplicationStatusFormatter.ts"],
+  "sourcesContent": ["import { Decorators, Formatter, Lookup } from \"@serenity-is/corelib\";\nimport { FormatterContext } from \"@serenity-is/sleekgrid\";\n\n@Decorators.registerFormatter('HRMSoftware.ApplicationStatusFormatter')\nexport class ApplicationStatusFormatter implements Formatter {\n\n    format(ctx: FormatterContext) {\n\n        let state = ctx.value as number;\n        if (state == -1)\n            return `<i class=\"fa fa-times\" style=\"color:red\"></i>`;\n\n        else if (state == 1)\n            return `<i class=\"fa fa-check\" style=\"color:green\"></i>`\n\n        else\n            return `<i class= \"fa fa-minus\" style=\"color:blue\"></i>`;\n\n    }\n}"],
+  "mappings": "8FAAA,IAAAA,EAA8C,SAIvC,IAAMC,EAAN,KAAsD,CAEzD,OAAOC,EAAuB,CAE1B,IAAIC,EAAQD,EAAI,MAChB,OAAIC,GAAS,GACF,gDAEFA,GAAS,EACP,kDAGA,iDAEf,CACJ,EAfaC,EAAAH,EAAA,8BAAAA,EAANI,EAAA,CADN,aAAW,kBAAkB,wCAAwC,GACzDJ",
+  "names": ["import_corelib", "ApplicationStatusFormatter", "ctx", "state", "__name", "__decorateClass"]
+}

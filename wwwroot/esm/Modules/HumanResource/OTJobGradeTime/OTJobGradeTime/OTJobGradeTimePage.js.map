@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../Modules/HumanResource/OTJobGradeTime/OTJobGradeTime/OTJobGradeTimePage.ts"],
+  "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\nimport { OTJobGradeTimeEditor } from './OTJobGradeTimeEditor';\nimport { OTJobGradeTimeGrid } from './OTJobGradeTimeGrid';\n\nexport default function pageInit() {\n    initFullHeightGridPage(new OTJobGradeTimeEditor($('#GridDiv')).element);\n}"],
+  "mappings": "8NAAA,IAAAA,EAAuC,SAIxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAqB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC1E,CAFwBC,EAAAF,EAAA",
+  "names": ["import_q", "pageInit", "OTJobGradeTimeEditor", "__name"]
+}

@@ -1,0 +1,2 @@
+import{a as f}from"./chunk-DNINIZJD.js";import{c as o,g as a,h as s}from"./chunk-L3ECGIWB.js";var t=a(f(),1);var e=class{format(l){let r=l.value;return r==-1?'<i class="fa fa-times" style="color:red"></i>':r==1?'<i class="fa fa-check" style="color:green"></i>':'<i class= "fa fa-minus" style="color:blue"></i>'}};o(e,"ApplicationStatusFormatter"),e=s([t.Decorators.registerFormatter("HRMSoftware.ApplicationStatusFormatter")],e);
+//# sourceMappingURL=chunk-T7E74GLF.js.map

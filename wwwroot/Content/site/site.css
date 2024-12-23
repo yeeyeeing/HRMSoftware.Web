@@ -1,0 +1,27 @@
+.s-site-logo-img {
+  content: url(../../Serenity.Assets/logo/white-128.png);
+}
+
+.s-UserPermissionDialog > .size,
+.s-RolePermissionDialog > .size {
+  min-width: 770px;
+  width: 770px;
+  min-height: 550px;
+  height: 550px;
+}
+
+.s-UserPermissionDialog .s-DataGrid,
+.s-RolePermissionDialog .s-DataGrid {
+  height: 100%;
+}
+
+.s-Shift-ShiftDialog > .size {
+  width: 700px;
+  height: 560px;
+}
+
+
+.s-LeaveApplication-LeaveApplicationDialog > .size {
+  width: 1000px;
+  height: 1000px;
+}

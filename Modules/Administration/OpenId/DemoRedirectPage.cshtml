@@ -1,0 +1,17 @@
+@if (ViewData["IsPublicDemo"] as bool? == true)
+{
+    Layout = MVC.Views.Shared._LayoutNoNavigation;
+
+    <div class="s-full-page justify-content-center">
+        <div class="">
+            <div class="s-Panel p-5">
+                <h1 class="text-center">
+                    If this wasn't a demo, you would be redirected to your application and get an access token with redirected code.
+                </h1>
+                <h4 class="text-center mt-4 mb-0">
+                    Click <a href="https://serenity.is/docs">here</a> to go back to the docs.
+                </h4>
+            </div>
+        </div>
+    </div>
+}

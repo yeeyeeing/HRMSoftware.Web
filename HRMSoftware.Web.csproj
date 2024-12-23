@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>HRMSoftware.Web</AssemblyName>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
+    <TypeScriptNoEmitOnError>false</TypeScriptNoEmitOnError>
+    <DotNetSergen>dotnet sergen</DotNetSergen>
+  </PropertyGroup>
+  <ItemGroup>
+    <TypeScriptCompile Remove="node_modules\**" />
+    <EmbeddedResource Include="Migrations\**\*.sql" />
+    <None Remove="Modules\Membership\Account\Shift.js" />
+    <None Remove="Modules\Membership\Account\Shift.jsx" />
+    <TypeScriptCompile Remove="Modules\HumanResource\OrganisationChart\OrganisationChart\OrganisationChartBackup27_8.ts" />
+    <Compile Include="Modules\HumanResource\OrganisationChart\OrganisationChart\OrganisationChartBackup27_8.ts" />
+    <None Include="DS_ERP_V1.sln" />
+    <None Include="HRMSoftware.sln" />
+    <Content Update=".eslintrc.json;libman.json;package.json;package-lock.json;sergen.json;tsconfig.json;tslint.json;Modules\tsconfig.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Bellatrix.Web.Screenshots.Html2Canvas" Version="1.9.7" />
+    <PackageReference Include="EPPlus" Version="4.5.3.3" />
+    <PackageReference Include="FluentMigrator.Runner" Version="3.3.2" />
+    <PackageReference Include="Highsoft.Highcharts" Version="11.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.2" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.0" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.7.4" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Include="OpenLayers" Version="4.6.4" />
+    <PackageReference Include="QRCoder" Version="1.4.1" />
+    <PackageReference Include="QuestPDF" Version="2022.11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Serenity.Assets" Version="6.7.5" />
+    <PackageReference Include="Serenity.Scripts" Version="6.7.5" />
+    <PackageReference Include="Serenity.Net.Web" Version="6.7.5" />
+    <PackageReference Include="Serenity.Extensions" Version="6.7.5" />
+    <PackageReference Include="Serenity.Demo.Northwind" Version="6.7.5" />
+    <PackageReference Include="Serenity.Demo.BasicSamples" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.Coder" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.Extensions" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.Theme" Version="6.7.5" />
+    <PackageReference Include="Serenity.Demo.AdvancedSamples" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.DataAuditLog" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.DataExplorer" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.UI" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.EmailClient" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.EmailQueue" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.OpenIddict" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.Organization" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.Meeting" Version="6.7.5" />
+    <PackageReference Include="Serenity.Pro.WorkLog" Version="6.7.5" />
+  </ItemGroup>
+  <Target Name="NpmInstall" BeforeTargets="BeforeBuild" Condition="!Exists('node_modules\@types\jquery\index.d.ts')">
+    <Message Text="Installing NPM packages..." Importance="high" />
+    <Exec Command="npm install" />
+  </Target>
+  <Target Name="TransformMvcClientTypes" BeforeTargets="BeforeBuild" Condition="'$(SourceGeneratorTransform)' == 'false'">
+    <Exec Command="dotnet tool restore" ContinueOnError="true" />
+    <Exec Command="$(DotNetSergen) mvct" ContinueOnError="true" />
+  </Target>
+  <Target Name="TransformServerTypings" AfterTargets="AfterBuild">
+    <Exec Command="$(DotNetSergen) servertypings" ContinueOnError="true" Condition="'$(SourceGeneratorTransform)' == 'false'" />
+  </Target>
+  <Target Name="CreateInputsOutputs" BeforeTargets="BeforeBuild">
+    <CreateItem Include="Modules\**\*.ts;Imports\**\*.ts;tsconfig.json">
+      <Output TaskParameter="Include" ItemName="CompileTSCInputs" />
+    </CreateItem>
+  </Target>
+  <Target Name="CompileTSC" AfterTargets="AfterBuild" Inputs="@(CompileTSCInputs)" Outputs="wwwroot\esm\**\*.js">
+    <Message Text="Executing TypeScript compiler..." Importance="high" />
+    <Exec Command="node ./tsbuild.js" ContinueOnError="true" />
+  </Target>
+  <ProjectExtensions><VisualStudio><UserProperties NpmRestoreOnProjectOpen="True" /></VisualStudio></ProjectExtensions>
+</Project>

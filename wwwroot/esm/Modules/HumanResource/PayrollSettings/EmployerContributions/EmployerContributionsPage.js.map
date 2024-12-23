@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../Modules/HumanResource/PayrollSettings/EmployerContributions/EmployerContributionsPage.ts"],
+  "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\nimport { EmployerContributionsGrid } from './EmployerContributionsGrid';\n\nexport default function pageInit() {\n    initFullHeightGridPage(new EmployerContributionsEditor($('#GridDiv')).element);\n}"],
+  "mappings": "wEAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAI,4BAA4B,EAAE,UAAU,CAAC,EAAE,OAAO,CACjF,CAFwBC,EAAAD,EAAA",
+  "names": ["import_q", "pageInit", "__name"]
+}

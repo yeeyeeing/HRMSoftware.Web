@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../../../Modules/HumanResource/TrainingManagement/ApplyNewSession/ApplyNewSessionPage.ts"],
+  "sourcesContent": ["import {ProgramSessionApplyDialog} from '../ProgramSession/ProgramSessionApplyDialog';\nimport {ProgramSessionStatusType} from \"@/ServerTypes/TrainingManagement/ProgramSessionStatusType\";\nimport {ProgramSessionRow} from '../../ServerTypes/TrainingManagement';\n\nexport default function pageInit() {\n    var dlg = new ProgramSessionApplyDialog();\n    dlg.loadEntityAndOpenDialog(<ProgramSessionRow>{\n        DepartmentList: [2],\n        Status: ProgramSessionStatusType.WaitingApprovalHR,\n    }, true);\n}\n"],
+  "mappings": "oeAIe,SAARA,GAA4B,CAC/B,IAAIC,EAAM,IAAIC,EACdD,EAAI,wBAA2C,CAC3C,eAAgB,CAAC,CAAC,EAClB,QACJ,EAAG,EAAI,CACX,CANwBE,EAAAH,EAAA",
+  "names": ["pageInit", "dlg", "ProgramSessionApplyDialog", "__name"]
+}

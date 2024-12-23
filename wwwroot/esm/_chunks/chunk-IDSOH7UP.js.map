@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Modules/Membership/Account/AccountPanelTitle.tsx"],
+  "sourcesContent": ["import { Texts } from \"@/ServerTypes/Texts\";\n\nexport const AccountPanelTitle = () =>\n    <h2 class=\"text-center p-4\">\n        <img class=\"s-site-logo-img s-form-title-logo\" /> {Texts.Forms.SiteTitle}\n    </h2>"],
+  "mappings": "wHAEO,IAAMA,EAAoBC,EAAA,IAC7BC,EAAC,MAAG,MAAM,kBACN,UAAAA,EAAC,OAAI,MAAM,oCAAoC,EAAE,IAAEC,EAAM,MAAM,WACnE,EAH6B",
+  "names": ["AccountPanelTitle", "__name", "jsx", "Texts"]
+}
