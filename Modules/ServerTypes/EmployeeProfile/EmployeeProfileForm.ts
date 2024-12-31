@@ -8,6 +8,7 @@ import { FixedDeductionEditor } from "@/HumanResource/EmployeeProfile/FixedDeduc
 import { EPFClass } from "./EPFClass";
 import { EISClass } from "./EISClass";
 import { SOCSOClass } from "./SOCSOClass";
+import { HRDFClass } from "./HRDFClass";
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface EmployeeProfileForm {
@@ -70,7 +71,6 @@ export interface EmployeeProfileForm {
     NightShiftAllowancePerDay: DecimalEditor;
     BankID: LookupEditor;
     BankAccountNumber: StringEditor;
-    EpfContribution: BooleanEditor;
     OtPayEntitlement: BooleanEditor;
     FixedOtRateOption: BooleanEditor;
     PayByMonth: BooleanEditor;
@@ -84,6 +84,7 @@ export interface EmployeeProfileForm {
     SocsoClass: EnumEditor;
     SocsoAccountNumber: StringEditor;
     SsfwEffectiveDate: DateEditor;
+    HRDFClass: EnumEditor;
     PCBnumber: StringEditor;
     CalculationDate: DateEditor;
     WorkingHour: DecimalEditor;
@@ -177,7 +178,6 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'NightShiftAllowancePerDay', w8,
                 'BankID', w4,
                 'BankAccountNumber', w2,
-                'EpfContribution', w7,
                 'OtPayEntitlement', w7,
                 'FixedOtRateOption', w7,
                 'PayByMonth', w7,
@@ -191,6 +191,7 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'SocsoClass', w3,
                 'SocsoAccountNumber', w2,
                 'SsfwEffectiveDate', w0,
+                'HRDFClass', w3,
                 'PCBnumber', w2,
                 'CalculationDate', w0,
                 'WorkingHour', w8,
@@ -205,4 +206,4 @@ export class EmployeeProfileForm extends PrefixedContext {
     }
 }
 
-[SexType, EmployeeType, MaritalStatus, ProbationClass, EPFClass, EISClass, SOCSOClass]; // referenced types
+[SexType, EmployeeType, MaritalStatus, ProbationClass, EPFClass, EISClass, SOCSOClass, HRDFClass]; // referenced types

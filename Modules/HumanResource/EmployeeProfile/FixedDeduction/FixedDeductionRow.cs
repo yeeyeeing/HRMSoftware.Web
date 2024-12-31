@@ -11,8 +11,6 @@ namespace HRMSoftware.EmployeeProfile;
 [DisplayName("Deductions"), InstanceName("Deductions")]
 [ReadPermission(PermissionKeys.HumanResources)]
 [ModifyPermission(PermissionKeys.HumanResources)]
-[LookupScript("EmployeeDeductions.EmployeeDeductions", Permission = "*")]
-
 public sealed class FixedDeductionRow : LoggingRow<FixedDeductionRow.RowFields>, IIdRow, INameRow
 {
     [DisplayName("Id"), Column("ID"), Identity, IdProperty]
@@ -36,13 +34,6 @@ public sealed class FixedDeductionRow : LoggingRow<FixedDeductionRow.RowFields>,
         set => fields.Description[this] = value;
     }
 
-
-    [DisplayName("Deduction Code"), NotNull]
-    public string DeductionCode
-    {
-        get => fields.DeductionCode[this];
-        set => fields.DeductionCode[this] = value;
-    }
 
     [DisplayName("Amount"), NotNull]
     public double? Amount
@@ -88,12 +79,30 @@ public sealed class FixedDeductionRow : LoggingRow<FixedDeductionRow.RowFields>,
     }
 
 
+    const string jRace = nameof(jRace);
+
+    [DisplayName("Deduction Code"), Column("MasterDeductionId"), ForeignKey("HumanResourcesMasterDeduction", "ID"), LeftJoin(jRace), TextualField(nameof(Race)), NotNull]
+    [LookupEditor("MasterDeduction.MasterDeduction")]
+    public int? MasterDeductionId
+    {
+        get => fields.MasterDeductionId[this];
+        set => fields.MasterDeductionId[this] = value;
+    }
+     [DisplayName("Deduction Code"), Expression($"{jRace}.[DeductionCode]")]
+    public string DeductionCode
+    {
+        get => fields.DeductionCode[this];
+        set => fields.DeductionCode[this] = value;
+    }
+
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
+        public Int32Field MasterDeductionId;
+        public StringField DeductionCode;
+
         public Int32Field EmployeeRowId;
         public StringField Description;
-        public StringField DeductionCode;
 
         public DoubleField Amount;
         public DateTimeField EffectiveFrom;

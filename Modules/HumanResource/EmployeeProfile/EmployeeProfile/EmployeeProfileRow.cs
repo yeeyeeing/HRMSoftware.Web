@@ -155,13 +155,6 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
-        [DisplayName("Epf Contribution")]
-        [BooleanEditor]
-        public int? EpfContribution
-        {
-            get => fields.EpfContribution[this];
-            set => fields.EpfContribution[this] = value;
-        }
 
         [DisplayName("Address"), Size(1000)]
         public string Address
@@ -236,14 +229,7 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
-        
-
-        [DisplayName("Monthly Allowance"), Column("allowance")]
-        public double? Allowance
-        {
-            get => fields.Allowance[this];
-            set => fields.Allowance[this] = value;
-        }
+      
 
         [DisplayName("Grant HR Privilege"), Column("GrantHRPrivilege")]
         [BooleanEditor]
@@ -416,6 +402,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.BankID[this];
             set => fields.BankID[this] = value;
         }
+
 
         [DisplayName("UserRowID"), Column("UserRowID")]
         public int? UserRowID
@@ -681,6 +668,12 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
+        [DisplayName("HRDF Class")]
+        public HRDFClass? HRDFClass
+        {
+            get => fields.HRDFClass[this];
+            set => fields.HRDFClass[this] = value;
+        }
         [DisplayName("EPF Class")]
         public EPFClass? EpfClass
         {
@@ -873,7 +866,7 @@ namespace HRMSoftware.EmployeeProfile
         }
         public class RowFields : LoggingRowFields
         {
-
+            
             public DoubleField WorkingHour;
             public DoubleField WorkingDays;
             public DoubleField DailyRateBase;
@@ -961,7 +954,6 @@ namespace HRMSoftware.EmployeeProfile
             public DoubleField BasicSalary;
             public DoubleField NightShiftAllowancePerDay;
 
-            public DoubleField Allowance;
             public Int32Field RaceID;
             public Int32Field DepartmentID;
             public Int32Field DivisionID;
@@ -969,7 +961,6 @@ namespace HRMSoftware.EmployeeProfile
             public Int32Field JobGradeID;
             public Int32Field OccupationID;
             public Int32Field BankID;
-            public Int32Field EpfContribution;
             public StringField BankAccountNumber;
             public Int32Field CityID;
             public Int32Field DailyWorkingMinute;
@@ -1005,7 +996,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
             public EnumField<EISClass> EisClass;
-            //public EnumField<HRDFClass> HrdfClass;
+            public EnumField<HRDFClass> HRDFClass;
 
             public StringField WorkingPermit;
             

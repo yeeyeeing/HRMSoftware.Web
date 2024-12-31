@@ -21,6 +21,7 @@ export interface EmployeeAllowanceRow {
     EmployeeRowId?: number;
     Description?: string;
     AllowanceCode?: string;
+    MasterAllowanceId?: number;
     Amount?: number;
     SubjectionEis?: boolean;
     SubjectionEpf?: boolean;

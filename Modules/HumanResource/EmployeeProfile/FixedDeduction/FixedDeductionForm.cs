@@ -8,10 +8,10 @@ namespace HRMSoftware.EmployeeProfile.Forms;
 [BasedOnRow(typeof(FixedDeductionRow), CheckNames = true)]
 public class FixedDeductionForm
 {
-    [TextAreaEditor(Rows = 3)]
-    public string Description { get; set; }
-    [HalfWidth]
     public string DeductionCode { get; set; }
+
+    [HalfWidth]
+    public int MasterDeductionId { get; set; }
 
     [HalfWidth]
     public double Amount { get; set; }
@@ -19,7 +19,8 @@ public class FixedDeductionForm
     public DateTime EffectiveFrom { get; set; }
     [HalfWidth]
     public DateTime EffectiveUntil { get; set; }
-
+    [TextAreaEditor(Rows = 3)]
+    public string Description { get; set; }
     [Category("Deduction Frequency")]
     [QuarterWidth]
     public int Recurring { get; set; }

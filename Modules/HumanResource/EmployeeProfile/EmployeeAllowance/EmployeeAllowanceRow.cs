@@ -40,8 +40,16 @@ public sealed class EmployeeAllowanceRow : LoggingRow<EmployeeAllowanceRow.RowFi
         get => fields.EffectiveUntil[this];
         set => fields.EffectiveUntil[this] = value;
     }
+    const string jRace = nameof(jRace);
 
-    [DisplayName("Allowance Code"),  NotNull]
+    [DisplayName("Allowance Code"), Column("MasterAllowanceId"), ForeignKey("HumanResourcesMasterAllowance", "ID"), LeftJoin(jRace), TextualField(nameof(Race)), NotNull]
+    [LookupEditor("MasterAllowance.MasterAllowance")]
+    public int? MasterAllowanceId
+    {
+        get => fields.MasterAllowanceId[this];
+        set => fields.MasterAllowanceId[this] = value;
+    }
+
     public string AllowanceCode
     {
         get => fields.AllowanceCode[this];
@@ -272,6 +280,9 @@ public sealed class EmployeeAllowanceRow : LoggingRow<EmployeeAllowanceRow.RowFi
         public Int32Field EmployeeRowId;
         public StringField Description;
         public StringField AllowanceCode;
+        public Int32Field MasterAllowanceId;
+
+
 
         public DoubleField Amount;
         public BooleanField SubjectionEis;

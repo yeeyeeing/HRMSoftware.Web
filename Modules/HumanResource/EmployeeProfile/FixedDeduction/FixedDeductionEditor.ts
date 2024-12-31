@@ -1,5 +1,5 @@
 import { Decorators } from '@serenity-is/corelib';
-import {FixedDeductionColumns, FixedDeductionRow } from '../../../ServerTypes/EmployeeProfile';
+import {FixedDeductionColumns, FixedDeductionRow, MasterDeductionRow } from '../../../ServerTypes/EmployeeProfile';
 
 import { GridEditorBase } from "@serenity-is/extensions";
 import { FixedDeductionEditDialog } from './FixedDeductionEditDialog';
@@ -11,7 +11,21 @@ export class FixedDeductionEditor extends GridEditorBase<FixedDeductionRow> {
     protected getAddButtonCaption() {
         return "Add";
     }
-    validateEntity(row, id) {
+    protected validateEntity(row: FixedDeductionRow, id: number) {
+        if (!super.validateEntity(row, id))
+            return false;
+
+        var itemId = id ?? row[this.getIdProperty()];
+        MasterDeductionRow.getLookupAsync().then(x => {
+            var item = this.view?.getItemById(itemId);
+            if (item) {
+                item.DeductionCode = x.itemById[row.MasterDeductionId].DeductionCode;
+                this.view.updateItem(itemId, item);
+            }
+        });
+
         return true;
     }
+
+
 }

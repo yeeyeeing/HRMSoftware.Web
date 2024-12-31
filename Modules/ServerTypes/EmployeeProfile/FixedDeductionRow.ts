@@ -1,10 +1,11 @@
-﻿import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
+﻿import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface FixedDeductionRow {
     Id?: number;
+    MasterDeductionId?: number;
+    DeductionCode?: string;
     EmployeeRowId?: number;
     Description?: string;
-    DeductionCode?: string;
     Amount?: number;
     EffectiveFrom?: string;
     EffectiveUntil?: string;
@@ -25,12 +26,6 @@ export abstract class FixedDeductionRow {
     static readonly isActiveProperty = 'IsActive';
     static readonly nameProperty = 'Description';
     static readonly localTextPrefix = 'EmployeeProfile.FixedDeduction';
-    static readonly lookupKey = 'EmployeeDeductions.EmployeeDeductions';
-
-    /** @deprecated use getLookupAsync instead */
-    static getLookup() { return getLookup<FixedDeductionRow>('EmployeeDeductions.EmployeeDeductions') }
-    static async getLookupAsync() { return getLookupAsync<FixedDeductionRow>('EmployeeDeductions.EmployeeDeductions') }
-
     static readonly deletePermission = 'Administration:HumanResources';
     static readonly insertPermission = 'Administration:HumanResources';
     static readonly readPermission = 'Administration:HumanResources';

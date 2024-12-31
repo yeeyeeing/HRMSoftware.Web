@@ -10,6 +10,9 @@ public class FixedDeductionColumns
 {
   
     [EditLink]
+    public string DeductionCode { get; set; }
+
+//    public int MasterDeductionId { get; set; }
     public string Description { get; set; }
     [Width(100, Max = 300)]
     public double Amount { get; set; }

@@ -1,9 +1,9 @@
-import { Decorators, EntityDialog, EditorUtils, ListResponse } from '@serenity-is/corelib';
+import { Decorators, EntityDialog, EditorUtils, ListResponse, Criteria } from '@serenity-is/corelib';
 import { PayrollGeneratingWizardForm, PayrollGeneratingWizardRow, PayrollGeneratingWizardService, PayrollService } from '../../../ServerTypes/PayrollSettings';
 import { alertDialog, isEmptyOrNull } from '@serenity-is/corelib/q';
 import { confirm, serviceCall, notifySuccess, notifyError } from '@serenity-is/corelib/q';
 import {  Select2Editor } from '@serenity-is/corelib';
-import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
+import { EmployeeProfileRow, EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { PayrollDialog } from '../Payroll/PayrollDialog';
 import { PayrollWizDialog } from '../PayrollWiz/PayrollWizDialog';
 import { PayrollWizardDialog } from '../PayrollWizard/PayrollWizardDialog';
@@ -21,14 +21,18 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
     public dateString: string;
     constructor() {
         super();
+        var criteria: any;
+
         EmployeeProfileService.List({
+            Criteria: Criteria.and(criteria, [[EmployeeProfileRow.Fields.Retired], '=', '0'],
+                [[EmployeeProfileRow.Fields.Terminated], '=', '0'],
+                [[EmployeeProfileRow.Fields.Resigned], '=', '0']
+            )
         }, response => {
             this.EmployeeData = response.Entities
         })
-        PayrollService.List({
-        }, response => {
-            this.PayrollData = response.Entities
-        })
+
+
 
     }
     protected form = new PayrollGeneratingWizardForm(this.idPrefix);
@@ -115,26 +119,28 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
         EmployeeRowListBuffer.forEach(number => {
             EmployeeRowList.push(parseInt(number)); // Convert string to integer and push to numberList
         })
-        for (var index in self.PayrollData)
-        {
-            var currentEmployeeRowId = self.PayrollData[index].EmployeeRowId
-            var currentPayMonth = self.PayrollData[index].PayMonth
-            var currentPayYear = self.PayrollData[index].PayYear
-            if (EmployeeRowIdList.indexOf(currentEmployeeRowId) !== -1 && currentPayMonth == PayMonth && currentPayYear == PayYear)
-            {
-                EmployeeRowString = self.form.EmployeeRowListBuffer.value
-                if (EmployeeRowString != "") {
-                    let EmployeeRowListBuffer = EmployeeRowString.split(',')
-                    EmployeeRowListBuffer.forEach(number => {
-                        EmployeeRowList.push(parseInt(number)); // Convert string to integer and push to numberList
-                    })
-                    EmployeeRowList = EmployeeRowList.filter(number => number !== self.PayrollData[index].EmployeeRowId);
-                    self.form.EmployeeRowListBuffer.value = EmployeeRowList.join(',')
+
+        PayrollService.List({
+        }, response => {
+
+            for (var index in response.Entities) {
+                var currentEmployeeRowId = response.Entities[index].EmployeeRowId
+                var currentPayMonth = response.Entities[index].PayMonth
+                var currentPayYear = response.Entities[index].PayYear
+                if (EmployeeRowIdList.indexOf(currentEmployeeRowId) !== -1 && currentPayMonth == PayMonth && currentPayYear == PayYear) {
+                    EmployeeRowString = self.form.EmployeeRowListBuffer.value
+                    if (EmployeeRowString != "") {
+                        let EmployeeRowListBuffer = EmployeeRowString.split(',')
+                        EmployeeRowListBuffer.forEach(number => {
+                            EmployeeRowList.push(parseInt(number)); // Convert string to integer and push to numberList
+                        })
+                        EmployeeRowList = EmployeeRowList.filter(number => number !== response.Entities[index].EmployeeRowId);
+                        self.form.EmployeeRowListBuffer.value = EmployeeRowList.join(',')
+                    }
                 }
             }
-        }
-        self.form.EmployeeRowList.value = EmployeeRowList.join(',')
-
+            self.form.EmployeeRowList.value = EmployeeRowList.join(',')
+        })
     }
     protected getToolbarButtons() {
         var self = this;
@@ -196,6 +202,8 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                                     PayrollDlg.dialogOpen();
                                     PayrollDlg.element.on("dialogclose", function () {
                                         self.counter += 1;
+                                        if (self.counter == EmployeeRowIdList.length)
+                                            notifySuccess("Payslip generated")
                                         resolve();
                                     });
                                 });
@@ -215,9 +223,10 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                                 });
                             }
                             async function processEmployees(EmployeeRowIdList) {
-                                for (let index = 0; index < EmployeeRowIdList.length; index++) 
+                                for (let index = 0; index < EmployeeRowIdList.length; index++) {
+                                   
                                     await handleEmployee(EmployeeRowIdList[index]);
-
+                                }
                                 if (self.form.Download.value == true) 
                                     await handleDownload();
                                  else 
@@ -225,10 +234,14 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                             }
                             console.log(EmployeeRowIdList)
                             processEmployees(EmployeeRowIdList)
-                            notifySuccess("Payslip generated")
+                     
                             if (self.form.Download.value == true)
                                 notifySuccess("Payslip downloaded")
+
                             self.form.EmployeeRowListBuffer.value = self.form.EmployeeRowList.value = ''
+                            
+
+
                         }
                     )
                 },

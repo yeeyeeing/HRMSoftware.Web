@@ -2,6 +2,7 @@
 import { EISClass } from "../EmployeeProfile/EISClass";
 import { SOCSOClass } from "../EmployeeProfile/SOCSOClass";
 import { EPFClass } from "../EmployeeProfile/EPFClass";
+import { HRDFClass } from "../EmployeeProfile/HRDFClass";
 import { MaritalStatus } from "../EmployeeProfile/MaritalStatus";
 import { MoneyClaimApplicationEditor } from "@/HumanResource/MoneyClaimApplication/MoneyClaimApplication/MoneyClaimApplicationEditor";
 import { PayslipPaidOneTimeAllowance } from "@/HumanResource/PayrollSettings/PayslipPaidOneTimeAllowance/PayslipPaidOneTimeAllowanceEditor";
@@ -28,6 +29,7 @@ export interface PayrollForm {
     EisClass: EnumEditor;
     SocsoClass: EnumEditor;
     EpfClass: EnumEditor;
+    HrdfClass: EnumEditor;
     TaxClass: IntegerEditor;
     MaritalStatus: EnumEditor;
     WorkingSpouse: BooleanEditor;
@@ -61,8 +63,6 @@ export interface PayrollForm {
     DeductionList: PayslipDeductedOneTimeDeductions;
     PayrollEarnings: PayrollEarningsEditor;
     PayrollDeductions: PayrollDeductionsEditor;
-    PayrollTable: StringEditor;
-    EmployerTable: StringEditor;
     Deduction: DecimalEditor;
     Earnings: DecimalEditor;
     Nett: DecimalEditor;
@@ -118,6 +118,7 @@ export class PayrollForm extends PrefixedContext {
                 'EisClass', w6,
                 'SocsoClass', w6,
                 'EpfClass', w6,
+                'HrdfClass', w6,
                 'TaxClass', w2,
                 'MaritalStatus', w6,
                 'WorkingSpouse', w7,
@@ -151,8 +152,6 @@ export class PayrollForm extends PrefixedContext {
                 'DeductionList', w10,
                 'PayrollEarnings', w11,
                 'PayrollDeductions', w12,
-                'PayrollTable', w1,
-                'EmployerTable', w1,
                 'Deduction', w5,
                 'Earnings', w5,
                 'Nett', w5,
@@ -169,4 +168,4 @@ export class PayrollForm extends PrefixedContext {
     }
 }
 
-[EISClass, SOCSOClass, EPFClass, MaritalStatus]; // referenced types
+[EISClass, SOCSOClass, EPFClass, HRDFClass, MaritalStatus]; // referenced types

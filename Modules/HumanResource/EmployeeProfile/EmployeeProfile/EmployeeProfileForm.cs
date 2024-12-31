@@ -239,8 +239,6 @@ public class EmployeeProfileForm
     //public string EISnumber { get; set; }
     */
 
-    [HalfWidth]
-    public int EpfContribution { get; set; }
 
     [Category("Payment Mode")]
 
@@ -290,13 +288,19 @@ public class EmployeeProfileForm
     public DateTime SsfwEffectiveDate { get; set; }
 
 
-    
+
+    [Category("HRDF")]
+
+
+    [HalfWidth]
+    public int HRDFClass { get; set; }
 
     [Category("Pcb")]
 
 
     [HalfWidth]
     public string PCBnumber { get; set; }
+
     [Tab("Rates")]
 
     [Category("Rates")]

@@ -850,10 +850,12 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     public dialogOpen(asPanel?: boolean): void {
         $('.field.BasicPay, .field.DailyPay, .field.DailyRate, .field.DaysWorked, .field.HourlyRate, .field.BirthDay, .field.Age').addClass('col-md-2');
         $(` .field.WorkingSpouse`).addClass('col-md-1');
+        $(`.field.HrdfClass`).addClass('col-md-2');
+
         $(` .field.ChildrenUnderEighteen, .field.ChildrenInUniversity, .field.DisabledChildInUniversity, .field.DisabledChild`).addClass('col-md-2');
         $(`.field.MaritalStatus`).addClass('col-md-3');
         $(`.field.MaritalStatus label.caption, .field.WorkingSpouse label.caption, .field.ChildrenUnderEighteen label.caption, .field.ChildrenInUniversity label.caption,
-        .field.DisabledChildInUniversity label.caption, .field.DisabledChild label.caption, .field.Age label.caption, .field.BirthDay label.caption`).removeClass('caption');
+        .field.DisabledChildInUniversity label.caption, .field.DisabledChild label.caption, .field.Age label.caption, .field.BirthDay label.caption, .field.HrdfClass label.caption`).removeClass('caption');
  
         this.ResetTable()    
         $('.field.EisClass').addClass('col-md-2');
@@ -873,7 +875,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $(`.DeductedEarlyLeavingList, .OneTimeDeductionList, .DeductedNoPaidLeaveList,
         .DeductedLateArrivalList, .OneTimeAllowanceList, .PaidMoneyClaimingList, .PaidOtList, .EarlyLeavingRate, .LateArrivalRate, .EarlyLeaving,
         .LateArrival, .FlatOt, .OtOne, .OtOnePointFive, .OtTwo, .NPLHourlyRate, .NPLDailyRate, .NPLHourly, .NPLDaily, .AbsentDailyRate, .AbsentDaily,
-        .OtSubjectEpf, .OtSubjectEis, .OtSubjectPcb, .OtSubjectSocso, .OtSubjectHrdf, .AllowanceList, .DeductionList, .OtOnePointFiveRate, .OtTwoRate`).hide()
+        .OtSubjectEpf, .OtSubjectEis, .OtSubjectPcb, .OtSubjectSocso, .OtSubjectHrdf, .AllowanceList, .DeductionList, .OtOnePointFiveRate, .OtTwoRate, .HrdfClass`).hide()
         function isValidDate(dateStr: string): string {
             const date = new Date(dateStr);
             if (!isNaN(date.getTime()))// not valid
@@ -964,6 +966,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             var PayMonthElement = document.getElementById(this.idPrefix + 'PayMonth')
             var PayYearElement = document.getElementById(this.idPrefix + 'PayYear')
 
+            var HrdfClass = document.getElementById(this.idPrefix + 'HrdfClass')
 
             var EisClass = document.getElementById(this.idPrefix + 'EisClass')
             var SocsoClass = document.getElementById(this.idPrefix + 'SocsoClass')
@@ -1013,11 +1016,10 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 BasicPay: number;
                 Allowance: number;
                 type: number;
-                EpfSubjection: number;
                 EisClass: number;
                 EpfClass: number;
                 SocsoClass: number;
-
+                HrdfClass: number;
                 MaritalStatus: number;
                 WorkingSpouse: boolean;
                 ChildrenUnderEighteen: number;
@@ -1034,12 +1036,12 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 listOfDicts.push({
                     id: response.Entities[index].Id, name: response.Entities[index].EmployeeName, BasicPay:
                         response.Entities[index].BasicSalary, Allowance: response.Entities[index].Allowance, type: response.Entities[index].EmployeeType,
-                    EpfSubjection: response.Entities[index].EpfContribution, 'EisClass': response.Entities[index].EisClass,
+                    'EisClass': response.Entities[index].EisClass,
                     'EpfClass': response.Entities[index].EpfClass, 'SocsoClass': response.Entities[index].SocsoClass,
                     'MaritalStatus': response.Entities[index].MaritalStatus, 'WorkingSpouse': response.Entities[index].WorkingSpouse,
                     'ChildrenUnderEighteen': response.Entities[index].ChildrenUnderEighteen, 'ChildrenInUniversity': response.Entities[index].ChildrenInUniversity,
                     'DisabledChildInUniversity': response.Entities[index].DisabledChildInUniversity, 'DisabledChild': response.Entities[index].DisabledChild,
-                    'Birthday': response.Entities[index].Birthday
+                    'Birthday': response.Entities[index].Birthday, 'HrdfClass': response.Entities[index].HRDFClass
                 });
             }
             this.listOfDicts = listOfDicts
@@ -1057,6 +1059,10 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             })
 
             $(SocsoClass).on('change', async function (e) {
+                e.stopImmediatePropagation()
+                self.updatePayroll()
+            })
+            $(HrdfClass).on('change', async function (e) {
                 e.stopImmediatePropagation()
                 self.updatePayroll()
             })
@@ -1277,7 +1283,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         let subjectSocso = 0;
         // Get the table body by its ID
         let AllowanceDeductionBody = document.getElementById("AllowanceDeductionBody");
-        if (AllowanceDeductionBody) {
+       if (AllowanceDeductionBody) {
             Array.from(AllowanceDeductionBody.rows).forEach(row => {
                 let amountCell = row.cells[2];  // Third column: Allowance amount cell
                 let amount = parseFloat(amountCell.innerText.trim()) || 0; // Parse the amount
@@ -1357,6 +1363,8 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 "EisCategory": self.form.EisClass.value,
                 "EpfCategory": self.form.EpfClass.value,
                 "SocsoCategory": self.form.SocsoClass.value,
+
+                "HrdfCategory": self.form.HrdfClass.value,
                 "EpfAmount": subjectEpf,
                 "EisAmount": subjectEis,
                 "SocsoAmount": subjectSocso,
@@ -1697,7 +1705,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                             $('.addEarnings, .addDeductions').show()
                             $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
                             .field.DisabledChildInUniversity, .field.DisabledChild,  .field.DaysWorked, .field.BasicPay, .field.DailyRate,
-                            .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.BirthDay, .field.Age`).show();
+                            .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.BirthDay, .field.Age, .field.HrdfClass`).show();
                             var wait = 0
                             serviceCall<RetrieveResponse<any>>({
                                 service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
@@ -1758,13 +1766,12 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                             self.form.EisClass.value = listOfDicts[index].EisClass.toString()
                             self.form.EpfClass.value = listOfDicts[index].EpfClass.toString()
                             self.form.SocsoClass.value = listOfDicts[index].SocsoClass.toString()
-                            
+                            self.form.HrdfClass.value = listOfDicts[index].HrdfClass
                             var EmployeeName = listOfDicts[index].name
                             var criteria: any;
                             EmployeeAllowanceService.List({
                                 Criteria: Criteria.and(criteria, [[EmployeeAllowanceRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
-                                    , [self.form.PayPeriodStart.get_value(), '>=', [EmployeeAllowanceRow.Fields.EffectiveFrom]],
-                                )
+                                    , [self.form.PayPeriodStart.get_value(), '>=', [EmployeeAllowanceRow.Fields.EffectiveFrom]])
                             }, response => {
                                 console.log(response.Entities)
                                 $('#AllowanceDeductionBody').empty()
@@ -1821,9 +1828,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                                                 continue
                                             if (response.Entities[index].ExemptGatepassLeave == true && HaveGatepassLeave == true)
                                                 continue
-
                                         }
-
                                     }
                                     else if (response.Entities[index].NoAbsence == true && NoAbsence == false)
                                         continue
@@ -1832,6 +1837,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                                     else if (response.Entities[index].NoLate == true && NoLate == false)
                                         continue
                                     var rowBuffer = document.createElement('tr')
+
                                     rowBuffer.innerHTML = `<td>${response.Entities[index].AllowanceCode}</td><td>${response.Entities[index].Description}</td>
                                             <td class = "AllowanceAmount" eis =  ${response.Entities[index].SubjectionEis.toString()} epf =  ${response.Entities[index].SubjectionEpf.toString()}
                                             hrdf =  ${response.Entities[index].SubjectionHrdf.toString()} pcb =  ${response.Entities[index].SubjectionPcb.toString()}
@@ -1925,10 +1931,20 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                                             }
                                             var row = document.createElement('tr')
                                             row.innerHTML = `<td>${response.Entities[index].DeductionCode}</td><td>${response.Entities[index].Description}</td><td class = "DeductionAmount">-${response.Entities[index].Amount}</td>`
+
+
                                             $('#AllowanceDeductionBody').append(row)
                                             self.DeductionId.push(response.Entities[index].Id)
                                             TotalDeductions += response.Entities[index].Amount
                                         }
+                                        $('.remove').on('click', async function (e) {
+                                            console.log('haha')
+                                            $(this).closest('tr').remove(); // Remove the row
+                                            self.updatePayroll()
+                                        })
+                                        $('.numberInput').on('change', async function (e) {
+                                            self.updatePayroll()
+                                        })
                                         $('#TotalDeduction').val(TotalDeductions)
                                         var criteria: any;
                                         MoneyClaimApplicationService.List({
@@ -2388,22 +2404,14 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             this.form.AllowanceList.value = AllowanceList
             this.form.DeductionList.value = DeductionList
         }
+        self.form.Nett.value = $('#NettWage').val()
+        self.form.Earnings.value = $('#GrossWage').val()
+        self.form.Deduction.value = self.form.Earnings.value - self.form.Nett.value 
 
         super.save_submitHandler(response)
         
     }
-    /*
-    protected onSaveSuccess(response): void {
-        super.onSaveSuccess(response);
-        if (!this.isNew()) {
-            var queryString = "PayrollRowId=" + encodeURIComponent(this.entityId)
-            var url = window.location.origin + '/PayrollSettings/Payroll/PdfSharpConvert?' + queryString
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', url, true);
-            xhr.send()
-        }
-    } 
-    */
+
 }
 
 class ConcreteMoneyClaimApplicationRow extends PayslipPaidMoneyClaimingRow {

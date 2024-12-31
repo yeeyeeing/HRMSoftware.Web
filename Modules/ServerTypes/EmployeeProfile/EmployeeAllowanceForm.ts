@@ -1,12 +1,13 @@
-﻿import { TextAreaEditor, StringEditor, DecimalEditor, DateEditor, BooleanEditor, PrefixedContext } from "@serenity-is/corelib";
+﻿import { StringEditor, LookupEditor, DecimalEditor, DateEditor, TextAreaEditor, BooleanEditor, PrefixedContext } from "@serenity-is/corelib";
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface EmployeeAllowanceForm {
-    Description: TextAreaEditor;
     AllowanceCode: StringEditor;
+    MasterAllowanceId: LookupEditor;
     Amount: DecimalEditor;
     EffectiveFrom: DateEditor;
     EffectiveUntil: DateEditor;
+    Description: TextAreaEditor;
     Recurring: BooleanEditor;
     OneTime: BooleanEditor;
     PaidOneTime: BooleanEditor;
@@ -43,42 +44,44 @@ export class EmployeeAllowanceForm extends PrefixedContext {
         if (!EmployeeAllowanceForm.init)  {
             EmployeeAllowanceForm.init = true;
 
-            var w0 = TextAreaEditor;
-            var w1 = StringEditor;
+            var w0 = StringEditor;
+            var w1 = LookupEditor;
             var w2 = DecimalEditor;
             var w3 = DateEditor;
-            var w4 = BooleanEditor;
+            var w4 = TextAreaEditor;
+            var w5 = BooleanEditor;
 
             initFormType(EmployeeAllowanceForm, [
-                'Description', w0,
-                'AllowanceCode', w1,
+                'AllowanceCode', w0,
+                'MasterAllowanceId', w1,
                 'Amount', w2,
                 'EffectiveFrom', w3,
                 'EffectiveUntil', w3,
-                'Recurring', w4,
-                'OneTime', w4,
-                'PaidOneTime', w4,
-                'AllowanceSubjections', w4,
-                'FullAttendance', w4,
-                'NoLate', w4,
-                'NoAbsence', w4,
-                'NoEarlyLeaving', w4,
-                'ExemptUnpaidLeave', w4,
-                'ExemptHospitalisationLeave', w4,
-                'ExemptSickLeave', w4,
-                'ExemptAnnualLeave', w4,
-                'ExemptMaternityLeave', w4,
-                'ExemptPaternityLeave', w4,
-                'ExemptMarriageLeave', w4,
-                'ExemptCompassionateLeave', w4,
-                'ExemptEmergencyLeave', w4,
-                'ExemptGatepassLeave', w4,
-                'SubjectionEis', w4,
-                'SubjectionEpf', w4,
-                'SubjectionHrdf', w4,
-                'SubjectionPcb', w4,
-                'SubjectionSocso', w4,
-                'SubjectionOt', w4
+                'Description', w4,
+                'Recurring', w5,
+                'OneTime', w5,
+                'PaidOneTime', w5,
+                'AllowanceSubjections', w5,
+                'FullAttendance', w5,
+                'NoLate', w5,
+                'NoAbsence', w5,
+                'NoEarlyLeaving', w5,
+                'ExemptUnpaidLeave', w5,
+                'ExemptHospitalisationLeave', w5,
+                'ExemptSickLeave', w5,
+                'ExemptAnnualLeave', w5,
+                'ExemptMaternityLeave', w5,
+                'ExemptPaternityLeave', w5,
+                'ExemptMarriageLeave', w5,
+                'ExemptCompassionateLeave', w5,
+                'ExemptEmergencyLeave', w5,
+                'ExemptGatepassLeave', w5,
+                'SubjectionEis', w5,
+                'SubjectionEpf', w5,
+                'SubjectionHrdf', w5,
+                'SubjectionPcb', w5,
+                'SubjectionSocso', w5,
+                'SubjectionOt', w5
             ]);
         }
     }

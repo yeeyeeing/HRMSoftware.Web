@@ -1,5 +1,5 @@
 import { Decorators, EditorUtils, EntityDialog } from '@serenity-is/corelib';
-import { FixedDeductionForm, FixedDeductionRow, FixedDeductionService } from '../../../ServerTypes/EmployeeProfile';
+import { FixedDeductionForm, FixedDeductionRow, FixedDeductionService, MasterDeductionService } from '../../../ServerTypes/EmployeeProfile';
 import { GridEditorDialog } from "@serenity-is/extensions";
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 
@@ -22,6 +22,22 @@ export class FixedDeductionEditDialog extends GridEditorDialog<FixedDeductionRow
     public onDialogOpen() {
         super.onDialogOpen()
         var self = this
+        this.
+        $('.DeductionCode').hide()
+        var MasterDeductionIdElement = document.getElementById(`${this.idPrefix}MasterDeductionId`)
+        $(MasterDeductionIdElement).on('change', async function () {
+            MasterDeductionService.Retrieve({
+                EntityId: self.form.MasterDeductionId.value
+            }, response => {
+                self.form.Amount.value = response.Entity.Amount
+                self.form.Description.value = response.Entity.Description
+ 
+                self.form.OneTime.value = response.Entity.OneTime
+                self.form.Recurring.value = response.Entity.Recurring
+
+            })
+        })
+
 
         EditorUtils.setReadonly(this.form.DeductedOneTime.element, true);
         if (this.form.OneTime.value == true && this.form.DeductedOneTime.value == true)
@@ -63,6 +79,8 @@ export class FixedDeductionEditDialog extends GridEditorDialog<FixedDeductionRow
             alertDialog('Please choose the frequency of this deduction')
             return
         }
+        this.form.DeductionCode.value = this.form.MasterDeductionId.text
+
         super.save_submitHandler(response);
 
     }

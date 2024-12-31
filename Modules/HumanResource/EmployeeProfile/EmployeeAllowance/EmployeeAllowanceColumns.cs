@@ -9,6 +9,9 @@ namespace HRMSoftware.EmployeeProfile.Columns;
 public class EmployeeAllowanceColumns
 {
     [EditLink]
+    // public int MasterAllowanceId { get; set; }
+    public string AllowanceCode { get; set; }
+
     public string Description { get; set; }
     [Width(100, Max = 300)]
     public double Amount { get; set; }

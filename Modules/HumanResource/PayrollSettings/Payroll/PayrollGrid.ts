@@ -1,4 +1,4 @@
-import {   Criteria, Decorators, EntityGrid, GridRowSelectionMixin, IntegerEditor, ListResponse, LookupEditor, StringEditor } from '@serenity-is/corelib';
+import { Criteria, Decorators, EntityGrid, IntegerEditor, ListResponse, LookupEditor, StringEditor, GridRowSelectionMixin } from '@serenity-is/corelib';
 import { EisSubjectionService, EpfSubjectionService, HrdfSubjectionService, PayrollColumns, PayrollRow, PayrollService, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
 import { PayrollDialog } from './PayrollDialog';
 import { confirmDialog, confirm, serviceCall, notifySuccess, notifyError, notifyInfo } from '@serenity-is/corelib/q';
@@ -180,7 +180,8 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
   
 
     protected onViewProcessData(response: ListResponse<PayrollRow>) {
-      
+        console.log(this.rowSelection.getSelectedKeys());
+
         //console.log('haha')
         response = super.onViewProcessData(response);
         //console.log(this.toolbar.findButton("add-button").toggle(false))
@@ -392,6 +393,50 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                 },
                 separator: true
             });
+            buttons.push({
+                title: 'Payroll Batch Delete',
+                cssClass: 'fas fa-hat-wizard text-bg-danger',
+                onClick: e => {
+                    confirm(
+                            "Do you want to delete all selected payslips?",
+                        () => {
+
+                            // Create an array of promises for each delete operation
+                            let deletePromises = [];
+
+                            $('.select-row-checkbox:checked').each(function () {
+                                let dataId = $(this).data('id');
+
+                                // Add each delete operation promise to the array
+                                let deletePromise = PayrollService.Delete({
+                                    EntityId: dataId,
+                                }).then(() => {
+                                    console.log('Deleted Data ID:', dataId);
+                                }).catch(error => {
+                                    console.error('Error deleting Data ID:', dataId, error);
+                                });
+
+                                // Push the promise to the array
+                                deletePromises.push(deletePromise);
+                            });
+
+                            // Wait for all delete operations to complete before reloading the page
+                            Promise.all(deletePromises)
+                                .then(() => {
+                                    // All delete operations are completed, now reload the page
+                                    location.reload();
+                                })
+                                .catch(error => {
+                                    // Handle any error that occurred during delete operations
+                                    console.error('Error in delete operations:', error);
+                                });
+                            
+                        }
+                    )
+                },
+                separator: true
+            });
+
             buttons.push({
                 title: 'EPF Subjection',
                 cssClass: 'apply-changes-button',
@@ -609,20 +654,16 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
 
     protected createToolbarExtensions() { //creates the selector
         super.createToolbarExtensions();
-
         this.rowSelection = new GridRowSelectionMixin(this, {
-
             selectable: (item: PayrollRow) => {
-
-
+                console.log(item)
                 return true;
-
             }
         });
 
 
     }
-  
+    
     protected getColumns() {
 
         var columns = super.getColumns();
@@ -641,8 +682,19 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
             minWidth: 12,
             maxWidth: 12
         });
+        columns.splice(0, 0, {
+            name: '',
+            field: '',
 
-  
+            cssClass : 'select-row-checkbox',
+            format: (ctx) => {
+                return `<input type="checkbox" class="select-row-checkbox" data-id="${ctx.item.Id}" />`;
+            },
+            width: 40
+        });
+        //console.log(this.rowSelection.getSelectedKeys());
+
+        // Add a checkbox column for multi-selection
         return columns;
     }
 

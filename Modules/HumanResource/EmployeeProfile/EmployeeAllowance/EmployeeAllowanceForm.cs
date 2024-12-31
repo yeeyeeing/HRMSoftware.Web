@@ -8,10 +8,10 @@ namespace HRMSoftware.EmployeeProfile.Forms;
 [BasedOnRow(typeof(EmployeeAllowanceRow), CheckNames = true)]
 public class EmployeeAllowanceForm
 {
-    [TextAreaEditor(Rows = 3)]
-    public string Description { get; set; }
-    [HalfWidth]
     public string AllowanceCode { get; set; }
+
+    [HalfWidth]
+    public int MasterAllowanceId { get; set; }
 
     [HalfWidth]
     public double Amount { get; set; }
@@ -19,7 +19,8 @@ public class EmployeeAllowanceForm
     public DateTime EffectiveFrom { get; set; }
     [HalfWidth]
     public DateTime EffectiveUntil { get; set; }
-
+    [TextAreaEditor(Rows = 3)]
+    public string Description { get; set; }
 
     [Category("Allowance Frequency")]
     [QuarterWidth]

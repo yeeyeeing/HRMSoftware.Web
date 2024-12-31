@@ -1,4 +1,5 @@
 ﻿import { MaritalStatus } from "../EmployeeProfile/MaritalStatus";
+import { HRDFClass } from "../EmployeeProfile/HRDFClass";
 import { EPFClass } from "../EmployeeProfile/EPFClass";
 import { SOCSOClass } from "../EmployeeProfile/SOCSOClass";
 import { EISClass } from "../EmployeeProfile/EISClass";
@@ -35,6 +36,7 @@ export interface PayrollRow {
     OtSubjectPcb?: boolean;
     OtSubjectSocso?: boolean;
     OtSubjectHrdf?: boolean;
+    HrdfClass?: HRDFClass;
     EpfClass?: EPFClass;
     SocsoClass?: SOCSOClass;
     EisClass?: EISClass;

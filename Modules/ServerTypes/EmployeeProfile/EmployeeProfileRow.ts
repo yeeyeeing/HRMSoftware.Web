@@ -6,6 +6,7 @@ import { SexType } from "./SexType";
 import { SOCSOClass } from "./SOCSOClass";
 import { EPFClass } from "./EPFClass";
 import { EISClass } from "./EISClass";
+import { HRDFClass } from "./HRDFClass";
 import { ProbationClass } from "./ProbationClass";
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
@@ -72,7 +73,6 @@ export interface EmployeeProfileRow {
     BonusFactor?: number;
     BasicSalary?: number;
     NightShiftAllowancePerDay?: number;
-    Allowance?: number;
     RaceID?: number;
     DepartmentID?: number;
     DivisionID?: number;
@@ -80,7 +80,6 @@ export interface EmployeeProfileRow {
     JobGradeID?: number;
     OccupationID?: number;
     BankID?: number;
-    EpfContribution?: number;
     BankAccountNumber?: string;
     CityID?: number;
     DailyWorkingMinute?: number;
@@ -108,6 +107,7 @@ export interface EmployeeProfileRow {
     Cp8dID?: number;
     Cp8dName?: string;
     EisClass?: EISClass;
+    HRDFClass?: HRDFClass;
     WorkingPermit?: string;
     SsfwEffectiveDate?: string;
     WorkingPermitIssueDate?: string;

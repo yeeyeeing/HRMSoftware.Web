@@ -42,6 +42,8 @@ public class PayrollForm
     public int EisClass { get; set; }
     public int SocsoClass { get; set; }
     public int EpfClass { get; set; }
+    public int HrdfClass { get; set; }
+
     public int TaxClass { get; set; }
     //
 
@@ -121,8 +123,6 @@ public class PayrollForm
 
 
 
-    public string PayrollTable { get; set; }
-    public string EmployerTable { get; set; }
 
 
     public double Deduction { get; set; }

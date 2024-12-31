@@ -541,6 +541,13 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.EpfClass[this];
         set => fields.EpfClass[this] = value;
     }
+
+    [DisplayName("HRDF Class")]
+    public HRDFClass? HrdfClass
+    {
+        get => fields.HrdfClass[this];
+        set => fields.HrdfClass[this] = value;
+    }
     [DisplayName("Socso Class")]
     public SOCSOClass? SocsoClass
     {
@@ -724,7 +731,7 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         public BooleanField OtSubjectHrdf;
 
 
-
+        public EnumField<HRDFClass> HrdfClass;
         public EnumField<EPFClass> EpfClass;
         public EnumField<SOCSOClass> SocsoClass;
         public EnumField<EISClass> EisClass;
