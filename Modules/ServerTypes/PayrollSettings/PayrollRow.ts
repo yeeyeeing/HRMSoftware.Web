@@ -11,6 +11,15 @@ import { PayslipPaidMoneyClaimingRow } from "./PayslipPaidMoneyClaimingRow";
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface PayrollRow {
+    SocsoAccountNumber?: string;
+    BankAccountNumber?: string;
+    EPFAccountNumber?: string;
+    PCBnumber?: string;
+    NRIC?: string;
+    CompanySocsoAccountNumber?: string;
+    CompanyBankAccountNumber?: string;
+    CompanyEPFAccountNumber?: string;
+    CompanyIncomeTaxAccountNumber?: string;
     NPLHourlyRate?: number;
     NPLDailyRate?: number;
     NPLHourly?: number;

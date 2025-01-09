@@ -436,7 +436,26 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                 },
                 separator: true
             });
+            
+            buttons.push({
+                title: 'Download Txt',
+                cssClass: 'fas fa-hat-wizard text-bg-danger',
+                onClick: e => {
+                    confirm(
+                            "Do you want to download txt?",
+                        () => {
+                            
+                         
 
+
+                        }
+                    )
+                },
+                separator: true
+            });
+
+            
+            
             buttons.push({
                 title: 'EPF Subjection',
                 cssClass: 'apply-changes-button',

@@ -91,7 +91,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.CalculationDate[this] = value;
         }
 
-        [DisplayName("Recruitment Date"),NotNull]
+        [DisplayName("Recruitment Date"), NotNull]
         public DateTime? RecruitmentDate
         {
             get => fields.RecruitmentDate[this];
@@ -105,10 +105,10 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.ResignationDate[this] = value;
         }
 
-    
-        
 
-        [DisplayName("Birthday"),NotNull]
+
+
+        [DisplayName("Birthday"), NotNull]
         public DateTime? Birthday
         {
             get => fields.Birthday[this];
@@ -123,7 +123,7 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
-        [DisplayName("Employee Email"), Size(1000),NotNull]
+        [DisplayName("Employee Email"), Size(1000), NotNull]
         public string EmployeeEmail
         {
             get => fields.EmployeeEmail[this];
@@ -156,6 +156,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
+
         [DisplayName("Address"), Size(1000)]
         public string Address
         {
@@ -166,7 +167,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
-        [DisplayName("Tel Number1"), Size(1000),NotNull]
+        [DisplayName("Tel Number1"), Size(1000), NotNull]
         public string TelNumber1
         {
             get => fields.TelNumber1[this];
@@ -215,7 +216,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.BonusFactor[this] = value;
         }
 
-        [DisplayName("Basic Salary"),NotNull]
+        [DisplayName("Basic Salary"), NotNull]
         public double? BasicSalary
         {
             get => fields.BasicSalary[this];
@@ -228,8 +229,6 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.NightShiftAllowancePerDay[this] = value;
         }
 
-
-      
 
         [DisplayName("Grant HR Privilege"), Column("GrantHRPrivilege")]
         [BooleanEditor]
@@ -266,7 +265,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.WorkingSpouse[this] = value;
         }
 
-        [DisplayName("Studying Children"),DefaultValue(0)]
+        [DisplayName("Studying Children"), DefaultValue(0)]
         public int? ChildrenUnderEighteen
         {
             get => fields.ChildrenUnderEighteen[this];
@@ -327,7 +326,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
-        [DisplayName("Race"), Column("RaceID"), ForeignKey("HumanResourcesRace", "ID"), LeftJoin(jRace), TextualField(nameof(Race)),NotNull]
+        [DisplayName("Race"), Column("RaceID"), ForeignKey("HumanResourcesRace", "ID"), LeftJoin(jRace), TextualField(nameof(Race)), NotNull]
         [LookupEditor(typeof(Race.RaceRow))]
         public int? RaceID
         {
@@ -340,14 +339,14 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.Race[this];
             set => fields.Race[this] = value;
         }
-        [DisplayName("Employee Type"),NotNull]
+        [DisplayName("Employee Type"), NotNull]
         public EmployeeType? EmployeeType
         {
             get => fields.EmployeeType[this];
             set => fields.EmployeeType[this] = value;
         }
 
-        [DisplayName("Sex"),NotNull]
+        [DisplayName("Sex"), NotNull]
         public SexType? Sex
         {
             get => fields.Sex[this];
@@ -403,7 +402,6 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.BankID[this] = value;
         }
 
-
         [DisplayName("UserRowID"), Column("UserRowID")]
         public int? UserRowID
         {
@@ -423,14 +421,14 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.Resigned[this] = value;
         }
 
-        
-        [DisplayName("Marital Status"), Column("MaritalStatus"),NotNull]
+
+        [DisplayName("Marital Status"), Column("MaritalStatus"), NotNull]
         public MaritalStatus? MaritalStatus
         {
             get => fields.MaritalStatus[this];
             set => fields.MaritalStatus[this] = value;
         }
-        [DisplayName("Bank Account Number"),  NotNull]
+        [DisplayName("Bank Account Number"), NotNull]
         public string BankAccountNumber
         {
             get => fields.BankAccountNumber[this];
@@ -445,14 +443,14 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.CityID[this] = value;
         }
 
-        [DisplayName("Daily Working Minute"),  NotNull]
+        [DisplayName("Daily Working Minute"), NotNull]
         public int? DailyWorkingMinute
         {
             get => fields.DailyWorkingMinute[this];
             set => fields.DailyWorkingMinute[this] = value;
         }
 
-        [DisplayName("State"), Column("StateID"), ForeignKey("MasterStates", "ID"), LeftJoin(jState), TextualField(nameof(StateName)),NotNull]
+        [DisplayName("State"), Column("StateID"), ForeignKey("MasterStates", "ID"), LeftJoin(jState), TextualField(nameof(StateName)), NotNull]
         [LookupEditor(typeof(Master.MasterStateRow))]
         public int? StateID
         {
@@ -460,7 +458,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.StateID[this] = value;
         }
 
-        [DisplayName("Employee Image"), Size(1000),NotNull]
+        [DisplayName("Employee Image"), Size(1000), NotNull]
         [ImageUploadEditor(FilenameFormat = "EmployeeProfile/~")]
         public string EmployeeImg
         {
@@ -474,8 +472,8 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.UserPassword[this];
             set => fields.UserPassword[this] = value;
         }
-        
-        [DisplayName("Nationality"), Column("NationalityID"), ForeignKey("MasterCountries", "ID"), LeftJoin(jNationality), TextualField(nameof(NationalityName)),NotNull]
+
+        [DisplayName("Nationality"), Column("NationalityID"), ForeignKey("MasterCountries", "ID"), LeftJoin(jNationality), TextualField(nameof(NationalityName)), NotNull]
         [LookupEditor(typeof(Master.MasterCountryRow))]
         public int? NationalityID
         {
@@ -547,7 +545,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
-        [DisplayName("Department"), Expression($"{jDepartment}.[Name]"), AsyncLookupEditor("Department.Department", AutoComplete = true),LookupInclude]
+        [DisplayName("Department"), Expression($"{jDepartment}.[Name]"), AsyncLookupEditor("Department.Department", AutoComplete = true), LookupInclude]
         public string DepartmentDept
         {
             get => fields.DepartmentDept[this];
@@ -555,28 +553,28 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
-        [DisplayName("Division"), Expression($"{jDivision}.[Name]"), AsyncLookupEditor("Division.Division", AutoComplete = true),LookupInclude]
+        [DisplayName("Division"), Expression($"{jDivision}.[Name]"), AsyncLookupEditor("Division.Division", AutoComplete = true), LookupInclude]
         public string Division
         {
             get => fields.Division[this];
             set => fields.Division[this] = value;
         }
 
-        [DisplayName("Section"), Expression($"{jSection}.[Name]"), AsyncLookupEditor("Section.Section", AutoComplete = true),LookupInclude]
+        [DisplayName("Section"), Expression($"{jSection}.[Name]"), AsyncLookupEditor("Section.Section", AutoComplete = true), LookupInclude]
         public string Section
         {
             get => fields.Section[this];
             set => fields.Section[this] = value;
         }
 
-        [DisplayName("Job Grade"), Expression($"{jJobGrade}.[Name]"),LookupInclude]
+        [DisplayName("Job Grade"), Expression($"{jJobGrade}.[Name]"), LookupInclude]
         public string JobGrade
         {
             get => fields.JobGrade[this];
             set => fields.JobGrade[this] = value;
         }
 
-        [DisplayName("Occupation"), Expression($"{jOccupation}.[Name]"),LookupInclude]
+        [DisplayName("Occupation"), Expression($"{jOccupation}.[Name]"), LookupInclude]
         public string Occupation
         {
             get => fields.Occupation[this];
@@ -610,7 +608,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.NationalityName[this];
             set => fields.NationalityName[this] = value;
         }
-   
+
 
 
         [DisplayName("User Name")]
@@ -636,13 +634,21 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.CountryName[this];
             set => fields.CountryName[this] = value;
         }
-        [DisplayName("Postal Code") ,Column("PostalCode")]
+        [DisplayName("Postal Code"), Column("PostalCode")]
         public string PostalCode
         {
             get => fields.PostalCode[this];
             set => fields.PostalCode[this] = value;
         }
 
+
+        [MasterDetailRelation(foreignKey: nameof(EmployeeCareerPathRow.EmployeeRowId), ColumnsType = typeof(EmployeeCareerPathColumns))]
+        [DisplayName("Employee Career Path"), NotMapped]
+        public List<EmployeeCareerPathRow> EmployeeCareerPath
+        {
+            get => fields.EmployeeCareerPath[this];
+            set => fields.EmployeeCareerPath[this] = value;
+        }
 
 
         [MasterDetailRelation(foreignKey: nameof(EmployeeAllowanceRow.EmployeeRowId), ColumnsType = typeof(EmployeeAllowanceColumns))]
@@ -668,12 +674,6 @@ namespace HRMSoftware.EmployeeProfile
 
 
 
-        [DisplayName("HRDF Class")]
-        public HRDFClass? HRDFClass
-        {
-            get => fields.HRDFClass[this];
-            set => fields.HRDFClass[this] = value;
-        }
         [DisplayName("EPF Class")]
         public EPFClass? EpfClass
         {
@@ -702,6 +702,12 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.EisClass[this] = value;
         }
 
+        [DisplayName("Hrdf Class")]
+        public HRDFClass? HRDFClass
+        {
+            get => fields.HRDFClass[this];
+            set => fields.HRDFClass[this] = value;
+        }
 
         [DisplayName("Permit ID"), Column("WorkingPermit")]
         public string WorkingPermit
@@ -715,7 +721,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.PCBnumber[this];
             set => fields.PCBnumber[this] = value;
         }
-        
+
         [DisplayName("Job Description"), Column("JobDescription")]
         [MultipleFileUploadEditor(FilenameFormat = "EmployeeProfile/~")]
         public string JobDescription
@@ -723,7 +729,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.JobDescription[this];
             set => fields.JobDescription[this] = value;
         }
-        
+
         [DisplayName("Permit Issue Date")]
         public DateTime? WorkingPermitIssueDate
         {
@@ -784,8 +790,8 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.PassedProbation[this];
             set => fields.PassedProbation[this] = value;
         }
-    
-    
+
+
         [DisplayName("Terminate Date")]
         public DateTime? TerminateDate
         {
@@ -840,7 +846,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.OtRateWeekday[this];
             set => fields.OtRateWeekday[this] = value;
         }
-        [ NotMapped]
+        [NotMapped]
         public double? OtRate
         {
             get => fields.OtRate[this];
@@ -852,7 +858,7 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.OtRatePublicHoliday[this];
             set => fields.OtRatePublicHoliday[this] = value;
         }
-        [ NotMapped]
+        [NotMapped]
         public int? NumberOfWorkingDays
         {
             get => fields.NumberOfWorkingDays[this];
@@ -866,7 +872,7 @@ namespace HRMSoftware.EmployeeProfile
         }
         public class RowFields : LoggingRowFields
         {
-            
+
             public DoubleField WorkingHour;
             public DoubleField WorkingDays;
             public DoubleField DailyRateBase;
@@ -884,6 +890,7 @@ namespace HRMSoftware.EmployeeProfile
             public Int32Field DisabledChild;
 
 
+            public RowListField<EmployeeCareerPathRow> EmployeeCareerPath;
 
             public RowListField<EmployeeAllowanceRow> AllowanceLists;
             public RowListField<FixedDeductionRow> FixedDeductionList;
@@ -906,7 +913,7 @@ namespace HRMSoftware.EmployeeProfile
 
             public EnumField<MaritalStatus> MaritalStatus;
 
-            
+
             public Int32Field Id;
             public Int32Field Retired;
 
@@ -999,7 +1006,7 @@ namespace HRMSoftware.EmployeeProfile
             public EnumField<HRDFClass> HRDFClass;
 
             public StringField WorkingPermit;
-            
+
             public DateTimeField SsfwEffectiveDate;
 
             public DateTimeField WorkingPermitIssueDate;
@@ -1009,7 +1016,7 @@ namespace HRMSoftware.EmployeeProfile
             public DateTimeField ArrivalDate;
 
             public StringField PCBnumber;
-           
+
             public DateTimeField ProbationPeriodFrom;
             public DateTimeField ProbationPeriodUntil;
             public EnumField<ProbationClass> PassedProbation;

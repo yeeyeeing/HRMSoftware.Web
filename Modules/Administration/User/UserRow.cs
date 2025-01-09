@@ -1,4 +1,5 @@
 
+using HRMSoftware.EmployeeProfile;
 using Serenity.ComponentModel;
 using Serenity.Data;
 using Serenity.Data.Mapping;
@@ -13,7 +14,8 @@ namespace HRMSoftware.Administration
     [ReadPermission("*")]
     [ModifyPermission("*")]
     [LookupScript("User.User", Permission = "*")]
-    public sealed class UserRow : Serenity.Extensions.Entities.LoggingRow<UserRow.RowFields>, IIdRow, INameRow, IIsActiveRow
+    public sealed class UserRow : LoggingRow<UserRow.RowFields>, IIdRow, INameRow
+
     {
         [DisplayName("User Id"), Identity, IdProperty]
         public int? UserId
@@ -21,13 +23,20 @@ namespace HRMSoftware.Administration
             get => fields.UserId[this];
             set => fields.UserId[this] = value;
         }
-        [DisplayName("Employee Row ID")]
+
+
+
+
+
+        [DisplayName("Employee ID")]
         public int? EmployeeRowID
         {
             get => fields.EmployeeRowID[this];
             set => fields.EmployeeRowID[this] = value;
         }
+        
 
+      
         
 
         [DisplayName("Username"), Size(100), NotNull, QuickSearch, LookupInclude, NameProperty]
@@ -151,14 +160,14 @@ namespace HRMSoftware.Administration
             get => fields.EmployeeName[this];
             set => fields.EmployeeName[this] = value;
         }
-
+        /*
         Int16Field IIsActiveRow.IsActiveField
         {
             get => fields.IsActive;
         }
         
 
-
+        
         public UserRow()
         {
         }
@@ -167,8 +176,9 @@ namespace HRMSoftware.Administration
             : base(fields)
         {
         }
+        */
 
-        public class RowFields : Serenity.Extensions.Entities.LoggingRowFields
+        public class RowFields : LoggingRowFields
         {
             public Int32Field UserId;
             public StringField EmployeeName;
@@ -184,7 +194,6 @@ namespace HRMSoftware.Administration
             public Int32Field TwoFactorAuth;
             public StringField UserImage;
             public DateTimeField LastDirectoryUpdate;
-            public Int16Field IsActive;
             public Int32Field EmployeeRowID;
 
             public StringField Password;

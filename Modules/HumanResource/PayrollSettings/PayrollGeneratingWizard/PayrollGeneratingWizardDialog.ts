@@ -95,6 +95,7 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
             self.form.EmployeeRowListBuffer.value = employeeRowList.join(',');
         }
     }
+
     public counter: number;
     public WaitingCounter: number;
     public SearchEmployeeCallback(): void
@@ -144,7 +145,6 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
     }
     protected getToolbarButtons() {
         var self = this;
-        var JobGradeListElement = document.getElementById(this.idPrefix + 'JobGradeList')
         var buttons = super.getToolbarButtons();
         $(`#${this.idPrefix}Toolbar`).addClass("ms-auto")
         buttons.push(
@@ -247,6 +247,57 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                 },
             }
         );
+        buttons.push(
+            {
+                title: "Download Txt",	// *** Get button text from translation
+                cssClass: 'text-bg-success p-2 ml-auto',
+                icon: 'fas fa-hat-wizard text-green',
+                onClick: () => {
+
+                    var queryString = "PayMonth=" + encodeURIComponent(self.form.PayMonth.value) +
+                        "&PayYear=" + encodeURIComponent(self.form.PayYear.value);
+                    var url = window.location.origin + '/PayrollSettings/Payroll/TxtGenerate?' + queryString
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.responseType = 'blob';
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            var blob = xhr.response;
+                            const fileUrl = window.URL.createObjectURL(blob);
+
+                            // Create an anchor element
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+
+                            // Set the href to the Object URL
+                            a.href = fileUrl;
+
+                            // Set the download attribute with the desired file name
+                            a.download = 'example.txt';  // You can customize the filename here
+
+                            // Append the anchor to the body (required for it to work)
+                            document.body.appendChild(a);
+
+                            // Simulate a click to trigger the download
+                            a.click();
+
+                            // Clean up by removing the anchor and revoking the object URL
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(fileUrl);
+
+                        } else {
+                            notifyError('Error encounter when downloading Payslip Pdf');
+                        }
+                    };
+                    xhr.send() 
+
+
+                        }
+                    
+               
+            }
+        );
+
         return buttons
     }
     public dialogOpen(asPanel?: boolean): void {
@@ -277,9 +328,9 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                     var DateObjYear = DateObj.getFullYear().toString()
                     var DateObjMonth = (DateObj.getMonth() + 1).toString()
                     var DateObjDay = DateObj.getDate().toString()
+                    todayMonth = todayMonth+1
                     var LastMonth = new Date(todayYear, todayMonth, PayDate)
-                    LastMonth.setMonth(LastMonth.getMonth() - 1);
-                    LastMonth.setDate(LastMonth.getDate() - 1);
+                    LastMonth.setDate(LastMonth.getDate() + 1);
                     var LastMonthObjYear = LastMonth.getFullYear().toString()
                     var LastMonthObjMonth = (LastMonth.getMonth() + 1).toString()
                     var LastMonthObjDay = LastMonth.getDate().toString()

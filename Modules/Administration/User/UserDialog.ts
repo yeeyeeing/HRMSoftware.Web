@@ -63,35 +63,30 @@ export class UserDialog extends EntityDialog<UserRow, any> {
 
         this.toolbar.findButton("edit-permissions-button").toggleClass("disabled", this.isNewOrDeleted());
     }
+    
     public dialogOpen(asPanel?: boolean): void {
         super.dialogOpen(asPanel);
+        
         var self = this
+        var CurrentEmployeeRowId = self.form.EmployeeRowID.value
+        console.log(CurrentEmployeeRowId)
         var EmployeeRowID = document.getElementById(this.idPrefix + 'EmployeeRowID')
         let EmployeeRowEditor = new Select2Editor($(EmployeeRowID))
-        EditorUtils.setReadonly(this.form.EmployeeName.element, true);
+        
         EmployeeProfileService.List({
         }, response => {
             for (var index in response.Entities) {
-                if (isEmptyOrNull(response.Entities[index].CreateUser))//if no account yet
+                if (response.Entities[index].CreateUser == false || response.Entities[index].Id == CurrentEmployeeRowId)//if no account yet
                 EmployeeRowEditor.addItem({ id: (response.Entities[index].Id).toString(), text: (response.Entities[index].EmployeeID).toString(), });
             }
+            if (!isEmptyOrNull(CurrentEmployeeRowId)) 
+                $(EmployeeRowID).val(CurrentEmployeeRowId.toString()).trigger('change');
+
+            
         });
-        $(EmployeeRowID).on('change', async function () {
-
-            if (isEmptyOrNull($(EmployeeRowID).val())) {
-                self.form.EmployeeName.value = ''
-            }
-            else {
-                EmployeeProfileService.Retrieve({
-                    EntityId: $(EmployeeRowID).val()
-                }, response => {
-                    self.form.EmployeeName.value = response.Entity.EmployeeName
-                });
-            }
-
-        })
+        
     }
-
+    
     protected afterLoadEntity() {
         super.afterLoadEntity();
 
@@ -104,13 +99,15 @@ export class UserDialog extends EntityDialog<UserRow, any> {
 
     protected save_submitHandler(response): void {
         super.save_submitHandler(response);
-        EmployeeProfileService.Update({
-            EntityId: this.form.EmployeeRowID.value,
-            Entity:
-            {
-                "UserPassword": this.form.Password.value
-            },
-        });
-
+        if (!isEmptyOrNull(this.form.EmployeeRowID.value)) {
+            EmployeeProfileService.Update({
+                EntityId: this.form.EmployeeRowID.value,
+                Entity:
+                {
+                    "UserPassword": this.form.Password.value
+                },
+            });
+        }
+        
     }
 }

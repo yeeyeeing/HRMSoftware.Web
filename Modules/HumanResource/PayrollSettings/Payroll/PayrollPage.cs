@@ -969,5 +969,44 @@ namespace HRMSoftware.PayrollSettings.Pages
 
         }
        
+        [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
+        public IActionResult TxtGenerate([FromServices] ISqlConnections sqlConnections, int PayMonth,int PayYear,int Type) {
+            List<MyRow> x = new List<MyRow>();
+            var connection = sqlConnections.NewByKey("Default");
+            x = (List<MyRow>)connection.Query<MyRow>("dbo.GenerationOfPayment",
+            param: new
+            {
+                @PayYear = PayYear,
+                @PayMonth = PayMonth
+            },
+            commandType: CommandType.StoredProcedure);
+            PayMonth = PayMonth + 1;
+            var json = JsonSerializer.Serialize(x);
+            int jsonLength = json.Length;
+            var deserializedList = JsonSerializer.Deserialize<List<MyRow>>(json);
+            string fileContent = "";
+            
+            foreach (var item in deserializedList)
+            {
+                var companySocso = item.CompanySocsoAccountNumber;
+                var NRIC = item.NRIC;
+                var Name = item.EmployeeName;
+                var EmployeeSocso = item.EmployeeSOCSO;
+                var EmployerSocso = item.EmployerSOCSO;
+                var TotalSocso = EmployeeSocso + EmployerSocso;
+                string amountString = ((int)(TotalSocso * 100)).ToString();
+                string paddedAmount = amountString.PadLeft(14, '0');
+
+                string employeeDetails = $"{NRIC}{Name}".PadRight(92); // Combine NRIC + Name to 92 chars
+                string contributionDetails = $"{PayMonth:D2}" +
+                    $"{PayYear}{paddedAmount}".PadRight(24); // Year, Month, Amount (24 chars)
+                string formattedRecord = $"{companySocso.PadRight(23)}{employeeDetails}{contributionDetails}{Environment.NewLine}";
+                fileContent += formattedRecord;
+            }
+
+            string fileName = "example.txt";
+            byte[] txtBytes = System.Text.Encoding.UTF8.GetBytes(fileContent);
+            return File(txtBytes, "text/plain", fileName);
+        }
     }
 }

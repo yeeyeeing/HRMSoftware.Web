@@ -1,4 +1,4 @@
-import {  DataGrid, Decorators, EditorUtils, EntityDialog, Select2Editor } from '@serenity-is/corelib';
+import { DataGrid, Decorators, EditorUtils, EntityDialog, Select2Editor } from '@serenity-is/corelib';
 import { EmployeeProfileForm, EmployeeProfileRow, EmployeeProfileService, EmployeeType, ProbationClass, SOCSOClass } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 import { ShiftService } from '../../../ServerTypes/Shift';
@@ -12,7 +12,7 @@ import { userDefinition } from '../../../Administration/User/Authentication/Auth
 import { Authorization, isEmptyOrNull } from '@serenity-is/corelib/q';
 import { TerminateEmployeeDialog } from '../TerminateEmployee/TerminateEmployeeDialog';
 import { EmployeeResignDialog } from '../EmployeeResign/EmployeeResignDialog';
-import {  ListResponse, confirm } from '@serenity-is/corelib/q';
+import { ListResponse, confirm } from '@serenity-is/corelib/q';
 import { AnnouncementWizardService } from '../../../ServerTypes/Announcement';
 import { OTApplicationService } from '../../../ServerTypes/OTApplication';
 
@@ -30,6 +30,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
     public OriginalEmployeeId: string;
     public Username: string;
+    public ProbationMonths: number;
 
     public permission: string;
     public UserRowID: number;
@@ -42,12 +43,13 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
     constructor() {
         super();
         this.form.FixedDeductionList.slickGrid.setOptions({ rowHeight: 30 });
-        this.form.AllowanceLists.slickGrid.setOptions({ rowHeight: 30});
+        this.form.AllowanceLists.slickGrid.setOptions({ rowHeight: 30 });
+        this.form.EmployeeCareerPath.slickGrid.setOptions({ rowHeight: 30 });
+
         this.cloneButton.remove()
         EmployeeProfileService.List({
         }, response => {
-            for (var key in response.Entities)
-            {
+            for (var key in response.Entities) {
                 this.list_of_employee_id.push(response.Entities[key].EmployeeID)
                 this.list_of_employee_row_id.push(response.Entities[key].Id)
             }
@@ -55,16 +57,17 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         CompanySettingsService.List({
         }, response => {
             for (var key in response.Entities) {
-                if (response.Entities[key].IsActive == 1)
+                if (response.Entities[key].IsActive == 1) {
+                    this.ProbationMonths = response.Entities[key].ProbationPeriod
                     this.RetireAge = response.Entities[key].RetireAge
+                }
             }
         });
 
     }
-    public createUser()
-    {
+    public createUser() {
         var self = this
-       
+
         UserService.Create({
             Entity:
             {
@@ -77,11 +80,10 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             },
         });
     }
-    protected onSaveSuccess(response): void
-    {
+    protected onSaveSuccess(response): void {
         var self = this
         var entity_id = this.entityId
-        
+
         if (this.isNew()) {
             var UserName = Authorization.userDefinition.Username
             var Today = new Date()
@@ -98,7 +100,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
                 },
             });
-            if (this.form.CreateUser.value == true) 
+            if (this.form.CreateUser.value == true)
                 this.createUser()
         }
         else if (!this.isNew())//not new
@@ -122,7 +124,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
                         }
                     }
-                    if (found == 0) 
+                    if (found == 0)
                         self.createUser()
                     this.Record(this.EditedValue)
                     var keys = Object.keys(this.EditedValue);
@@ -132,17 +134,17 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                         if (this.EditedValue[key] != this.OriginalValue[key] && typeof this.OriginalValue[key] != "object"
                             && typeof this.EditedValue[key] != "object") {
                             var Word = key
-                            Word = Word.replace(/ID/g,"")
+                            Word = Word.replace(/ID/g, "")
                             if (isEmptyOrNull(this.OriginalValue[key])) {
                                 var Description = Word + ' of ' + this.form.EmployeeName.value + ' is set by ' + UserName
                                     + ' to ' + this.EditedValue[key] + ' on ' + Today
                             }
-                            else { 
+                            else {
                                 var Description = Word + ' of ' + this.form.EmployeeName.value + ' is changed by ' + UserName
                                     + ' from ' + this.OriginalValue[key] + ' to ' + this.EditedValue[key] + ' on ' + Today
                             }
-                                
-                            
+
+
                             EmployeeEditHistoryService.Create({
                                 Entity:
                                 {
@@ -153,16 +155,15 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                                     "EmployeeRowId": this.EmployeeRowID
                                 },
                             });
-                            
+
                         }
-                        
+
                     }
-                    
+
                 });
             }
-            
-            else
-            { 
+
+            else {
                 this.Record(this.EditedValue)
                 var keys = Object.keys(this.EditedValue);
                 var UserName = Authorization.userDefinition.Username
@@ -179,33 +180,57 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                         else
                             var Description = Word + ' of ' + this.form.EmployeeName.value + ' is changed by ' + UserName
                                 + ' from ' + this.OriginalValue[key] + ' to ' + this.EditedValue[key] + ' on ' + Today
-                        
+
                         EmployeeEditHistoryService.Create({
                             Entity:
                             {
                                 "Description": Description,
-                                "OldValue" : this.OriginalValue[key],
-                                "NewValue" : this.EditedValue[key],
-                                "FieldName" : key,
-                                "EmployeeRowId" : this.EmployeeRowID
+                                "OldValue": this.OriginalValue[key],
+                                "NewValue": this.EditedValue[key],
+                                "FieldName": key,
+                                "EmployeeRowId": this.EmployeeRowID
                             },
                         });
-                        
+
                     }
                 }
             }
-            
+
 
         }
-        
+
         super.onSaveSuccess(response);
     }
-    protected onDialogOpen()
-    {
+    protected onDialogOpen() {
         super.onDialogOpen()
         var self = this
-    
-      $('.OtPayEntitlement').parent().after(`<ul role="tablist" class="nav nav-tabs property-tabs">
+        if (!this.isNew()) {
+            EditorUtils.setReadonly(self.form.BasicSalary.element, true);
+            EditorUtils.setReadonly(self.form.DivisionID.element, true);
+            EditorUtils.setReadonly(self.form.DepartmentID.element, true);
+            EditorUtils.setReadonly(self.form.OccupationID.element, true);
+            EditorUtils.setReadonly(self.form.SectionID.element, true);
+            EditorUtils.setReadonly(self.form.JobGradeID.element, true);
+        }
+        else
+            $('.CareerPahth').parent().hide()
+
+
+
+
+
+
+        const addButton = $('.EmployeeCareerPath .add-button');
+        addButton.on("click", function () {
+            $('.s-HRMSoftware-EmployeeProfile-EmployeeCareerPathEditDialog .s-TemplatedDialog .s-DialogContent .s-Form .EmployeeRowId .s-LookupEditor').val(self.entityId).trigger('change')
+
+        })
+
+
+
+
+
+        $('.OtPayEntitlement').parent().after(`<ul role="tablist" class="nav nav-tabs property-tabs">
             <li class="nav-item" role="presentation"> <a class="nav-link custom active AllowanceLists" data-bs-toggle="tab" role="tab">Allowance</a> </li>
             <li class="nav-item" role="presentation"> <a class="nav-link custom FixedDeductionList" data-bs-toggle="tab" role="tab"> Deductions</a></li>
         </ul>
@@ -268,7 +293,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         EditorUtils.setReadonly(this.form.WorkingDays.element, true);
         EditorUtils.setReadonly(this.form.DailyRateBase.element, true);
         EditorUtils.setReadonly(this.form.NplRateBase.element, true);
-        
+
         var PassWordElement = this.form.UserPassword.element;
         var UserNameElement = this.form.UserName.element;
         $(PassWordElement).attr('autocomplete', 'off');
@@ -311,15 +336,15 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             retireDate.setFullYear(retireYear);
 
             // If the birth month and day is after the current date, adjust the retirement date to the next year
-            if (retireDate < new Date()) {
+            if (retireDate < new Date())
                 retireDate.setFullYear(retireYear + 1);
-            }
+
             self.form.RetireDate.valueAsDate = retireDate
         });
-    
+
         var UsernameElement = document.getElementById(this.idPrefix + 'UserName')
         var UserNameDialog = 'Username Cannot Start With Number, No Special Characters'
-        $(UsernameElement).on("blur", function() {
+        $(UsernameElement).on("blur", function () {
             // If input is empty, set default text
             if (isEmptyOrNull($(this).val())) {
                 $(this).val(UserNameDialog);
@@ -328,7 +353,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 });
             }
         });
-        $(UsernameElement).on("focus", function() {
+        $(UsernameElement).on("focus", function () {
             if ($(this).val() == UserNameDialog) {
                 $(this).val('');
                 $(this).css({
@@ -337,7 +362,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             }
         });
 
-        $(UsernameElement).on("change", function() {
+        $(UsernameElement).on("change", function () {
 
             if ($(this).val() != '' && $(this).val() != UserNameDialog)
                 $(this).css("color", "black");
@@ -346,7 +371,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 $(this).css("color", "grey");
 
         });
-        $(UsernameElement).on("keydown", function(event) {
+        $(UsernameElement).on("keydown", function (event) {
             var caretPosition = this.selectionStart; // Get the current caret position
             // Allow letters and numbers
             var allowedKeys = /[A-Za-z0-9]/;
@@ -358,7 +383,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 if (caretPosition === 0 && event.key.match(/[0-9]/)) {
                     event.preventDefault(); // Prevent input if starting with a number
                 }
-            } else 
+            } else
                 event.preventDefault();
         });
 
@@ -375,7 +400,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         });
         var UserPasswordElement = document.getElementById(this.idPrefix + 'UserPassword')
         var UserPasswordDialog = 'Password length must be greater or equal to 6'
-        $(UserPasswordElement).on("blur", function() {
+        $(UserPasswordElement).on("blur", function () {
             // If input is empty, set default text
             if (isEmptyOrNull($(this).val())) {
                 $(this).val(UserPasswordDialog);
@@ -384,7 +409,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 });
             }
         });
-        $(UserPasswordElement).on("focus", function() {
+        $(UserPasswordElement).on("focus", function () {
             if ($(this).val() == UserPasswordDialog) {
                 $(this).val('');
                 $(this).css({
@@ -392,7 +417,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 });
             }
         });
-        $(UserPasswordElement).on("change", function() {
+        $(UserPasswordElement).on("change", function () {
             if ($(this).val() != '' && $(this).val() != UserPasswordDialog)
                 $(this).css("color", "black");
             else
@@ -410,52 +435,52 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             tooltip.style.display = 'none';
         });
         var CalculationDate = document.getElementById(this.idPrefix + 'CalculationDate')
-        $(CalculationDate).on('change', () => {        
-        serviceCall<RetrieveResponse<any>>({
-            service: EmployeeProfileService.baseUrl + '/CalculateWorkingHourAndDayWithDate',
-            data: {
-                "EmployeeRowID": this.entityId,
-                "Date": self.form.CalculationDate.value
-            },
-            method: "GET",
-            async: false,
-            onSuccess: (response) => {
-                if (!isEmptyOrNull(response.Entities[0].NumberOfWorkingDays) && response.Entities[0].NumberOfWorkingDays > 0)
-                    self.form.WorkingHour.value = response.Entities[0].TotalWorkingTimeInMinutes / response.Entities[0].NumberOfWorkingDays
-                else
-                    self.form.WorkingHour.value = 0
-                self.form.WorkingDays.value = response.Entities[0].NumberOfWorkingDays
-                self.form.DailyRateBase.value = response.Entities[0].DailyRateBase
-                self.form.NplRateBase.value = response.Entities[0].NplRateBase
-            },
-            onError: (error) => {
-                console.log(error.Error);
-            }
-        });
-        
-        if (self.form.OtPayEntitlement.value == true) {
+        $(CalculationDate).on('change', () => {
             serviceCall<RetrieveResponse<any>>({
-                service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
+                service: EmployeeProfileService.baseUrl + '/CalculateWorkingHourAndDayWithDate',
                 data: {
                     "EmployeeRowID": this.entityId,
                     "Date": self.form.CalculationDate.value
-    
                 },
                 method: "GET",
                 async: false,
                 onSuccess: (response) => {
-                    console.log(response)
-                    self.form.OtRateWeekday.value = response.Entities[0].OtRateWeekday
-                    self.form.OtRateWeekend.value = response.Entities[0].OtRateWeekend
-                    self.form.OtRatePublicHoliday.value = response.Entities[0].OtRatePublicHoliday
+                    if (!isEmptyOrNull(response.Entities[0].NumberOfWorkingDays) && response.Entities[0].NumberOfWorkingDays > 0)
+                        self.form.WorkingHour.value = response.Entities[0].TotalWorkingTimeInMinutes / response.Entities[0].NumberOfWorkingDays
+                    else
+                        self.form.WorkingHour.value = 0
+                    self.form.WorkingDays.value = response.Entities[0].NumberOfWorkingDays
+                    self.form.DailyRateBase.value = response.Entities[0].DailyRateBase
+                    self.form.NplRateBase.value = response.Entities[0].NplRateBase
+                },
+                onError: (error) => {
+                    console.log(error.Error);
                 }
-            })
-        }
-        else {
-            self.form.OtRateWeekday.value = self.form.OtRateWeekend.value = self.form.OtRatePublicHoliday.value = 0
-            $('.OtRateWeekday, .OtRateWeekend, .OtRatePublicHoliday').hide();
-        }
-        
+            });
+
+            if (self.form.OtPayEntitlement.value == true) {
+                serviceCall<RetrieveResponse<any>>({
+                    service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
+                    data: {
+                        "EmployeeRowID": this.entityId,
+                        "Date": self.form.CalculationDate.value
+
+                    },
+                    method: "GET",
+                    async: false,
+                    onSuccess: (response) => {
+                        console.log(response)
+                        self.form.OtRateWeekday.value = response.Entities[0].OtRateWeekday
+                        self.form.OtRateWeekend.value = response.Entities[0].OtRateWeekend
+                        self.form.OtRatePublicHoliday.value = response.Entities[0].OtRatePublicHoliday
+                    }
+                })
+            }
+            else {
+                self.form.OtRateWeekday.value = self.form.OtRateWeekend.value = self.form.OtRatePublicHoliday.value = 0
+                $('.OtRateWeekday, .OtRateWeekend, .OtRatePublicHoliday').hide();
+            }
+
         });
         serviceCall<ListResponse<any>>({
             service: AnnouncementWizardService.baseUrl + '/GetTodayDateTime',
@@ -498,7 +523,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             EmployeeProfileService.Retrieve({
                 EntityId: this.entityId
             }, response => {
-                if (response.Entity.Retired == 0 && response.Entity.Terminated == 0 && response.Entity.Resigned == 0) 
+                if (response.Entity.Retired == 0 && response.Entity.Terminated == 0 && response.Entity.Resigned == 0)
                     $('.tool-button').removeClass('hidden')
                 else {
                     self.readOnly = true
@@ -506,16 +531,16 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                         self.dialogTitle = `Terminated Employee (${self.form.EmployeeID.value})`
                         $('.TerminateDate').show()
                         $('.TerminateLeaveDate').show()
-                    }                    
+                    }
                     else if (response.Entity.Resigned == 1) {
                         self.dialogTitle = `Resigned Employee (${self.form.EmployeeID.value})`
                         $('.ResignationDate').show()
                         $('.ResignLeaveDate').show()
                     }
-                    else if (response.Entity.Retired == 1) 
+                    else if (response.Entity.Retired == 1)
                         self.dialogTitle = `Retired Employee (${self.form.EmployeeID.value})`
-                 }
-            });            
+                }
+            });
         }
         UserService.List({
         }, response => {
@@ -525,9 +550,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 this.ListOfUserName.push(response.Entities[index].Username)
             }
         });
-       // EditorUtils.setReadonly(this.form.ProbationPeriodEnd.element, true);
+        // EditorUtils.setReadonly(this.form.ProbationPeriodEnd.element, true);
         var ProbationPeriodElement = document.getElementById(this.idPrefix + 'ProbationPeriod')
         var ProbationPeriodEndElement = document.getElementById(this.idPrefix + 'ProbationPeriodEnd')
+        var ProbationPeriodStartElement = document.getElementById(this.idPrefix + 'ProbationPeriodStart')
+
         var RecruitmentDateElement = document.getElementById(this.idPrefix + 'RecruitmentDate')
         var EmployeeTypeElement = document.getElementById(this.idPrefix + 'EmployeeType')
         var PayByDayElement = document.getElementById(this.idPrefix + 'PayByDay')
@@ -535,15 +562,15 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         var PayByHourElement = document.getElementById(this.idPrefix + 'PayByHour')
 
 
-        $(PayByDayElement).on('change', function(e) {
+        $(PayByDayElement).on('change', function (e) {
             if (self.form.PayByDay.value) //if employee is local
             {
                 self.form.PayByHour.value = false;
                 self.form.PayByMonth.value = false;
             }
         });
-        
-        $(PayByHourElement).on('change', function(e) {
+
+        $(PayByHourElement).on('change', function (e) {
             if (self.form.PayByHour.value) //if employee is local
             {
                 self.form.PayByDay.value = false;
@@ -551,7 +578,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             }
         });
 
-        $(PayByMonthElement).on('change', function(e) {
+        $(PayByMonthElement).on('change', function (e) {
             if (self.form.PayByMonth.value) //if employee is local
             {
                 self.form.PayByHour.value = false;
@@ -560,10 +587,10 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         });
 
         $(EmployeeTypeElement).on('change', function (e) {
-            
+
             if ($(EmployeeTypeElement).val() == 1) //if employee is local
             {
-               // self.form.EpfContribution.value = 1
+                // self.form.EpfContribution.value = 1
                 $('.' + 'EpfContribution').hide();
                 $('.' + 'WorkingPermit').hide();
                 $('.' + 'WorkingPermitIssueDate').hide();
@@ -575,7 +602,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             }
             else {
                 //self.form
-               // self.form.EpfContribution.value = 0
+                // self.form.EpfContribution.value = 0
                 $('.' + 'EpfContribution').show();
                 $('.' + 'WorkingPermit').show();
                 $('.' + 'WorkingPermitIssueDate').show();
@@ -594,7 +621,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
             if (isEmptyOrNull(recruitment_date))
                 return
-            
+
             var recruitment_date_Parts = recruitment_date.split('/');
             const recruitment_date_datetime = new Date(
                 parseInt(recruitment_date_Parts[2]), // Year
@@ -607,18 +634,16 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             const day = recruitment_date_datetime.getDate();
 
             var probation_end_string = `${month}/${day}/${year}`
-            $(ProbationPeriodEndElement).prop('readonly', false);
             $(ProbationPeriodEndElement).val(probation_end_string)
-            $(ProbationPeriodEndElement).prop('readonly', true);
         });
 
         $(RecruitmentDateElement).on('change', function (e) {
-            var currentValue = $(ProbationPeriodElement).val()
             var recruitment_date = $(RecruitmentDateElement).val()
+            console.log('haha')
 
-            if (isEmptyOrNull(currentValue)) 
+            if (!self.isNew())
                 return
-            
+            console.log('haha')
 
             var recruitment_date_Parts = recruitment_date.split('/');
             const recruitment_date_datetime = new Date(
@@ -635,9 +660,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             const day = recruitment_date_datetime.getDate();
 
             var probation_end_string = `${month}/${day}/${year}`
-            $(ProbationPeriodEndElement).prop('readonly', false);
-            $(ProbationPeriodEndElement).val(probation_end_string)
-            $(ProbationPeriodEndElement).prop('readonly', true);
+
+            self.form.ProbationPeriodFrom.value = self.form.RecruitmentDate.value
+            self.form.ProbationPeriodUntil.value = probation_end_string
 
         });
         if (!this.isNew()) //this is old record
@@ -648,8 +673,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 EditorUtils.setReadonly(this.form.UserName.element, true);
 
             }
-            else
-            {
+            else {
                 $('.' + 'UserName').hide();
                 $('.' + 'UserPassword').hide();
                 $('.' + 'GrantHRPrivilege').hide();
@@ -694,8 +718,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     this.EmployeeRowID = this.list_of_employee_row_id[index]
             }
 
-            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation)
-            {
+            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation) {
                 EditorUtils.setReadonly(this.form.ProbationPeriodFrom.element, true);
                 EditorUtils.setReadonly(this.form.ProbationPeriodUntil.element, true);
             }
@@ -715,8 +738,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
 
         }
-        else
-        {
+        else {
             $('.' + 'EpfContribution').hide();
             $('.' + 'UserName').hide();
             $('.' + 'UserPassword').hide();
@@ -725,12 +747,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             $('.' + 'CreateUser').on('change', (evt: Event) => {
                 if (self.form.CreateUser.value == true) {
                     $('.' + 'GrantHRPrivilege').show();
-                    
+
                     $('.' + 'UserName').show();
 
-                    if (isEmptyOrNull($(UserNameElement).val()))
-                    {
-                       // var UserNameDialog = 'Cannot Start With Number '
+                    if (isEmptyOrNull($(UserNameElement).val())) {
+                        // var UserNameDialog = 'Cannot Start With Number '
                         $(UserNameElement).val(UserNameDialog)
                         $(UserNameElement).css({
                             "color": "grey" // Set text color to grey
@@ -747,8 +768,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                         });
                     }
                 }
-                else
-                {
+                else {
                     $('.' + 'GrantHRPrivilege').val('');
                     $('.' + 'UserName').val('');
                     $('.' + 'UserPassword').val('');
@@ -759,13 +779,12 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             });
         }
     }
-    
-  
-    
-    public Record(RecordElement: Record<string, string>)
-    {
+
+
+
+    public Record(RecordElement: Record<string, string>) {
         var ItemsBuffer = this.propertyGrid.get_items()
-       // var stringList: string[];
+        // var stringList: string[];
         var stringList: string[] = [];
         for (var index in ItemsBuffer) {
             // if (!isEmptyOrNull(ItemsBuffer[index].name))
@@ -773,22 +792,20 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             stringList.push(name)
         }
         let Dictionary: Record<string, string> = {};
-        for (let item of stringList)
-        {
+        for (let item of stringList) {
 
-                var Value = this.form[item]?.text
+            var Value = this.form[item]?.text
+            if (typeof Value === 'undefined' || Value === null) {
+                Value = this.form[item]?.value
                 if (typeof Value === 'undefined' || Value === null) {
-                    Value = this.form[item]?.value
-                    if (typeof Value === 'undefined' || Value === null) {
-                        Value = ''
-                    }
+                    Value = ''
                 }
-                Dictionary[item] = Value
             }
+            Dictionary[item] = Value
+        }
         Object.assign(RecordElement, Dictionary); // Assigning values to RecordElement
     }
-    protected getDialogOptions()
-    {
+    protected getDialogOptions() {
         let opt = super.getDialogOptions()
         opt.height = 800
         opt.width = 1200
@@ -808,13 +825,12 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         }
         if (this.form.UserName.value == 'Username Cannot Start With Number, No Special Characters')
             this.form.UserName.value = ''
-        if (this.isNew() || (this.Username.toLowerCase() != this.form.UserName.value.toLowerCase()) && !isEmptyOrNull(this.Username))
-        {
+        if (this.isNew() || (this.Username.toLowerCase() != this.form.UserName.value.toLowerCase()) && !isEmptyOrNull(this.Username)) {
             for (var index in this.ListOfUserName)
                 if (this.form.UserName.value.toLowerCase() == this.ListOfUserName[index].toLowerCase())
                     list_of_errors.push('Please use another username, there is another user with same username')
         }
-        
+
         if (this.form.CreateUser.value == true && this.form.UserPassword.value == '')
             list_of_errors.push('Please fill in UserPassword')
 
@@ -834,7 +850,10 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             if (this.form.Nric.value == '')
                 list_of_errors.push('Please fill in the Identity Card Number')
         }
-       
+        if (this.form.FixedOtRateOption.value == true) {
+            if (isEmptyOrNull(this.form.OtRatePublicHoliday.value) || isEmptyOrNull(this.form.OtRateWeekday.value) || isEmptyOrNull(this.form.OtRateWeekend.value))
+                list_of_errors.push('Please fill in the Ot Rate')
+        }
         var CurrentEmployeeID = this.form.EmployeeID.value.toString()
         if ((this.isNew()) || (!this.isNew() && (this.form.EmployeeID.value != this.OriginalEmployeeId))) // if is new or the value changed
         {
@@ -843,35 +862,29 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     list_of_errors.push("There is a active employee with the ID, please check again.")
             }
         }
-
-        if (this.form.FixedOtRateOption.value == true) {
-            if (isEmptyOrNull(this.form.OtRateWeekday.value) || isEmptyOrNull(this.form.OtRateWeekend.value) 
-            || isEmptyOrNull(this.form.OtRatePublicHoliday.value)) {
-                alertDialog("Please fill in the OT rate")
-                return
-            }
-        }
         if (list_of_errors.length > 0) {
             const concatenatedString: string = list_of_errors.map(item => `- ${item}`).join('\n');
             alertDialog(concatenatedString)
         }
         else {
-            var res = response
-            var self = this
-            if(!this.isNew())
-            EmployeeProfileService.Retrieve({
-                EntityId: this.entityId
-            }, response => {
-                console.log('haha')
-               // if (response.Entity.CreateUser == false && self.form.CreateUser.value == true) {
+            //var res = response
+            //r self = this
+            super.save_submitHandler(response)
+            /*
+            if (!this.isNew())
+                EmployeeProfileService.Retrieve({
+                    EntityId: this.entityId
+                }, response => {
+                    console.log('haha')
+                    // if (response.Entity.CreateUser == false && self.form.CreateUser.value == true) {
                     //self.createUser()
                     super.save_submitHandler(res)
-              //  }
-                
-            });
+                    //  }
+
+                });
             else
                 super.save_submitHandler(res)
-
+            */
 
         }
     }
@@ -923,23 +936,23 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
                     }
                     else
-                    confirm("Are you sure this employee has retired?", () => {
+                        confirm("Are you sure this employee has retired?", () => {
 
 
-                        EmployeeProfileService.Update({
-                            EntityId: self.entityId,
-                            Entity:
-                            {
-                                "Retired": 1
-                            }
+                            EmployeeProfileService.Update({
+                                EntityId: self.entityId,
+                                Entity:
+                                {
+                                    "Retired": 1
+                                }
+                            });
+                            self.readOnly = true
+                            self.dialogTitle = `Retired Employee (${self.form.EmployeeID.value})`
+                            $('.confirmEmployee').addClass('hidden');
+                            $('.terminateButton').addClass('hidden');
+                            $('.resignButton').addClass('hidden');
+                            $('.retireButton').addClass('hidden');
                         });
-                        self.readOnly = true
-                        self.dialogTitle = `Retired Employee (${self.form.EmployeeID.value})`
-                        $('.confirmEmployee').addClass('hidden');
-                        $('.terminateButton').addClass('hidden');
-                        $('.resignButton').addClass('hidden');
-                        $('.retireButton').addClass('hidden');
-                    });
                 },
             }
         );
@@ -1007,10 +1020,10 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                                     self.dialogTitle = `Resigned Employee (${self.form.EmployeeID.value})`
                                 else if (response.Entity.Retired == 1)
                                     self.dialogTitle = `Retired Employee (${self.form.EmployeeID.value})`
-                            }                               
+                            }
                         });
-                    })   
-    
+                    })
+
                 },
             }
         );
@@ -1040,7 +1053,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                                     self.dialogTitle = `Retired Employee (${self.form.EmployeeID.value})`
                             }
                         })
-                        
+
                         /*
                         EmployeeProfileService.Retrieve({
                             EntityId: self.entityId
@@ -1070,11 +1083,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
                         });
                         */
-                    })   
+                    })
                 },
             }
         );
-        
+
         return buttons;
     }
 }

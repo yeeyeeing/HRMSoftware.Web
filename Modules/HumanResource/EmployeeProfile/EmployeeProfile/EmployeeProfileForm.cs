@@ -164,7 +164,11 @@ public class EmployeeProfileForm
     public int CostCentreID { get; set; }
 
     public string JobDescription { get; set; }
-    
+    [Category("Employee Career Path")]
+    [IgnoreName, LabelWidth("0"), EmployeeCareerPathEditor]
+    public List<EmployeeCareerPathRow> EmployeeCareerPath { get; set; }
+
+
     [Category("User Creation")]
 
     [OneThirdWidth]

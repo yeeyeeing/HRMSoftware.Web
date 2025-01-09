@@ -8,8 +8,6 @@ namespace HRMSoftware.EmployeeProfile.Forms;
 [BasedOnRow(typeof(FixedDeductionRow), CheckNames = true)]
 public class FixedDeductionForm
 {
-    public string DeductionCode { get; set; }
-
     [HalfWidth]
     public int MasterDeductionId { get; set; }
 

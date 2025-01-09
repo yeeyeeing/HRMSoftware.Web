@@ -3,6 +3,7 @@ import { SexType } from "./SexType";
 import { EmployeeType } from "./EmployeeType";
 import { MaritalStatus } from "./MaritalStatus";
 import { ProbationClass } from "./ProbationClass";
+import { EmployeeCareerPathEditor } from "@/HumanResource/EmployeeProfile/EmployeeCareerPath/EmployeeCareerPathEditor";
 import { EmployeeAllowanceEditor } from "@/HumanResource/EmployeeProfile/EmployeeAllowance/EmployeeAllowanceEditor";
 import { FixedDeductionEditor } from "@/HumanResource/EmployeeProfile/FixedDeduction/FixedDeductionEditor";
 import { EPFClass } from "./EPFClass";
@@ -57,6 +58,7 @@ export interface EmployeeProfileForm {
     OccupationID: LookupEditor;
     CostCentreID: LookupEditor;
     JobDescription: MultipleImageUploadEditor;
+    EmployeeCareerPath: EmployeeCareerPathEditor;
     CreateUser: BooleanEditor;
     GrantHRPrivilege: BooleanEditor;
     UserName: StringEditor;
@@ -113,10 +115,11 @@ export class EmployeeProfileForm extends PrefixedContext {
             var w4 = LookupEditor;
             var w5 = IntegerEditor;
             var w6 = MultipleImageUploadEditor;
-            var w7 = BooleanEditor;
-            var w8 = DecimalEditor;
-            var w9 = EmployeeAllowanceEditor;
-            var w10 = FixedDeductionEditor;
+            var w7 = EmployeeCareerPathEditor;
+            var w8 = BooleanEditor;
+            var w9 = DecimalEditor;
+            var w10 = EmployeeAllowanceEditor;
+            var w11 = FixedDeductionEditor;
 
             initFormType(EmployeeProfileForm, [
                 'ResignationDate', w0,
@@ -164,27 +167,28 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'OccupationID', w4,
                 'CostCentreID', w4,
                 'JobDescription', w6,
-                'CreateUser', w7,
-                'GrantHRPrivilege', w7,
+                'EmployeeCareerPath', w7,
+                'CreateUser', w8,
+                'GrantHRPrivilege', w8,
                 'UserName', w2,
                 'UserPassword', w2,
-                'WorkingSpouse', w7,
+                'WorkingSpouse', w8,
                 'ChildrenInUniversity', w5,
                 'ChildrenUnderEighteen', w5,
                 'DisabledChildInUniversity', w5,
                 'DisabledChild', w5,
-                'BasicSalary', w8,
+                'BasicSalary', w9,
                 'DailyWorkingMinute', w5,
-                'NightShiftAllowancePerDay', w8,
+                'NightShiftAllowancePerDay', w9,
                 'BankID', w4,
                 'BankAccountNumber', w2,
-                'OtPayEntitlement', w7,
-                'FixedOtRateOption', w7,
-                'PayByMonth', w7,
-                'PayByHour', w7,
-                'PayByDay', w7,
-                'AllowanceLists', w9,
-                'FixedDeductionList', w10,
+                'OtPayEntitlement', w8,
+                'FixedOtRateOption', w8,
+                'PayByMonth', w8,
+                'PayByHour', w8,
+                'PayByDay', w8,
+                'AllowanceLists', w10,
+                'FixedDeductionList', w11,
                 'EpfClass', w3,
                 'EpfAccountNumber', w2,
                 'EisClass', w3,
@@ -194,13 +198,13 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'HRDFClass', w3,
                 'PCBnumber', w2,
                 'CalculationDate', w0,
-                'WorkingHour', w8,
-                'WorkingDays', w8,
-                'DailyRateBase', w8,
-                'NplRateBase', w8,
-                'OtRateWeekday', w8,
-                'OtRateWeekend', w8,
-                'OtRatePublicHoliday', w8
+                'WorkingHour', w9,
+                'WorkingDays', w9,
+                'DailyRateBase', w9,
+                'NplRateBase', w9,
+                'OtRateWeekday', w9,
+                'OtRateWeekend', w9,
+                'OtRatePublicHoliday', w9
             ]);
         }
     }

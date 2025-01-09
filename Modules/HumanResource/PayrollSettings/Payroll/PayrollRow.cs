@@ -683,8 +683,76 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         set => fields.NettWage[this] = value;
     }
     */
+    [NotMapped]
+    public string SocsoAccountNumber
+    {
+        get => fields.SocsoAccountNumber[this];
+        set => fields.SocsoAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string PCBnumber
+    {
+        get => fields.PCBnumber[this];
+        set => fields.PCBnumber[this] = value;
+    }
+    [NotMapped]
+    public string EPFAccountNumber
+    {
+        get => fields.EPFAccountNumber[this];
+        set => fields.EPFAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string BankAccountNumber
+    {
+        get => fields.BankAccountNumber[this];
+        set => fields.BankAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string NRIC
+    {
+        get => fields.NRIC[this];
+        set => fields.NRIC[this] = value;
+    }
+
+
+
+    [NotMapped]
+    public string CompanyIncomeTaxAccountNumber
+    {
+        get => fields.CompanyIncomeTaxAccountNumber[this];
+        set => fields.CompanyIncomeTaxAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string CompanyEPFAccountNumber
+    {
+        get => fields.CompanyEPFAccountNumber[this];
+        set => fields.CompanyEPFAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string CompanyBankAccountNumber
+    {
+        get => fields.CompanyBankAccountNumber[this];
+        set => fields.CompanyBankAccountNumber[this] = value;
+    }
+    [NotMapped]
+    public string CompanySocsoAccountNumber
+    {
+        get => fields.CompanySocsoAccountNumber[this];
+        set => fields.CompanySocsoAccountNumber[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
+        public StringField SocsoAccountNumber;
+        public StringField BankAccountNumber;
+        public StringField EPFAccountNumber;
+        public StringField PCBnumber;
+        public StringField NRIC;
+
+        public StringField CompanySocsoAccountNumber;
+        public StringField CompanyBankAccountNumber;
+        public StringField CompanyEPFAccountNumber;
+        public StringField CompanyIncomeTaxAccountNumber;
+
         /*
         public DoubleField TotalAllowance;
         public DoubleField TotalDeduction;

@@ -25,13 +25,6 @@ namespace HRMSoftware.Administration
             set => fields.UserId[this] = value;
         }
 
-        [DisplayName("Role Id"), NotNull]
-        public int? RoleId
-        {
-            get => fields.RoleId[this];
-            set => fields.RoleId[this] = value;
-        }
-
         [DisplayName("User Username"), Expression("jUser.[Username]")]
         public string Username
         {
@@ -39,6 +32,14 @@ namespace HRMSoftware.Administration
             set => fields.Username[this] = value;
         }
 
+        [DisplayName("Role Id"), NotNull]
+        public int? RoleId
+        {
+            get => fields.RoleId[this];
+            set => fields.RoleId[this] = value;
+        }
+
+   
         [DisplayName("User Display Name"), Expression("jUser.[DisplayName]")]
         public string User
         {

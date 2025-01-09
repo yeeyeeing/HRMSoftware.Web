@@ -108,6 +108,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     public PayDateWiz: string;
     public PayPeriodStart: string;
     public PayPeriodEnd: string;
+    public ListOfPayrollData: any[];
 
 
     constructor(Wiz,WizEmployeeRowId, PayYear, PayMonth, PayDateWiz, PayPeriodStart, PayPeriodEnd) {
@@ -119,9 +120,13 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         this.PayDateWiz = PayDateWiz
         this.PayPeriodStart = PayPeriodStart
         this.PayPeriodEnd = PayPeriodEnd
-
+        var self = this
         this.ReadOnly = false
+        PayrollService.List({
+        }, response => {
+            self.ListOfPayrollData = response.Entities
 
+        })
     }
 
     public dialogClose(): void {
@@ -863,7 +868,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $('.field.EpfClass').addClass('col-md-3');
         $('.field.TaxClass').addClass('col-md-1');
         $(`.field.BasicPay label.caption, .field.DailyPay label.caption, .field.DailyRate label.caption, .field.DaysWorked label.caption,
-        .field.HourlyRate label.caption, .field.EisClass label.caption, .field.SocsoClass label.caption, .field.EpfClass label.caption, .field.TaxClass label.caption `).removeClass('caption');
+        .field.HourlyRate label.caption, .field.EisClass label.caption, .field.SocsoClass label.caption, .field.EpfClass label.caption, .field.HrdfClass label.caption, .field.TaxClass label.caption `).removeClass('caption');
         EditorUtils.setReadonly(this.form.BasicPay.element, true);
         EditorUtils.setReadonly(this.form.DaysWorked.element, true);
         EditorUtils.setReadonly(this.form.HourlyRate.element, true);
@@ -929,9 +934,11 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             var DateObjDay = DateObj.getDate().toString()
 
 
+
+            todayMonth = todayMonth - 1
             var LastMonth = new Date(todayYear, todayMonth, this.PayDate)
-            LastMonth.setMonth(LastMonth.getMonth() - 1);
-            LastMonth.setDate(LastMonth.getDate() - 1);
+            LastMonth.setDate(LastMonth.getDate() + 1);
+
             var LastMonthObjYear = LastMonth.getFullYear().toString()
             var LastMonthObjMonth = (LastMonth.getMonth() + 1).toString()
             var LastMonthObjDay = LastMonth.getDate().toString()
@@ -1133,9 +1140,8 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 })
                 $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
         .field.DisabledChildInUniversity, .field.DisabledChild,  .field.DaysWorked, .field.BasicPay, .field.DailyRate,
-        .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.addEarnings, .field.addDeductions,
+        .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.HrdfClass, .field.addEarnings, .field.addDeductions,
         .field.BirthDay, .field.Age,  .addEarnings, .addDeductions`).hide();
-               
             }
             else if (!this.isNew()) {
                 EditorUtils.setReadonly(this.form.PayMonth.element, true);
@@ -1150,6 +1156,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                         this.EmployeeType = listOfDicts[index].type
                 }
                 $(EmployeeRowIdElement).val(EmployeeRowIdValue.toString()).trigger('change');
+                $('.HrdfClass').show()
                 EditorUtils.setReadonly(this.form.EmployeeRowId.element, true);
                 $("#PCB").val(this.form.EmployeePCB.value)
                 $("#EmployeeEIS").val(this.form.EmployeeEIS.value)
@@ -1165,7 +1172,6 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 $("#NplDay").val(this.form.NPLDaily.value)
                 $("#NplHr").val(this.form.NPLHourly.value)
                 $("#AbsentDay").val(this.form.AbsentDaily.value)
-                // console.log((this.form.FlatOt.value * 1.5))
                 document.getElementById('Ot1.0x').textContent = this.form.FlatOt.value.toString()
                 document.getElementById('Ot1.5x').textContent = this.form.OtOnePointFiveRate.value.toString()
                 document.getElementById('Ot2.0x').textContent = this.form.OtTwoRate.value.toString()
@@ -1242,18 +1248,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 self.form.PayPeriodEnd.value = self.PayPeriodEnd
                 self.form.PayDate.value = self.PayDateWiz
             }
-            /*
-            if (!isEmptyOrNull(self.WizEmployeeRowId)) {
-                self.form.EmployeeRowId.value = self.WizEmployeeRowId.toString()
-                self.form.PayMonth.value = self.PayMonth
-                self.form.PayYear.value = self.PayYear
-                self.form.PayPeriodStart.value = self.PayPeriodStart
-                self.form.PayPeriodEnd.value = self.PayPeriodEnd
-                self.form.PayDate.value = self.PayDateWiz
-                self.Wiz = 1
-                $(PayYearElement).val(this.form.PayYear.value).trigger('change')
-            }
-            */
+       
         });
     }
     public Wiz: number;
@@ -1501,6 +1496,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         let totalEmployeeContrib = parseFloat($('#EmployeeEPF').val()) + parseFloat($('#EmployeeSOCSO').val())
             + parseFloat($('#EmployeeEIS').val()) + parseFloat($('#PCB').val())
         let totalEmployerContrib = parseFloat($('#EmployerEPF').val()) + parseFloat($('#EmployerEIS').val()) + parseFloat($('#EmployerSOCSO').val())
+            + parseFloat($('#HRD').val())
         $('#totalEmployeeContribution').val(totalEmployeeContrib.toFixed(2))
         $('#totalEmployerContribution').val(totalEmployerContrib.toFixed(2))
         let NettWage = GrossWages - totalEmployeeContrib
@@ -1514,7 +1510,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     public GeneratePayrollTable(setDate): void {
         var self = this
         if (self.Wiz != 1)
-        self.ResetTable()    
+            self.ResetTable()    
         var PayrollEarningsNode = document.getElementById('PayrollTable')
         var EmployeeRowIdElement = document.getElementById(this.idPrefix + 'EmployeeRowId')
         var PayMonthElement = document.getElementById(this.idPrefix + 'PayMonth')
@@ -1526,6 +1522,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         var DeductionsString = this.DeductionsString
         var listOfDicts = self.listOfDicts
 
+
         if (!isEmptyOrNull($(EmployeeRowIdElement).val())) {
             for (var index in listOfDicts) {
                 if (listOfDicts[index].id == $(EmployeeRowIdElement).val())
@@ -1534,15 +1531,29 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         }
         else 
             self.form.EmployeeName.value = ``
+
         if (isEmptyOrNull($(EmployeeRowIdElement).val()) || isEmptyOrNull($(PayMonthElement).val()) || isEmptyOrNull($(PayYearElement).val())) {
 
             $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
         .field.DisabledChildInUniversity, .field.DisabledChild,  .field.DaysWorked, .field.BasicPay, .field.DailyRate,
-        .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .addEarnings, .addDeductions,
+        .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.HrdfClass, .field.EpfClass, .field.TaxClass, .addEarnings, .addDeductions,
         .field.BirthDay, .field.Age`).hide();
             return
         }
         else {
+            for (var index in self.ListOfPayrollData) {
+                var CurrentRecordMonth = self.ListOfPayrollData[index].PayMonth
+                var CurrentRecordYear = self.ListOfPayrollData[index].PayYear
+                if (self.form.PayMonth.value == CurrentRecordMonth
+                    && self.form.PayYear.value == CurrentRecordYear
+                    && self.form.EmployeeRowId.value == self.ListOfPayrollData[index].EmployeeRowId) {
+                    self.form.EmployeeRowId.value = ""
+                    notifyError('The employee already have payslip for current month')
+                    return
+                }
+            }
+
+
             if(setDate == 1)
             { 
             var todayYear = self.form.PayYear.value
@@ -1554,10 +1565,11 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             var DateObjDay = DateObj.getDate().toString()
 
 
+            todayMonth = todayMonth - 1
             var LastMonth = new Date(todayYear, todayMonth, this.PayDate)
-            LastMonth.setMonth(LastMonth.getMonth() - 1);
-            LastMonth.setDate(LastMonth.getDate() - 1);
-            var LastMonthObjYear = LastMonth.getFullYear().toString()
+            LastMonth.setDate(LastMonth.getDate() + 1);
+
+           var LastMonthObjYear = LastMonth.getFullYear().toString()
             var LastMonthObjMonth = (LastMonth.getMonth() + 1).toString()
             var LastMonthObjDay = LastMonth.getDate().toString()
 
@@ -1705,7 +1717,9 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                             $('.addEarnings, .addDeductions').show()
                             $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
                             .field.DisabledChildInUniversity, .field.DisabledChild,  .field.DaysWorked, .field.BasicPay, .field.DailyRate,
-                            .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.BirthDay, .field.Age, .field.HrdfClass`).show();
+                            .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.BirthDay, .field.Age`).show();
+
+                            $(`.HrdfClass`).show();
                             var wait = 0
                             serviceCall<RetrieveResponse<any>>({
                                 service: EmployeeProfileService.baseUrl + '/CalculateOtRate',

@@ -34,7 +34,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.Amount[this] = value;
     }
 
-    [DisplayName("Subjection Eis")]
+    [DisplayName("Eis")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionEis
     {
@@ -42,7 +42,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.SubjectionEis[this] = value;
     }
 
-    [DisplayName("Subjection Epf")]
+    [DisplayName("Epf")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionEpf
     {
@@ -50,7 +50,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.SubjectionEpf[this] = value;
     }
 
-    [DisplayName("Subjection Socso")]
+    [DisplayName("Socso")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionSocso
     {
@@ -58,7 +58,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.SubjectionSocso[this] = value;
     }
 
-    [DisplayName("Subjection Pcb")]
+    [DisplayName("Pcb")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionPcb
     {
@@ -66,7 +66,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.SubjectionPcb[this] = value;
     }
 
-    [DisplayName("Subjection Hrdf")]
+    [DisplayName("Hrdf")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionHrdf
     {
@@ -74,7 +74,7 @@ public sealed class MasterAllowanceRow : LoggingRow<MasterAllowanceRow.RowFields
         set => fields.SubjectionHrdf[this] = value;
     }
 
-    [DisplayName("Subjection Ot")]
+    [DisplayName("Ot")]
     [BooleanEditor, StatusFormatter]
     public bool? SubjectionOt
     {

@@ -15,7 +15,6 @@ export interface UserRow {
     TwoFactorAuth?: TwoFactorAuthType;
     UserImage?: string;
     LastDirectoryUpdate?: string;
-    IsActive?: number;
     EmployeeRowID?: number;
     Password?: string;
     PasswordConfirm?: string;
@@ -25,6 +24,9 @@ export interface UserRow {
     InsertDate?: string;
     UpdateUserId?: number;
     UpdateDate?: string;
+    DeleteUserId?: number;
+    DeleteDate?: string;
+    IsActive?: number;
 }
 
 export abstract class UserRow {

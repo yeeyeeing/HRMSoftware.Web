@@ -26,5 +26,8 @@ namespace HRMSoftware.Administration.Forms
         [OneWay]
         public string Source { get; set; }
 
+        public int EmployeeRowID { get; set; }
+
+
     }
 }

@@ -1,4 +1,5 @@
-﻿import { EmployeeAllowanceRow } from "./EmployeeAllowanceRow";
+﻿import { EmployeeCareerPathRow } from "./EmployeeCareerPathRow";
+import { EmployeeAllowanceRow } from "./EmployeeAllowanceRow";
 import { FixedDeductionRow } from "./FixedDeductionRow";
 import { MaritalStatus } from "./MaritalStatus";
 import { EmployeeType } from "./EmployeeType";
@@ -23,6 +24,7 @@ export interface EmployeeProfileRow {
     NumberOfWorkingDays?: number;
     DisabledChildInUniversity?: number;
     DisabledChild?: number;
+    EmployeeCareerPath?: EmployeeCareerPathRow[];
     AllowanceLists?: EmployeeAllowanceRow[];
     FixedDeductionList?: FixedDeductionRow[];
     CountryID?: number;
