@@ -409,7 +409,8 @@ public class CompanySettingsEndpoint : ServiceEndpoint
 
             SqlParameter param93 = new SqlParameter("@MonthlyDays", request.Entity.MonthlyDays);
             command.Parameters.Add(param93);
-
+            SqlParameter param94 = new SqlParameter("@ProbationPeriod", request.Entity.ProbationPeriod);
+            command.Parameters.Add(param94);
 
             command.ExecuteNonQuery();
 

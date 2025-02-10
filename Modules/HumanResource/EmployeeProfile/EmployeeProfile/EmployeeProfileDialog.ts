@@ -204,6 +204,8 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
     protected onDialogOpen() {
         super.onDialogOpen()
         var self = this
+        EditorUtils.setReadonly(self.form.Age.element, true);
+
         if (!this.isNew()) {
             EditorUtils.setReadonly(self.form.BasicSalary.element, true);
             EditorUtils.setReadonly(self.form.DivisionID.element, true);

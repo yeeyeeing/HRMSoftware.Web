@@ -5,6 +5,7 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptNoEmitOnError>false</TypeScriptNoEmitOnError>
     <DotNetSergen>dotnet sergen</DotNetSergen>
+    <UserSecretsId>========================</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <TypeScriptCompile Remove="node_modules\**" />
@@ -13,6 +14,30 @@
     <None Remove="Modules\Membership\Account\Shift.jsx" />
     <TypeScriptCompile Remove="Modules\HumanResource\OrganisationChart\OrganisationChart\OrganisationChartBackup27_8.ts" />
     <Compile Include="Modules\HumanResource\OrganisationChart\OrganisationChart\OrganisationChartBackup27_8.ts" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.ar.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.bn.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.cs.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.de.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.es.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.fa.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.fr.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.hi.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.id.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.it.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.ja.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.ko.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.nl.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.pl.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.pt-BR.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.pt.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.ro.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.ru.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.sv.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.tr.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.vi-VN.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.zh-CN.json" />
+    <EmbeddedResource Include="Modules\texts\resources\site.texts.zh-TW.json" />
     <None Include="DS_ERP_V1.sln" />
     <None Include="HRMSoftware.sln" />
     <Content Update=".eslintrc.json;libman.json;package.json;package-lock.json;sergen.json;tsconfig.json;tslint.json;Modules\tsconfig.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />

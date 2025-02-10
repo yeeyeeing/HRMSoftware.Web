@@ -268,6 +268,7 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         set => fields.Earnings[this] = value;
     }
 
+
     [DisplayName("Nett")]
     public double? Nett
     {
@@ -302,7 +303,19 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.BasicPay[this];
         set => fields.BasicPay[this] = value;
     }
-
+    /*
+    public string BonusDescription
+    {
+        get => fields.BonusDescription[this];
+        set => fields.BonusDescription[this] = value;
+    }
+    [DisplayName("Bonus")]
+    public double? Bonus
+    {
+        get => fields.Bonus[this];
+        set => fields.Bonus[this] = value;
+    }
+    */
     [DisplayName("EmployeeEPF")]
     public double? EmployeeEPF
     {
@@ -555,12 +568,14 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         set => fields.SocsoClass[this] = value;
     }
 
+
     [DisplayName("EIS Class")]
     public EISClass? EisClass
     {
         get => fields.EisClass[this];
         set => fields.EisClass[this] = value;
     }
+
 
     [DisplayName("Tax Class")]
     public int? TaxClass
@@ -713,6 +728,25 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.NRIC[this];
         set => fields.NRIC[this] = value;
     }
+    [NotMapped]
+    public string PassportNumber
+    {
+        get => fields.PassportNumber[this];
+        set => fields.PassportNumber[this] = value;
+    }
+    [NotMapped]
+    public string CountryCode
+    {
+        get => fields.CountryCode[this];
+        set => fields.CountryCode[this] = value;
+    }
+
+    [NotMapped]
+    public string OldNRIC
+    {
+        get => fields.OldNRIC[this];
+        set => fields.OldNRIC[this] = value;
+    }
 
 
 
@@ -740,13 +774,179 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.CompanySocsoAccountNumber[this];
         set => fields.CompanySocsoAccountNumber[this] = value;
     }
+    [NotMapped]
+    public string CompanyRegistrationNumber
+    {
+        get => fields.CompanyRegistrationNumber[this];
+        set => fields.CompanyRegistrationNumber[this] = value;
+    }
+    public double? EpfWages
+    {
+        get => fields.EpfWages[this];
+        set => fields.EpfWages[this] = value;
+    }
+    public double? SocsoWages
+    {
+        get => fields.SocsoWages[this];
+        set => fields.SocsoWages[this] = value;
+    }
+    public double? EmployeeCp38
+    {
+        get => fields.EmployeeCp38[this];
+        set => fields.EmployeeCp38[this] = value;
+    }
+
+    
+
+    public double? EisWages
+    {
+        get => fields.EisWages[this];
+        set => fields.EisWages[this] = value;
+    }
+    public double? PcbWages
+    {
+        get => fields.PcbWages[this];
+        set => fields.PcbWages[this] = value;
+    }
+    public double? HrdfWages
+    {
+        get => fields.HrdfWages[this];
+        set => fields.HrdfWages[this] = value;
+    }
+    public bool? SeperateBonus
+    {
+        get => fields.SeperateBonus[this];
+        set => fields.SeperateBonus[this] = value;
+    }
+    public bool? SeperateIncentive
+    {
+        get => fields.SeperateIncentive[this];
+        set => fields.SeperateIncentive[this] = value;
+    }
+    public bool? AnnualizedIncentive
+    {
+        get => fields.AnnualizedIncentive[this];
+        set => fields.AnnualizedIncentive[this] = value;
+    }
+    public bool? AnnualizedBonus
+    {
+        get => fields.AnnualizedBonus[this];
+        set => fields.AnnualizedBonus[this] = value;
+    }
+
+    public double? Bonus
+    {
+        get => fields.Bonus[this];
+        set => fields.Bonus[this] = value;
+    }
+    public double? Incentive
+    {
+        get => fields.Incentive[this];
+        set => fields.Incentive[this] = value;
+    }
+    public bool? BonusSubjectEpf
+    {
+        get => fields.BonusSubjectEpf[this];
+        set => fields.BonusSubjectEpf[this] = value;
+    }
+    public bool? BonusSubjectEis
+    {
+        get => fields.BonusSubjectEis[this];
+        set => fields.BonusSubjectEis[this] = value;
+    }
+    public bool? BonusSubjectPcb
+    {
+        get => fields.BonusSubjectPcb[this];
+        set => fields.BonusSubjectPcb[this] = value;
+    }
+    public bool? BonusSubjectSocso
+    {
+        get => fields.BonusSubjectSocso[this];
+        set => fields.BonusSubjectSocso[this] = value;
+    }
+    public bool? BonusSubjectHrdf
+    {
+        get => fields.BonusSubjectHrdf[this];
+        set => fields.BonusSubjectHrdf[this] = value;
+    }
+
+
+
+
+
+
+
+
+    public bool? IncentiveSubjectEpf
+    {
+        get => fields.IncentiveSubjectEpf[this];
+        set => fields.IncentiveSubjectEpf[this] = value;
+    }
+    public bool? IncentiveSubjectEis
+    {
+        get => fields.IncentiveSubjectEis[this];
+        set => fields.IncentiveSubjectEis[this] = value;
+    }
+    public bool? IncentiveSubjectPcb
+    {
+        get => fields.IncentiveSubjectPcb[this];
+        set => fields.IncentiveSubjectPcb[this] = value;
+    }
+    public bool? IncentiveSubjectSocso
+    {
+        get => fields.IncentiveSubjectSocso[this];
+        set => fields.IncentiveSubjectSocso[this] = value;
+    }
+    public bool? IncentiveSubjectHrdf
+    {
+        get => fields.IncentiveSubjectHrdf[this];
+        set => fields.IncentiveSubjectHrdf[this] = value;
+    }
+
     public class RowFields : LoggingRowFields
     {
+        public BooleanField BonusSubjectEpf;
+        public BooleanField BonusSubjectEis;
+        public BooleanField BonusSubjectPcb;
+        public BooleanField BonusSubjectSocso;
+        public BooleanField BonusSubjectHrdf;
+
+        public BooleanField IncentiveSubjectEpf;
+        public BooleanField IncentiveSubjectEis;
+        public BooleanField IncentiveSubjectPcb;
+        public BooleanField IncentiveSubjectSocso;
+        public BooleanField IncentiveSubjectHrdf;
+
+
+        public DoubleField Bonus;
+        public DoubleField Incentive;
+        public DoubleField EmployeeCp38;
+
+
+        public BooleanField SeperateBonus;
+        public BooleanField SeperateIncentive;
+        public BooleanField AnnualizedIncentive;
+        public BooleanField AnnualizedBonus;
+
+
+        public DoubleField EpfWages;
+        public DoubleField SocsoWages;
+        public DoubleField EisWages;
+        public DoubleField PcbWages;
+        public DoubleField HrdfWages;
+
+
+
+        public StringField CompanyRegistrationNumber;
+
         public StringField SocsoAccountNumber;
         public StringField BankAccountNumber;
         public StringField EPFAccountNumber;
         public StringField PCBnumber;
         public StringField NRIC;
+        public StringField OldNRIC;
+        public StringField PassportNumber;
+        public StringField CountryCode;
 
         public StringField CompanySocsoAccountNumber;
         public StringField CompanyBankAccountNumber;
@@ -792,6 +992,8 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         public BooleanField WorkingSpouse;
         public EnumField<MaritalStatus> MaritalStatus;
 
+
+        
         public BooleanField OtSubjectEpf;
         public BooleanField OtSubjectEis;
         public BooleanField OtSubjectPcb;
@@ -827,8 +1029,13 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         public ListField<int> DeductedLateArrivalList;
         public ListField<int> DeductedNoPaidLeaveList;
         public ListField<int> DeductedEarlyLeavingList;
-        */
+        
+        public DoubleField Bonus;
+        public StringField BonusDescription;
 
+
+        //
+        */
 
         public DoubleField BasicPay;
         public DoubleField SocsoAllowance;

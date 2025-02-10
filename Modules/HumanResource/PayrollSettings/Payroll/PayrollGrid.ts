@@ -1,5 +1,5 @@
 import { Criteria, Decorators, EntityGrid, IntegerEditor, ListResponse, LookupEditor, StringEditor, GridRowSelectionMixin } from '@serenity-is/corelib';
-import { EisSubjectionService, EpfSubjectionService, HrdfSubjectionService, PayrollColumns, PayrollRow, PayrollService, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
+import { EisSubjectionService, EpfSubjectionService, HrdfSubjectionService, PayrollColumns, PayrollRow, PayrollService, PayrollSettingsService, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
 import { PayrollDialog } from './PayrollDialog';
 import { confirmDialog, confirm, serviceCall, notifySuccess, notifyError, notifyInfo } from '@serenity-is/corelib/q';
 import { EpfSubjectionDialog } from '../EpfSubjection/EpfSubjectionDialog';
@@ -10,12 +10,14 @@ import { SocsoSubjectionDialog } from '../SocsoSubjection/SocsoSubjectionDialog'
 import { PayrollWizardDialog } from '../PayrollWizard/PayrollWizardDialog';
 import { PayrollGeneratingWizardDialog } from '../PayrollGeneratingWizard/PayrollGeneratingWizardDialog';
 import { TextEditor } from '@serenity-is/sleekgrid';
-import { OccupationService, DepartmentService, JobGradeService, DivisionService } from '../../../ServerTypes/OrganisationHierarchy';
+import { OccupationService, DepartmentService, JobGradeService, DivisionService, SectionService } from '../../../ServerTypes/OrganisationHierarchy';
 import { PermissionKeys } from '../../../ServerTypes/Administration';
 import { Authorization, isEmptyOrNull } from '@serenity-is/corelib/q';
 import { Select2Editor, QuickFilter, Widget } from '@serenity-is/corelib';
 import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { MasterCostCentreService } from '../../../ServerTypes/Master';
+import { TextDownloadingWizardDialog } from './TextDownloadingWizardDialog';
+import { PayrollSettingsDialog } from '../PayrollSettings/PayrollSettingsDialog';
 
 @Decorators.registerClass('HRMSoftware.PayrollSettings.PayrollGrid')
 export class PayrollGrid extends EntityGrid<PayrollRow, any> {
@@ -33,7 +35,7 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
     protected getQuickFilters(): QuickFilter<Widget<any>, any>[] {
         //Gets the Filters defined in the Columns or in parent grids.
         let filters = super.getQuickFilters();
-       
+        
         // console.log(filters[3].type = Select2Editor)
         if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
             filters.push({
@@ -70,6 +72,14 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                 field: PayrollRow.Fields.DepartmentName,
                 type: Select2Editor,
                 title: "Department",
+
+            });
+
+            filters.push({
+                cssClass: "hidden-xs",
+                field: PayrollRow.Fields.SectionName,
+                type: Select2Editor,
+                title: "Section",
 
             });
             filters.push({
@@ -122,8 +132,8 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
 
             super.createQuickFilters();
 
-        if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
-          
+        if (Authorization.hasPermission(PermissionKeys.HumanResources))
+        {
             OccupationService.List({
             }, response => {
                 for (var index in response.Entities)
@@ -143,6 +153,12 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
             }, response => {
                 for (var index in response.Entities)
                     this.findQuickFilter(Select2Editor, PayrollRow.Fields.DivisionName).items.push({ id: (response.Entities[index].Name).toString(), text: (response.Entities[index].Name).toString(), })
+
+            })
+            SectionService.List({
+            }, response => {
+                for (var index in response.Entities)
+                    this.findQuickFilter(Select2Editor, PayrollRow.Fields.SectionName).items.push({ id: (response.Entities[index].Name).toString(), text: (response.Entities[index].Name).toString(), })
 
             })
             EmployeeProfileService.List({
@@ -180,8 +196,7 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
   
 
     protected onViewProcessData(response: ListResponse<PayrollRow>) {
-        console.log(this.rowSelection.getSelectedKeys());
-
+        var self = this
         //console.log('haha')
         response = super.onViewProcessData(response);
         //console.log(this.toolbar.findButton("add-button").toggle(false))
@@ -267,7 +282,9 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                                         var GeneratingWizard = new PayrollGeneratingWizardDialog()
                                         GeneratingWizard.dialogOpen()
                                         GeneratingWizard.element.on("dialogclose", function () {
-                                            location.reload()
+                                            //  location.reload()
+                                            self.internalRefresh()
+
                                         })
                                     },
                                     onError: (error) => {
@@ -292,7 +309,7 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                                     }
                                 })
 
-                                notifyInfo("You can run the payslip generation wizard anytime")
+                                    notifyInfo("You can run the payroll generation wizard anytime")
                             }
                             ,
                         });
@@ -312,76 +329,110 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
         var buttons = super.getButtons();
         var self = this
         if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
-            EpfSubjectionService.List({
+            PayrollSettingsService.List({
             }, response => {
                 if (response.Entities.length > 0) {
-                    EisSubjectionService.List({
+                    EpfSubjectionService.List({
                     }, response => {
                         if (response.Entities.length > 0) {
-                            HrdfSubjectionService.List({
+                            EisSubjectionService.List({
                             }, response => {
                                 if (response.Entities.length > 0) {
-                                    EisSubjectionService.List({
+                                    HrdfSubjectionService.List({
                                     }, response => {
                                         if (response.Entities.length > 0) {
-                                            PcbSubjectionService.List({
+                                            EisSubjectionService.List({
                                             }, response => {
-                                                if (response.Entities.length <= 0) {
+                                                if (response.Entities.length > 0) {
+                                                    PcbSubjectionService.List({
+                                                    }, response => {
+                                                        if (response.Entities.length <= 0) {
+                                                            this.toolbar.findButton("add-button").toggle(false);
+                                                            notifyError("Please complete PCB subjection form before using payroll function")
+                                                        }
+                                                    });
+                                                }
+                                                else {
                                                     this.toolbar.findButton("add-button").toggle(false);
-                                                    notifyError("Please complete PCB subjection form before using payslip function")
+                                                    notifyError("Please complete EIS subjection form before using payroll function")
+
                                                 }
                                             });
                                         }
                                         else {
+                                            notifyError("Please complete HRDF subjection form before using payroll function")
                                             this.toolbar.findButton("add-button").toggle(false);
-                                            notifyError("Please complete EIS subjection form before using payslip function")
-
                                         }
                                     });
                                 }
                                 else {
-                                    notifyError("Please complete HRDF subjection form before using payslip function")
+                                    notifyError("Please complete EIS subjection form before using payroll function")
                                     this.toolbar.findButton("add-button").toggle(false);
                                 }
                             });
                         }
                         else {
-                            notifyError("Please complete EIS subjection form before using payslip function")
+                            notifyError("Please complete EPF subjection form before using payroll function")
                             this.toolbar.findButton("add-button").toggle(false);
+
                         }
                     });
+
+
                 }
                 else {
-                    notifyError("Please complete EPF subjection form before using payslip function")
+                    notifyError("Please complete Payroll Settings form before using payroll function")
                     this.toolbar.findButton("add-button").toggle(false);
 
                 }
+            })
+
+            buttons.push({
+                title: 'Payroll Settings',
+                cssClass: 'fas fa-wrench text-bg-primary',
+                onClick: e => {
+                    confirm(
+                        "Do you want to edit payroll settings?",
+                        () => {
+                            var PayrollSettingDialog = new PayrollSettingsDialog()
+                            PayrollSettingsService.List({
+                            }, response => {
+                                if (response.Entities.length > 0)
+                                    PayrollSettingDialog.loadByIdAndOpenDialog(response.Entities[0].Id)
+
+                                else
+                                    PayrollSettingDialog.dialogOpen()
+                            });
+                        }
+                    )
+                },
             });
+
             buttons.push({
                 title: 'Payroll Generator',
                 cssClass: 'fas fa-hat-wizard text-bg-success',
                 onClick: e => {
                     confirm(
-                        "Do you want to run payslip generating wizard",
+                        "Do you want to run payroll generating wizard",
                         () => {
                             var GeneratingWizard = new PayrollGeneratingWizardDialog()
                             GeneratingWizard.dialogOpen()
                             GeneratingWizard.element.on("dialogclose", function () {
                                 //self.refresh()
-                                location.reload()
+                                //location.reload()
+                                self.internalRefresh()
 
                             })
                         }
                     )
                 },
-                separator: false
             });
             buttons.push({
                 title: 'Payroll Download',
                 cssClass: 'fas fa-hat-wizard text-bg-warning',
                 onClick: e => {
                     confirm(
-                        "Do you want to run payslip download wizard",
+                        "Do you want to run payroll download wizard",
                         () => {
                             var DownloadWizard = new PayrollWizardDialog(null, null, null)
                             DownloadWizard.dialogOpen()
@@ -424,7 +475,9 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                             Promise.all(deletePromises)
                                 .then(() => {
                                     // All delete operations are completed, now reload the page
-                                    location.reload();
+                                    //location.reload();
+                                    self.internalRefresh()
+
                                 })
                                 .catch(error => {
                                     // Handle any error that occurred during delete operations
@@ -438,13 +491,20 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
             });
             
             buttons.push({
-                title: 'Download Txt',
-                cssClass: 'fas fa-hat-wizard text-bg-danger',
+                title: 'Download Text Report',
+                cssClass: 'fas fa-hat-wizard text-bg-info',
                 onClick: e => {
                     confirm(
-                            "Do you want to download txt?",
+                            "Do you want to download text report?",
                         () => {
-                            
+                               var TextWizard = new TextDownloadingWizardDialog()
+                            TextWizard.dialogOpen()
+                            TextWizard.element.on("dialogclose", function () {
+                                //self.refresh()
+                               // location.reload()
+                                self.internalRefresh()
+
+                            })
                          
 
 
@@ -473,11 +533,7 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                                     EpfDlg.dialogOpen()
                             });
 
-                            EpfDlg.element.on("dialogclose", function () {
-
-                     
-
-                            })
+                         
                         }
 
                     )

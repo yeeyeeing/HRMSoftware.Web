@@ -1,6 +1,6 @@
 import {  Criteria, Decorators, EditorUtils, EntityDialog, RetrieveResponse, Select2Editor } from '@serenity-is/corelib';
-import { EmployeeAllowanceRow, EmployeeAllowanceService, EmployeeProfileService, EmployeeType, EPFClass, FixedDeductionRow, FixedDeductionService, MaritalStatus } from '../../../ServerTypes/EmployeeProfile';
-import { EisSubjectionService, EmployerContributionsRow, EpfSubjectionService, HrdfSubjectionService, NoPaidLeaveRow, NoPaidLeaveService, PayrollDeductionsRow, PayrollDeductionsService, PayrollEarningsRow, PayrollEarningsService, PayrollForm, PayrollRow, PayrollService, PayslipDeductedOneTimeDeductionsRow, PayslipPaidMoneyClaimingRow, PayslipPaidOneTimeAllowanceRow, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
+import { EmployeeAllowanceRow, EmployeeAllowanceService, EmployeeBonusRow, EmployeeBonusService, EmployeeCp38Row, EmployeeCp38Service, EmployeeIncentiveRow, EmployeeIncentiveService, EmployeeProfileService, EmployeeType, EPFClass, FixedDeductionRow, FixedDeductionService, MaritalStatus } from '../../../ServerTypes/EmployeeProfile';
+import { EisSubjectionService, EmployerContributionsRow, EpfSubjectionService, HrdfSubjectionService, NoPaidLeaveRow, NoPaidLeaveService, PayrollDeductionsRow, PayrollDeductionsService, PayrollEarningsRow, PayrollEarningsService, PayrollForm, PayrollRow, PayrollService, PayrollSettingsService, PayslipDeductedOneTimeDeductionsRow, PayslipPaidMoneyClaimingRow, PayslipPaidOneTimeAllowanceRow, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
 import { ListResponse, serviceCall, Authorization } from '@serenity-is/corelib/q';
 import { OTApplicationRow, OTApplicationService } from '../../../ServerTypes/OTApplication';
 import { alertDialog, isEmptyOrNull } from '@serenity-is/corelib/q';
@@ -31,6 +31,10 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     protected getFormKey() { return PayrollForm.formKey; }
     protected getRowDefinition() { return PayrollRow; }
     protected getService() { return PayrollService.baseUrl; }
+    public AnnualizedIncentive: boolean;
+    public SeperateIncentive: boolean;
+    public AnnualizedBonus: boolean;
+    public SeperateBonus: boolean;
 
     protected form = new PayrollForm(this.idPrefix);
     public ExternalEarnings: string[] = [];
@@ -113,6 +117,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
 
     constructor(Wiz,WizEmployeeRowId, PayYear, PayMonth, PayDateWiz, PayPeriodStart, PayPeriodEnd) {
         super();
+        var self = this
         this.Wiz = Wiz
         this.WizEmployeeRowId = WizEmployeeRowId
         this.PayYear = PayYear
@@ -125,7 +130,6 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         PayrollService.List({
         }, response => {
             self.ListOfPayrollData = response.Entities
-
         })
     }
 
@@ -141,10 +145,12 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         return opt
     }
     public ResetTable(): void {
-        console.log('reset  table')
         $('#AllowanceDeductionBody, #EarningDeductionBody, #MoneyClaimingBody').empty()
         $(`#EarlyLeavingRate, #LateArrivalRate, #EarlyLeavingSubtotal, #LateArrivalSubtotal,
-        #NplDayRate, #totalOt, #NplHrRate, #AbsentDayRate`).text(0)
+        #NplDayRate, #totalOt, #NplHrRate, #AbsentDayRate, #PC38`).text(0)
+        $(`#${this.idPrefix}Bonus`).val(null)
+        $(`#${this.idPrefix}Incentive`).val(null)
+
         var ot = document.getElementById("Ot1.0x")
         if (ot)
             ot.textContent = "0"
@@ -170,14 +176,19 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         #Allowance, #TotalEIS, #TotalHRD, #TotalTaxableWage, #GrossWage, #EmployerEPF, #EmployeeEPF,
         #EmployerSOCSO, #EmployeeSOCSO, #EmployerEIS, #EmployeeEIS, #HRD, #PCB, #TotalAllowance, #TotalDeduction,
         #EarlyLeavingMinutes,  #LateArrivalMinutes, #GrossWage, #NettWage, #GrossWage, #totalEmployerContribution,
-        #totalEmployeeContribution`).val(0)
-
+        #totalEmployeeContribution, #CP38`).val(0)
+        $(`.Bonus, .Incentive`).hide()
     }
     public Setup(): void {
         var self = this
+        $('.HrdfWages').hide()
+        $('.PcbWages').hide()
+        $('.EisWages').hide()
+        $('.SocsoWages').hide()
+        $('.EpfWages').hide()
+
         var tabId = this.idPrefix + "PropertyGrid"
         var node3 = document.getElementById(tabId);
-        console.log(node3)
         var divNode = document.createElement('DIV')
         divNode.classList.add('category-title')
         divNode.setAttribute("id", "PayRoll-Description")
@@ -359,7 +370,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             { label: "OT1.5x", descId: "OnePointFiveOtDesc",id: "Ot1.5x", valueId: "Ot1.5xValue", inputId: "OtOnePointFiveTime", value: 0, total: 0, adjustment: 0 },
             { label: "OT2.0x", descId: "TwoOtDesc",id: "Ot2.0x", valueId: "Ot2.0xValue", inputId: "OtTwoTime", value: 0, total: 0, adjustment: 0 },
         ];
-
+      
 
         const OvertimeTableBody = document.createElement("tbody");
         OvertimeTableBody.id = 'OvertimeTableBody'
@@ -584,7 +595,11 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
            <td></td>
           <td><input class="govPayment" id="PCB" type="number" value="0.0" ></td>
         </tr>
-
+          <tr>
+          <td>CP38</td>
+           <td></td>
+          <td><input class="govPayment" id="CP38" type="number" value="0.0" ></td>
+        </tr>
         <tr>
           <td>Total</td>
           <td><input class="govPayment" id="totalEmployerContribution" type="number" value="0.0" readonly></td>
@@ -833,11 +848,40 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             });
 
         });
+        if (this.isNew()) {
+            PayrollSettingsService.List({
+            }, response => {
+                self.AnnualizedIncentive = self.SeperateIncentive = self.AnnualizedBonus = self.SeperateBonus = false;
+                self.form.IncentiveSubjectEpf.value = response.Entities[0].IncentiveSubjectEpf;
+                self.form.IncentiveSubjectEis.value = response.Entities[0].IncentiveSubjectEis;
+                self.form.IncentiveSubjectHrdf.value = response.Entities[0].IncentiveSubjectHrdf;
+                self.form.IncentiveSubjectPcb.value = response.Entities[0].IncentiveSubjectPcb;
+                self.form.IncentiveSubjectSocso.value = response.Entities[0].IncentiveSubjectSocso;
 
+
+                self.form.BonusSubjectHrdf.value = response.Entities[0].BonusSubjectHrdf;
+                self.form.BonusSubjectSocso.value = response.Entities[0].BonusSubjectSocso;
+                self.form.BonusSubjectPcb.value = response.Entities[0].BonusSubjectPcb;
+                self.form.BonusSubjectEpf.value = response.Entities[0].BonusSubjectEpf;
+                self.form.BonusSubjectEis.value = response.Entities[0].BonusSubjectEis;
+                self.form.AnnualizedBonus.value = response.Entities[0].AnnualizedBonus;
+                self.form.SeperateIncentive.value = response.Entities[0].SeperateIncentive;
+                self.form.AnnualizedIncentive.value = response.Entities[0].AnnualizedIncentive;
+                self.form.SeperateBonus.value = response.Entities[0].SeperateBonus;
+
+                self.AnnualizedIncentive = response.Entities[0].AnnualizedIncentive;
+                self.SeperateIncentive = response.Entities[0].SeperateIncentive;
+                self.AnnualizedBonus = response.Entities[0].AnnualizedBonus;
+                self.SeperateBonus = response.Entities[0].SeperateBonus;
+
+            })
+
+        }
     }
     public WeekdayMultiplier: number;
     public WeekendMultiplier: number;
     public PublicHolidayMultiplier: number;
+
     public calculateAge(): number {
         const today = new Date(this.dateString);
         const birthday = new Date(this.form.BirthDay.value);
@@ -856,13 +900,13 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $('.field.BasicPay, .field.DailyPay, .field.DailyRate, .field.DaysWorked, .field.HourlyRate, .field.BirthDay, .field.Age').addClass('col-md-2');
         $(` .field.WorkingSpouse`).addClass('col-md-1');
         $(`.field.HrdfClass`).addClass('col-md-2');
-
+        $(`.field.Bonus, .field.Incentive`).addClass('col-md-4');
         $(` .field.ChildrenUnderEighteen, .field.ChildrenInUniversity, .field.DisabledChildInUniversity, .field.DisabledChild`).addClass('col-md-2');
         $(`.field.MaritalStatus`).addClass('col-md-3');
         $(`.field.MaritalStatus label.caption, .field.WorkingSpouse label.caption, .field.ChildrenUnderEighteen label.caption, .field.ChildrenInUniversity label.caption,
         .field.DisabledChildInUniversity label.caption, .field.DisabledChild label.caption, .field.Age label.caption, .field.BirthDay label.caption, .field.HrdfClass label.caption`).removeClass('caption');
  
-        this.ResetTable()    
+        this.ResetTable();
         $('.field.EisClass').addClass('col-md-2');
         $('.field.SocsoClass').addClass('col-md-6');
         $('.field.EpfClass').addClass('col-md-3');
@@ -870,6 +914,9 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $(`.field.BasicPay label.caption, .field.DailyPay label.caption, .field.DailyRate label.caption, .field.DaysWorked label.caption,
         .field.HourlyRate label.caption, .field.EisClass label.caption, .field.SocsoClass label.caption, .field.EpfClass label.caption, .field.HrdfClass label.caption, .field.TaxClass label.caption `).removeClass('caption');
         EditorUtils.setReadonly(this.form.BasicPay.element, true);
+        EditorUtils.setReadonly(this.form.Bonus.element, true);
+        EditorUtils.setReadonly(this.form.Incentive.element, true);
+
         EditorUtils.setReadonly(this.form.DaysWorked.element, true);
         EditorUtils.setReadonly(this.form.HourlyRate.element, true);
         EditorUtils.setReadonly(this.form.DailyRate.element, true);
@@ -880,7 +927,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $(`.DeductedEarlyLeavingList, .OneTimeDeductionList, .DeductedNoPaidLeaveList,
         .DeductedLateArrivalList, .OneTimeAllowanceList, .PaidMoneyClaimingList, .PaidOtList, .EarlyLeavingRate, .LateArrivalRate, .EarlyLeaving,
         .LateArrival, .FlatOt, .OtOne, .OtOnePointFive, .OtTwo, .NPLHourlyRate, .NPLDailyRate, .NPLHourly, .NPLDaily, .AbsentDailyRate, .AbsentDaily,
-        .OtSubjectEpf, .OtSubjectEis, .OtSubjectPcb, .OtSubjectSocso, .OtSubjectHrdf, .AllowanceList, .DeductionList, .OtOnePointFiveRate, .OtTwoRate, .HrdfClass`).hide()
+        .OtSubjectEpf, .OtSubjectEis, .OtSubjectPcb, .OtSubjectSocso, .OtSubjectHrdf, .AllowanceList, .DeductionList, .OtOnePointFiveRate, .OtTwoRate, .HrdfClass, .Bonus, .Incentive`).hide()
         function isValidDate(dateStr: string): string {
             const date = new Date(dateStr);
             if (!isNaN(date.getTime()))// not valid
@@ -1254,6 +1301,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     public Wiz: number;
     public extraEarningDeduction: number;
     public updatePayroll(): void {
+       
         var self = this
         this.extraEarningDeduction = 0
         if (isEmptyOrNull(self.form.EpfClass.value) || isEmptyOrNull(self.form.EisClass.value) ||
@@ -1276,7 +1324,104 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         let subjectHrdf = 0;
         let subjectPcb = 0;
         let subjectSocso = 0;
-        // Get the table body by its ID
+
+        let BonusEis = 0;
+        let BonusEpf = 0;
+        let BonusHrdf = 0;
+        let BonusPcb = 0;
+        let BonusSocso = 0;
+        let IncentiveEis = 0;
+        let IncentiveEpf = 0;
+        let IncentiveHrdf = 0;
+        let IncentivePcb = 0;
+        let IncentiveSocso = 0;
+
+
+        if (self.form.Bonus.value > 0) 
+            $('.Bonus').show()
+        if (self.form.Incentive.value > 0) 
+            $('.Incentive').show()
+        let PcbOffset = 0
+        if (self.form.IncentiveSubjectEis.value == true) {
+            if (self.form.SeperateIncentive.value == true)
+                IncentiveEis += self.form.Incentive.value
+            else
+                subjectEis += self.form.Incentive.value
+        }
+            
+        if (self.form.IncentiveSubjectEpf.value == true)
+        {
+            if (self.form.SeperateIncentive.value == true)
+                IncentiveEpf += self.form.Incentive.value
+            else
+                subjectEpf += self.form.Incentive.value
+        }
+
+        if (self.form.IncentiveSubjectHrdf.value == true)
+        {
+            if (self.form.SeperateIncentive.value == true)
+                IncentiveHrdf += self.form.Incentive.value
+            else
+                subjectHrdf += self.form.Incentive.value
+        }
+        if (self.form.IncentiveSubjectPcb.value == true)
+        {
+            if (self.form.SeperateIncentive.value == true)
+                IncentivePcb += self.form.Incentive.value
+
+            else
+                subjectPcb += self.form.Incentive.value
+        }
+        if (self.form.IncentiveSubjectSocso.value == true)
+        {
+
+            if (self.form.SeperateIncentive.value == true)
+                IncentiveSocso += self.form.Incentive.value
+            else
+                subjectSocso += self.form.Incentive.value
+        }
+
+
+        if (self.form.BonusSubjectEis.value == true)
+        {
+            if (self.form.SeperateBonus.value == true)
+                BonusEis += self.form.Bonus.value
+            else
+                subjectEis += self.form.Bonus.value
+        }
+        if (self.form.BonusSubjectEpf.value == true)
+        {
+            if (self.form.SeperateBonus.value == true)
+                BonusEpf += self.form.Bonus.value
+            else
+                subjectEpf += self.form.Bonus.value
+        }
+
+        if (self.form.BonusSubjectHrdf.value == true)
+        {
+            if (self.form.SeperateBonus.value == true)
+                BonusHrdf += self.form.Bonus.value
+            else
+                subjectHrdf += self.form.Bonus.value
+        }
+
+        if (self.form.BonusSubjectPcb.value == true)
+        {
+            if (self.form.SeperateBonus.value == true)
+                BonusPcb += self.form.Bonus.value
+            else
+                subjectPcb += self.form.Bonus.value
+        }
+
+
+        if (self.form.BonusSubjectSocso.value == true)
+        {
+            if (self.form.SeperateBonus.value == true)
+                BonusSocso += self.form.Bonus.value
+            else
+                subjectSocso += self.form.Bonus.value
+        }
+
         let AllowanceDeductionBody = document.getElementById("AllowanceDeductionBody");
        if (AllowanceDeductionBody) {
             Array.from(AllowanceDeductionBody.rows).forEach(row => {
@@ -1350,81 +1495,154 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         $('#TotalEIS').val(subjectEis.toFixed(2))
         $('#TotalTaxableWage').val(subjectPcb.toFixed(2))
         
-        var WorkSpouse = self.form.WorkingSpouse.value == true? 1:0
-        serviceCall<ListResponse<any>>({
-            service: PayrollService.baseUrl + '/CalculateGovernmentPaymentSpecial',
-            method: "GET",
-            data: {
-                "EisCategory": self.form.EisClass.value,
-                "EpfCategory": self.form.EpfClass.value,
-                "SocsoCategory": self.form.SocsoClass.value,
+        var WorkSpouse = self.form.WorkingSpouse.value == true ? 1 : 0
+        var calculatingGovPayment = 0
+        let EmployeeEPF = 0
+        let EmployeeEIS = 0
+        let EmployeePCB = 0
+        let EmployeeSOCSO = 0
+        let EmployerEPF = 0
+        let EmployerEIS = 0
+        let EmployerHRDF = 0
+        let EmployerSOCSO = 0
+   
+        if (self.form.SeperateBonus.value == true) {
+            calculatingGovPayment = 0
+            serviceCall<ListResponse<any>>({
+                service: PayrollService.baseUrl + '/CalculateGovernmentPaymentBonus',
+                method: "GET",
+                data: {
+                    "EisCategory": self.form.EisClass.value,
+                    "EpfCategory": self.form.EpfClass.value,
+                    "SocsoCategory": self.form.SocsoClass.value,
 
-                "HrdfCategory": self.form.HrdfClass.value,
-                "EpfAmount": subjectEpf,
-                "EisAmount": subjectEis,
-                "SocsoAmount": subjectSocso,
-                "PcbAmount": subjectPcb,
-                "HrdfAmount": subjectHrdf,
+                    "HrdfCategory": self.form.HrdfClass.value,
+                    "EpfAmount": subjectEpf,
+                    "EisAmount": subjectEis,
+                    "SocsoAmount": subjectSocso,
+                    "PcbAmount": subjectPcb,
+                    "HrdfAmount": subjectHrdf,
+
+                    "Bonus": self.form.Bonus.value,
+
+                    "WorkingSpouse": WorkSpouse,
+                    "ChildrenUnderEighteen": self.form.ChildrenUnderEighteen.value,
+                    "ChildrenInUniversity": self.form.ChildrenInUniversity.value,
+                    "NumberOfDisabledChild": self.form.DisabledChild.value,
+                    "NumberOfDisabledChildInUni": self.form.DisabledChildInUniversity.value,
+                },
+                async: false,
+                onSuccess: (response) => {
+                    EmployeeEPF += response.Entities[0].EmployeeEPF
+                    EmployerEPF += response.Entities[0].EmployerEPF
 
 
-                "WorkingSpouse": WorkSpouse,
-                "ChildrenUnderEighteen": self.form.ChildrenUnderEighteen.value,
-                "ChildrenInUniversity": self.form.ChildrenInUniversity.value,
-                "NumberOfDisabledChild": self.form.DisabledChild.value,
-                "NumberOfDisabledChildInUni": self.form.DisabledChildInUniversity.value,
-            },
-            async: false,
-            onSuccess: (response) => {
-               // console.log(response)
-                self.EmployerContributions.length = 0
-                self.form.TaxClass.value = response.Entities[0].TaxClass
-                $('#EmployeeEPF').val(response.Entities[0].EmployeeEPF.toFixed(2))
-                $('#EmployeeEIS').val(response.Entities[0].EmployeeEIS.toFixed(2))
-                $('#PCB').val(response.Entities[0].EmployeePCB.toFixed(2))
-                $('#EmployeeSOCSO').val(response.Entities[0].EmployeeSOCSO.toFixed(2))
-                $('#EmployerEPF').val(response.Entities[0].EmployerEPF.toFixed(2))
-                $('#EmployerEIS').val(response.Entities[0].EmployerEIS.toFixed(2))
-                $('#HRD').val(response.Entities[0].EmployerHRDF.toFixed(2))
-                $('#EmployerSOCSO').val(response.Entities[0].EmployerSOCSO.toFixed(2))
+                    EmployeeEIS += response.Entities[0].EmployeeEIS
+                    EmployeePCB += response.Entities[0].EmployeePCB
+                    EmployeeSOCSO += response.Entities[0].EmployeeSOCSO
+                    EmployerEIS += response.Entities[0].EmployerEIS
+                    EmployerHRDF += response.Entities[0].EmployerHRDF
+                    EmployerSOCSO += response.Entities[0].EmployerSOCSO
 
-
-                /*
-                if (self.EmployeeType == EmployeeType.Local) {// if is local 
-                    $('#EmployeeEPF').val(response.Entities[0].EmployeeEPF.toFixed(2))
-                    $('#EmployeeEIS').val(response.Entities[0].EmployeeEIS.toFixed(2))
-                    $('#PCB').val(response.Entities[0].EmployeePCB.toFixed(2))
-                    $('#EmployeeSOCSO').val(response.Entities[0].EmployeeSOCSO.toFixed(2))
-                    $('#EmployerEPF').val(response.Entities[0].EmployerEPF.toFixed(2))
-                    $('#EmployerEIS').val(response.Entities[0].EmployerEIS.toFixed(2))
-                    $('#HRD').val(response.Entities[0].EmployerHRDF.toFixed(2))
-                    $('#EmployerSOCSO').val(response.Entities[0].EmployerSOCSO.toFixed(2))
-                   
+                    console.log(response.Entities[0])
+                    calculatingGovPayment = 1;
                 }
-                else if (self.EmployeeType == EmployeeType.Foreigner) {// if is foreigner 
-                    self.EmployeeSocso = 0
-                    self.EmployerSocso = response.Entities[0].EmployerSOCSO
-                    $('#EmployerSOCSO').val(response.Entities[0].EmployerSOCSO)
-                    if (self.EpfSubjection) { // if volunteer for epf payments
-                        if (response.Entities[0].EmployeeEPF > 0) {
-                            $('#EmployeeEPF').val(response.Entities[0].EmployeeEPF)
+            })
+            while (calculatingGovPayment == 0) { };
+        }
+        else if (self.form.SeperateIncentive.value == true) {
+            calculatingGovPayment = 0
+            serviceCall<ListResponse<any>>({
+                service: PayrollService.baseUrl + '/CalculateGovernmentPaymentSpecial',
+                method: "GET",
+                data: {
+                    "EisCategory": self.form.EisClass.value,
+                    "EpfCategory": self.form.EpfClass.value,
+                    "SocsoCategory": self.form.SocsoClass.value,
 
-                        }
-                        if (response.Entities[0].EmployerEPF > 0) {
-                            $('#EmployerEPF').val(response.Entities[0].EmployerEPF)
-                        }
-                        self.EmployeeEpf = response.Entities[0].EmployeeEPF
-                        self.EmployerEpf = response.Entities[0].EmployerEPF
-                    }
-                    $('#PCB').val(response.Entities[0].EmployeePCB)
+                    "HrdfCategory": self.form.HrdfClass.value,
+                    "EpfAmount": IncentiveEpf,
+                    "EisAmount": IncentiveEis,
+                    "SocsoAmount": IncentiveSocso,
+                    "PcbAmount": IncentivePcb,
+                    "HrdfAmount": IncentiveHrdf,
 
-                    self.EmployeePcb = response.Entities[0].EmployeePCB
-                    self.EmployeeEis = self.EmployerEis = 0
-                    self.EmployerHrdf = 0
+
+                    "WorkingSpouse": WorkSpouse,
+                    "ChildrenUnderEighteen": self.form.ChildrenUnderEighteen.value,
+                    "ChildrenInUniversity": self.form.ChildrenInUniversity.value,
+                    "NumberOfDisabledChild": self.form.DisabledChild.value,
+                    "NumberOfDisabledChildInUni": self.form.DisabledChildInUniversity.value,
+                },
+                async: false,
+                onSuccess: (response) => {
+                    EmployeeEPF += response.Entities[0].EmployeeEPF
+                    EmployeeEIS += response.Entities[0].EmployeeEIS
+                    EmployeePCB += response.Entities[0].EmployeePCB
+                    EmployeeSOCSO += response.Entities[0].EmployeeSOCSO
+                    EmployerEPF += response.Entities[0].EmployerEPF
+                    EmployerEIS += response.Entities[0].EmployerEIS
+                    EmployerHRDF += response.Entities[0].EmployerHRDF
+                    EmployerSOCSO += response.Entities[0].EmployerSOCSO
+
+                    calculatingGovPayment = 1;
                 }
-                */
-                self.updateWages()
-            }
-        })
+            })
+            while (calculatingGovPayment == 0) { };
+        }
+        else {
+            serviceCall<ListResponse<any>>({
+                service: PayrollService.baseUrl + '/CalculateGovernmentPaymentSpecial',
+                method: "GET",
+                data: {
+                    "EisCategory": self.form.EisClass.value,
+                    "EpfCategory": self.form.EpfClass.value,
+                    "SocsoCategory": self.form.SocsoClass.value,
+
+                    "HrdfCategory": self.form.HrdfClass.value,
+                    "EpfAmount": subjectEpf,
+                    "EisAmount": subjectEis,
+                    "SocsoAmount": subjectSocso,
+                    "PcbAmount": subjectPcb,
+                    "HrdfAmount": subjectHrdf,
+
+
+                    "WorkingSpouse": WorkSpouse,
+                    "ChildrenUnderEighteen": self.form.ChildrenUnderEighteen.value,
+                    "ChildrenInUniversity": self.form.ChildrenInUniversity.value,
+                    "NumberOfDisabledChild": self.form.DisabledChild.value,
+                    "NumberOfDisabledChildInUni": self.form.DisabledChildInUniversity.value,
+                },
+                async: false,
+                onSuccess: (response) => {
+                    self.EmployerContributions.length = 0
+                    self.form.TaxClass.value = response.Entities[0].TaxClass
+                    EmployeeEPF += response.Entities[0].EmployeeEPF
+                    EmployeeEIS += response.Entities[0].EmployeeEIS
+                    EmployeePCB += response.Entities[0].EmployeePCB
+                    EmployeeSOCSO += response.Entities[0].EmployeeSOCSO
+                    EmployerEPF += response.Entities[0].EmployerEPF
+                    EmployerEIS += response.Entities[0].EmployerEIS
+                    EmployerHRDF += response.Entities[0].EmployerHRDF
+                    EmployerSOCSO += response.Entities[0].EmployerSOCSO
+                    console.log(response.Entities[0])
+
+                    calculatingGovPayment = 1;
+                }
+            })
+
+            while (calculatingGovPayment == 0) { };
+
+        }
+        $('#EmployeeEPF').val(EmployeeEPF.toFixed(2))
+        $('#EmployeeEIS').val(EmployeeEIS.toFixed(2))
+        $('#PCB').val(EmployeePCB.toFixed(2))
+        $('#EmployeeSOCSO').val(EmployeeSOCSO.toFixed(2))
+        $('#EmployerEPF').val(EmployerEPF.toFixed(2))
+        $('#EmployerEIS').val(EmployerEIS.toFixed(2))
+        $('#HRD').val(EmployerHRDF.toFixed(2))
+        $('#EmployerSOCSO').val(EmployerSOCSO.toFixed(2))
+        self.updateWages()
     }
     public updateTotals() {
     // NPL/Absent totals
@@ -1480,6 +1698,9 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
 }
     public updateWages(): void {
         var BasicPay = this.form.BasicPay.value
+        var Bonus = this.form.Bonus.value
+        var Incentive = this.form.Incentive.value
+
         var TotalAllowance = parseFloat($('#TotalAllowance').val())
         var TotalDeduction = parseFloat($('#TotalDeduction').val())
         var TotalOt = parseFloat($('#totalOt').text())
@@ -1492,9 +1713,14 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
 
         var GrossWages = BasicPay + TotalAllowance + TotalOt + this.extraEarningDeduction
             - TotalDeduction - totalNplAbsent - totalTimeDeduction;
+        if (!isEmptyOrNull(Bonus))
+            GrossWages += Bonus
+        if (!isEmptyOrNull(Incentive))
+            GrossWages += Incentive
+
         $('#GrossWage').val(GrossWages.toFixed(2))
         let totalEmployeeContrib = parseFloat($('#EmployeeEPF').val()) + parseFloat($('#EmployeeSOCSO').val())
-            + parseFloat($('#EmployeeEIS').val()) + parseFloat($('#PCB').val())
+            + parseFloat($('#EmployeeEIS').val()) + parseFloat($('#PCB').val()) + parseFloat($('#CP38').val())
         let totalEmployerContrib = parseFloat($('#EmployerEPF').val()) + parseFloat($('#EmployerEIS').val()) + parseFloat($('#EmployerSOCSO').val())
             + parseFloat($('#HRD').val())
         $('#totalEmployeeContribution').val(totalEmployeeContrib.toFixed(2))
@@ -1509,6 +1735,16 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
 
     public GeneratePayrollTable(setDate): void {
         var self = this
+        function isOverlap(start1, end1, start2, end2) {
+            // Convert strings to Date objects if needed
+            const startDate1 = new Date(start1);
+            const endDate1 = new Date(end1);
+            const startDate2 = new Date(start2);
+            const endDate2 = new Date(end2);
+
+            // Check for overlap
+            return startDate1 <= endDate2 && startDate2 <= endDate1;
+        }
         if (self.Wiz != 1)
             self.ResetTable()    
         var PayrollEarningsNode = document.getElementById('PayrollTable')
@@ -1541,6 +1777,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             return
         }
         else {
+            /*
             for (var index in self.ListOfPayrollData) {
                 var CurrentRecordMonth = self.ListOfPayrollData[index].PayMonth
                 var CurrentRecordYear = self.ListOfPayrollData[index].PayYear
@@ -1552,34 +1789,33 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                     return
                 }
             }
+            */
+
+            if (setDate == 1) {
+                var todayYear = self.form.PayYear.value
+                var todayMonth = self.form.PayMonth.value
+
+                var DateObj = new Date(todayYear, todayMonth, this.PayDate)
+                var DateObjYear = DateObj.getFullYear().toString()
+                var DateObjMonth = (DateObj.getMonth() + 1).toString()
+                var DateObjDay = DateObj.getDate().toString()
 
 
-            if(setDate == 1)
-            { 
-            var todayYear = self.form.PayYear.value
-            var todayMonth = self.form.PayMonth.value
+                todayMonth = todayMonth - 1
+                var LastMonth = new Date(todayYear, todayMonth, this.PayDate)
+                LastMonth.setDate(LastMonth.getDate() + 1);
 
-            var DateObj = new Date(todayYear, todayMonth, this.PayDate)
-            var DateObjYear = DateObj.getFullYear().toString()
-            var DateObjMonth = (DateObj.getMonth() + 1).toString()
-            var DateObjDay = DateObj.getDate().toString()
+                var LastMonthObjYear = LastMonth.getFullYear().toString()
+                var LastMonthObjMonth = (LastMonth.getMonth() + 1).toString()
+                var LastMonthObjDay = LastMonth.getDate().toString()
 
+                var LatestDateFormat = DateObjMonth.padStart(2, '0') + '/' + DateObjDay.padStart(2, '0') + '/' + DateObjYear
+                var LastMonthFormat = LastMonthObjMonth.padStart(2, '0') + '/' + LastMonthObjDay.padStart(2, '0') + '/' + LastMonthObjYear
 
-            todayMonth = todayMonth - 1
-            var LastMonth = new Date(todayYear, todayMonth, this.PayDate)
-            LastMonth.setDate(LastMonth.getDate() + 1);
-
-           var LastMonthObjYear = LastMonth.getFullYear().toString()
-            var LastMonthObjMonth = (LastMonth.getMonth() + 1).toString()
-            var LastMonthObjDay = LastMonth.getDate().toString()
-
-            var LatestDateFormat = DateObjMonth.padStart(2, '0') + '/' + DateObjDay.padStart(2, '0') + '/' + DateObjYear
-            var LastMonthFormat = LastMonthObjMonth.padStart(2, '0') + '/' + LastMonthObjDay.padStart(2, '0') + '/' + LastMonthObjYear
-
-            self.form.PayDate.value = LatestDateFormat
-            self.form.PayPeriodEnd.value = LatestDateFormat
-            self.form.PayPeriodStart.value = LastMonthFormat
-        }
+                self.form.PayDate.value = LatestDateFormat
+                self.form.PayPeriodEnd.value = LatestDateFormat
+                self.form.PayPeriodStart.value = LastMonthFormat
+            }
 
             var FullAttendance = true
             var HaveUnpaidLeave = false
@@ -1638,7 +1874,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                 }
             })
             */
-           var wait = 0
+            var wait = 0
             serviceCall<ListResponse<any>>({
                 service: PayrollService.baseUrl + '/CalculateNplAbsentOtSpecial',
                 method: "GET",
@@ -1657,386 +1893,434 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                     $("#LateArrivalRate").html(response.Entities[0].LateArrivalRate.toFixed(2));
                     self.form.DailyRate.value = response.Entities[0].DailyRate.toFixed(2)
                     self.form.HourlyRate.value = response.Entities[0].HourlyRate.toFixed(2)
-                    
+
                 }
             })
             while (wait == 0);
             var criteria: any;
-            LeaveApplicationService.List({
-                    Criteria: Criteria.and(criteria, [[LeaveApplicationRow.Fields.Status], '=', '1'],
-                        [[LeaveApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
-                        [[LeaveApplicationRow.Fields.StartDate], '<=', self.form.PayPeriodEnd.get_value()],
-                        [[LeaveApplicationRow.Fields.EndDate], '>=', self.form.PayPeriodStart.get_value()],
+            EmployeeCp38Service.List({
+                Criteria: Criteria.and(criteria,
+                    [[EmployeeCp38Row.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                    [[EmployeeCp38Row.Fields.EffectiveFrom], '<=', self.form.PayPeriodEnd.valueAsDate],
+                    [self.form.PayPeriodStart.valueAsDate, '<=', [EmployeeCp38Row.Fields.EffectiveUntil]],
+                )
+            }, response => {
+                let TotalCp38 = 0;
+                for (var res in response.Entities) {
+                    if (isOverlap(response.Entities[res].EffectiveFrom, response.Entities[res].EffectiveUntil, self.form.PayPeriodStart, self.form.PayPeriodEnd))
+                        TotalCp38 += response.Entities[res].Cp38Amount
+                }
+                $('#CP38').val(TotalCp38)
+                var criteria: any;
+                EmployeeBonusService.List({
+                    Criteria: Criteria.and(criteria,
+                        [[EmployeeBonusRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                        [[EmployeeBonusRow.Fields.PayMonth], '=', self.form.PayMonth.value],
+                        [[EmployeeBonusRow.Fields.PayYear], '=', self.form.PayYear.value],
                     )
                 }, response => {
-                    response.Entities.length > 0 ? FullAttendance = false : ''
+                    let TotalBonus = 0;
+                    for (var res in response.Entities)
+                        TotalBonus += response.Entities[res].BonusAmount
+                    if (TotalBonus > 0)
+                        self.form.Bonus.value = TotalBonus
                     var criteria: any;
-                    for (var res in response.Entities) {
-                        var leaveReasonId = response.Entities[res].LeaveReasonId;
 
-                        switch (leaveReasonId) {
-                            case 1:
-                                HaveUnpaidLeave = true;
-                                break;
-                            case 2:
-                                HaveHospitalisationLeave = true;
-                                break;
-                            case 3:
-                                HaveSickLeave = true;
-                                break;
-                            case 4:
-                                HaveAnnualLeave = true;
-                                break;
-                            case 5:
-                                HaveMaternityLeave = true;
-                                break;
-                            case 6:
-                                HavePaternityLeave = true;
-                                break;
-                            case 7:
-                                HaveMarriageLeave = true;
-                                break;
-                            case 8:
-                                HaveCompassionateLeave = true;
-                                break;
-                            case 10:
-                                HaveEmergencyLeave = true;
-                                break;
-                            case 11:
-                                HaveGatepassLeave = true;
-                                break;
-                        }
-                    }
+                    EmployeeIncentiveService.List({
+                        Criteria: Criteria.and(criteria,
+                            [[EmployeeIncentiveRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                            [[EmployeeIncentiveRow.Fields.PayMonth], '=', self.form.PayMonth.value],
+                            [[EmployeeIncentiveRow.Fields.PayYear], '=', self.form.PayYear.value],
+                        )
+                    }, response => {
+                        var criteria: any;
+                        let TotalIncentive = 0;
+                        for (var res in response.Entities)
+                            TotalIncentive += response.Entities[res].IncentiveAmount
+                        if (TotalIncentive > 0)
+                            self.form.Incentive.value = TotalIncentive
+                        LeaveApplicationService.List({
+                            Criteria: Criteria.and(criteria, [[LeaveApplicationRow.Fields.Status], '=', '1'],
+                                [[LeaveApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                                [[LeaveApplicationRow.Fields.StartDate], '<=', self.form.PayPeriodEnd.get_value()],
+                                [[LeaveApplicationRow.Fields.EndDate], '>=', self.form.PayPeriodStart.get_value()],
+                            )
+                        }, response => {
+                            response.Entities.length > 0 ? FullAttendance = false : ''
+                            var criteria: any;
+                            for (var res in response.Entities) {
+                                var leaveReasonId = response.Entities[res].LeaveReasonId;
+
+                                switch (leaveReasonId) {
+                                    case 1:
+                                        HaveUnpaidLeave = true;
+                                        break;
+                                    case 2:
+                                        HaveHospitalisationLeave = true;
+                                        break;
+                                    case 3:
+                                        HaveSickLeave = true;
+                                        break;
+                                    case 4:
+                                        HaveAnnualLeave = true;
+                                        break;
+                                    case 5:
+                                        HaveMaternityLeave = true;
+                                        break;
+                                    case 6:
+                                        HavePaternityLeave = true;
+                                        break;
+                                    case 7:
+                                        HaveMarriageLeave = true;
+                                        break;
+                                    case 8:
+                                        HaveCompassionateLeave = true;
+                                        break;
+                                    case 10:
+                                        HaveEmergencyLeave = true;
+                                        break;
+                                    case 11:
+                                        HaveGatepassLeave = true;
+                                        break;
+                                }
+                            }
 
 
-                    for (var index in listOfDicts) {
-                        if (listOfDicts[index].id == $(EmployeeRowIdElement).val()) {
-                            self.form.PayrollEarnings.value.length = 0
-                            self.form.PayrollDeductions.value.length = 0
+                            for (var index in listOfDicts) {
+                                if (listOfDicts[index].id == $(EmployeeRowIdElement).val()) {
+                                    self.form.PayrollEarnings.value.length = 0
+                                    self.form.PayrollDeductions.value.length = 0
 
-                            $('.addEarnings, .addDeductions').show()
-                            $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
+                                    $('.addEarnings, .addDeductions').show()
+                                    $(`.field.MaritalStatus, .field.WorkingSpouse, .field.ChildrenUnderEighteen, .field.ChildrenInUniversity,
                             .field.DisabledChildInUniversity, .field.DisabledChild,  .field.DaysWorked, .field.BasicPay, .field.DailyRate,
                             .field.HourlyRate, .field.EisClass, .field.SocsoClass, .field.EpfClass, .field.TaxClass, .field.BirthDay, .field.Age`).show();
 
-                            $(`.HrdfClass`).show();
-                            var wait = 0
-                            serviceCall<RetrieveResponse<any>>({
-                                service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
-                                data: {
-                                    "EmployeeRowID": self.form.EmployeeRowId.value,
-                                    "Date": PayrollDate
-                                },
-                                method: "GET",
-                                async: false,
-                                onSuccess: (response) =>
-                                {
-                                    if (document.getElementById('PayRoll-Description').children.length == 0) 
-                                        self.Setup()
-             
-                                    console.log(response.Entities[0])
-                                    self.FixedOtRateOption = response.Entities[0].FixedOtRateOption
-                                    if (self.FixedOtRateOption == false) {
-                                        self.form.FlatOt.value = response.Entities[0].OtRate
-                                        let roundedOtRate = parseFloat(response.Entities[0].OtRate.toFixed(2));
-                                        // Calculate 1.5x and 2.0x multipliers
-                                        let otRate1_5x = (roundedOtRate * 1.5).toFixed(2);
-                                        let otRate2_0x = (roundedOtRate * 2).toFixed(2);
-                                        document.getElementById("flatOtDesc").innerHTML = "OT1.0x"
-                                        document.getElementById("OnePointFiveOtDesc").innerHTML = "OT1.5x"
-                                        document.getElementById("TwoOtDesc").innerHTML = "OT2.0x"
+                                    $(`.HrdfClass`).show();
+                                    var wait = 0
+                                    serviceCall<RetrieveResponse<any>>({
+                                        service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
+                                        data: {
+                                            "EmployeeRowID": self.form.EmployeeRowId.value,
+                                            "Date": PayrollDate
+                                        },
+                                        method: "GET",
+                                        async: false,
+                                        onSuccess: (response) => {
+                                            if (document.getElementById('PayRoll-Description').children.length == 0)
+                                                self.Setup()
 
-                                        document.getElementById("Ot1.0x").textContent = roundedOtRate.toFixed(2);
-                                        document.getElementById("Ot1.5x").textContent = otRate1_5x
-                                        document.getElementById("Ot2.0x").textContent = otRate2_0x
-                                    }
-                                    else {
-                                        document.getElementById("flatOtDesc").innerHTML = "Weekday"
-                                        document.getElementById("OnePointFiveOtDesc").innerHTML = "Weekend"
-                                        document.getElementById("TwoOtDesc").innerHTML = "Public Holiday"
+                                            console.log(response.Entities[0])
+                                            self.FixedOtRateOption = response.Entities[0].FixedOtRateOption
+                                            if (self.FixedOtRateOption == false) {
+                                                self.form.FlatOt.value = response.Entities[0].OtRate
+                                                let roundedOtRate = parseFloat(response.Entities[0].OtRate.toFixed(2));
+                                                // Calculate 1.5x and 2.0x multipliers
+                                                let otRate1_5x = (roundedOtRate * 1.5).toFixed(2);
+                                                let otRate2_0x = (roundedOtRate * 2).toFixed(2);
+                                                document.getElementById("flatOtDesc").innerHTML = "OT1.0x"
+                                                document.getElementById("OnePointFiveOtDesc").innerHTML = "OT1.5x"
+                                                document.getElementById("TwoOtDesc").innerHTML = "OT2.0x"
 
-                                        document.getElementById("Ot1.0x").textContent = response.Entities[0].OtRateWeekday;
-                                        document.getElementById("Ot1.5x").textContent = response.Entities[0].OtRateWeekend;
-                                        document.getElementById("Ot2.0x").textContent = response.Entities[0].OtRatePublicHoliday
-
-
-                                    }
-                                    wait = 1
-                                }
-                            })
-                            while (wait == 0);
-                            self.form.BirthDay.value = listOfDicts[index].Birthday
-                            self.form.Age.value = self.calculateAge()
-                            self.form.MaritalStatus.value = listOfDicts[index].MaritalStatus.toString()
-                            self.form.WorkingSpouse.value = listOfDicts[index].WorkingSpouse
-                            self.form.ChildrenUnderEighteen.value = listOfDicts[index].ChildrenUnderEighteen
-                            self.form.ChildrenInUniversity.value = listOfDicts[index].ChildrenInUniversity
-                            self.form.DisabledChildInUniversity.value = listOfDicts[index].DisabledChildInUniversity
-                            self.form.DisabledChild.value = listOfDicts[index].DisabledChild
-
-                            self.form.BasicPay.value = listOfDicts[index].BasicPay
-                            self.EmployeeType = listOfDicts[index].type
-                            self.EpfSubjection = listOfDicts[index].EpfSubjection
-                            self.form.EisClass.value = listOfDicts[index].EisClass.toString()
-                            self.form.EpfClass.value = listOfDicts[index].EpfClass.toString()
-                            self.form.SocsoClass.value = listOfDicts[index].SocsoClass.toString()
-                            self.form.HrdfClass.value = listOfDicts[index].HrdfClass
-                            var EmployeeName = listOfDicts[index].name
-                            var criteria: any;
-                            EmployeeAllowanceService.List({
-                                Criteria: Criteria.and(criteria, [[EmployeeAllowanceRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
-                                    , [self.form.PayPeriodStart.get_value(), '>=', [EmployeeAllowanceRow.Fields.EffectiveFrom]])
-                            }, response => {
-                                console.log(response.Entities)
-                                $('#AllowanceDeductionBody').empty()
-                                var TotalAllowance = 0
-                                for (var index in response.Entities) {
-                                    if (!isEmptyOrNull(response.Entities[index].EffectiveUntil)) {
-                                        var timestamp = response.Entities[index].EffectiveUntil;
-                                        var date = new Date(timestamp);
-                                        if (self.form.PayPeriodStart.valueAsDate > date)
-                                            continue
-                                    }
-                                    
-                                    if (response.Entities[index].OneTime == true) {
-                                        if (response.Entities[index].PaidOneTime == true)
-                                            continue
-                                    }
-                                    if (response.Entities[index].FullAttendance == true) {
-                                        if (
-                                            response.Entities[index].ExemptAnnualLeave == false &&
-                                            response.Entities[index].ExemptCompassionateLeave == false &&
-                                            response.Entities[index].ExemptEmergencyLeave == false &&
-                                            response.Entities[index].ExemptUnpaidLeave == false &&
-                                            response.Entities[index].ExemptSickLeave == false &&
-                                            response.Entities[index].ExemptPaternityLeave == false &&
-                                            response.Entities[index].ExemptMaternityLeave == false &&
-                                            response.Entities[index].ExemptMarriageLeave == false &&
-                                            response.Entities[index].ExemptHospitalisationLeave == false &&
-                                            response.Entities[index].ExemptGatepassLeave == false
-                                        ) {
-                                            if (FullAttendance == false)
-                                                continue
-                                        }
-                                        else {
-                                            if (response.Entities[index].ExemptAnnualLeave == true && HaveAnnualLeave == true)
-                                                continue
-
-                                            if (response.Entities[index].ExemptCompassionateLeave == true && HaveCompassionateLeave == true)
-                                                continue
-
-                                            if (response.Entities[index].ExemptEmergencyLeave == true && HaveEmergencyLeave == true)
-                                                continue
-
-                                            if (response.Entities[index].ExemptUnpaidLeave == true && HaveUnpaidLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptSickLeave == true && HaveSickLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptPaternityLeave == true && HavePaternityLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptMaternityLeave == true && HaveMaternityLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptMarriageLeave == true && HaveMarriageLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptHospitalisationLeave == true && HaveHospitalisationLeave == true)
-                                                continue
-                                            if (response.Entities[index].ExemptGatepassLeave == true && HaveGatepassLeave == true)
-                                                continue
-                                        }
-                                    }
-                                    else if (response.Entities[index].NoAbsence == true && NoAbsence == false)
-                                        continue
-                                    else if (response.Entities[index].NoEarlyLeaving == true && NoEarlyLeaving == false)
-                                        continue
-                                    else if (response.Entities[index].NoLate == true && NoLate == false)
-                                        continue
-                                    var rowBuffer = document.createElement('tr')
-
-                                    rowBuffer.innerHTML = `<td>${response.Entities[index].AllowanceCode}</td><td>${response.Entities[index].Description}</td>
-                                            <td class = "AllowanceAmount" eis =  ${response.Entities[index].SubjectionEis.toString()} epf =  ${response.Entities[index].SubjectionEpf.toString()}
-                                            hrdf =  ${response.Entities[index].SubjectionHrdf.toString()} pcb =  ${response.Entities[index].SubjectionPcb.toString()}
-                                                socso =  ${response.Entities[index].SubjectionSocso.toString()} 
-                                            >${response.Entities[index].Amount}</td>`
-                                    $('#AllowanceDeductionBody').append(rowBuffer)
-                                    self.AllowanceId.push(response.Entities[index].Id)
-                                    TotalAllowance += response.Entities[index].Amount
-                                }
-                                $('#TotalAllowance').val(TotalAllowance)
-                                $(PersonNameElement).val(EmployeeName)
-                                if (PayrollEarningsNode) {
-                                    var rows = PayrollEarningsNode.getElementsByTagName('TR');
-                                    var numRows = rows.length;
-                                    for (var i = numRows - 1; i > 0; i--)
-                                        rows[i].parentNode.removeChild(rows[i]);
-                                }
-                                var criteria: any;
-
-                                OTApplicationService.List({
-                                    Criteria: Criteria.and(criteria, [[OTApplicationRow.Fields.Status], '=', '1'], [[OTApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val() ],
-                                        [[OTApplicationRow.Fields.OtDate], '>=', self.form.PayPeriodStart.get_value()],
-                                        [[OTApplicationRow.Fields.OtDate], '<=', self.form.PayPeriodEnd.get_value()])
-                                }, response => {
-                                    let WeekendTime = 0
-                                    let WeekdayTime = 0
-                                    let PublicHolidayTime = 0
-                                    let TwoTimes = 0
-                                    let OnePointFiveTimes = 0
-                                    response.Entities.forEach(data => {
-                                        if (data.WeekendOt) 
-                                            WeekendTime += data.OtMinute;
-                                        else if (data.WeekdayOt) 
-                                            WeekdayTime += data.OtMinute;
-                                        else if (data.PublicHolidayOt) 
-                                            PublicHolidayTime += data.OtMinute;
-                                    })
-                                    if (self.FixedOtRateOption == false) {
-                                        self.PublicHolidayMultiplier == 2.0 ? TwoTimes += PublicHolidayTime : OnePointFiveTimes += PublicHolidayTime
-                                        self.WeekendMultiplier == 2.0 ? TwoTimes += WeekendTime : OnePointFiveTimes += WeekendTime
-                                        self.WeekdayMultiplier == 2.0 ? TwoTimes += WeekdayTime : OnePointFiveTimes += WeekdayTime
-
-                                        TwoTimes = TwoTimes / 60
-                                        OnePointFiveTimes = OnePointFiveTimes / 60
-
-                                        $('#OtOnePointFiveTime').val(OnePointFiveTimes)
-                                        $('#OtTwoTime').val(TwoTimes)
-                                    }
-                                    else {
-                                        WeekdayTime = WeekdayTime / 60;
-                                        WeekendTime = WeekendTime / 60;
-                                        PublicHolidayTime = PublicHolidayTime / 60;
-
-                                        $('#OtOneTime').val(WeekdayTime)
-                                        $('#OtOnePointFiveTime').val(WeekendTime)
-                                        $('#OtTwoTime').val(PublicHolidayTime)
-                                    }
-                                    $('#OtTwoTime').trigger('change')
-                                   
-                                    var criteria: any;
-                                NoPaidLeaveService.List({
-                                    Criteria: Criteria.and(criteria, [[NoPaidLeaveRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
-                                        [[NoPaidLeaveRow.Fields.LeaveDate], '>=', self.form.PayPeriodStart.get_value()],
-                                        [[NoPaidLeaveRow.Fields.LeaveDate], '<=', self.form.PayPeriodEnd.get_value()]
-                                    )
-                                }, response => {
-                                    let NoPaidLeaveDays = 0
-
-                                    for (var index in response.Entities) {
-                                        if (!isEmptyOrNull(response.Entities[index].Deductions)) {
-                                            self.NoPaidLeaveId.push(response.Entities[index].Id)
-                                            NoPaidLeaveDays += response.Entities[index].HalfDay ? 0.5 : 1
-                                        }
-                                    }
-                                    var criteria: any;
-                                    FixedDeductionService.List({
-                                        Criteria: Criteria.and(criteria, [[FixedDeductionRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
-                                            , [self.form.PayPeriodStart.get_value(), '>=', [FixedDeductionRow.Fields.EffectiveFrom]])
-                                    }, response => {
-                                        var TotalDeductions = 0
-                                        for (var index in response.Entities) {
-                                            if (response.Entities[index].OneTime == true) {
-                                                if (response.Entities[index].DeductedOneTime == true)
-                                                    continue
+                                                document.getElementById("Ot1.0x").textContent = roundedOtRate.toFixed(2);
+                                                document.getElementById("Ot1.5x").textContent = otRate1_5x
+                                                document.getElementById("Ot2.0x").textContent = otRate2_0x
                                             }
+                                            else {
+                                                document.getElementById("flatOtDesc").innerHTML = "Weekday"
+                                                document.getElementById("OnePointFiveOtDesc").innerHTML = "Weekend"
+                                                document.getElementById("TwoOtDesc").innerHTML = "Public Holiday"
+
+                                                document.getElementById("Ot1.0x").textContent = response.Entities[0].OtRateWeekday;
+                                                document.getElementById("Ot1.5x").textContent = response.Entities[0].OtRateWeekend;
+                                                document.getElementById("Ot2.0x").textContent = response.Entities[0].OtRatePublicHoliday
+
+
+                                            }
+                                            wait = 1
+                                        }
+                                    })
+                                    while (wait == 0);
+                                    self.form.BirthDay.value = listOfDicts[index].Birthday
+                                    self.form.Age.value = self.calculateAge()
+                                    self.form.MaritalStatus.value = listOfDicts[index].MaritalStatus.toString()
+                                    self.form.WorkingSpouse.value = listOfDicts[index].WorkingSpouse
+                                    self.form.ChildrenUnderEighteen.value = listOfDicts[index].ChildrenUnderEighteen
+                                    self.form.ChildrenInUniversity.value = listOfDicts[index].ChildrenInUniversity
+                                    self.form.DisabledChildInUniversity.value = listOfDicts[index].DisabledChildInUniversity
+                                    self.form.DisabledChild.value = listOfDicts[index].DisabledChild
+
+                                    self.form.BasicPay.value = listOfDicts[index].BasicPay
+                                    self.EmployeeType = listOfDicts[index].type
+                                    self.EpfSubjection = listOfDicts[index].EpfSubjection
+                                    self.form.EisClass.value = listOfDicts[index].EisClass.toString()
+                                    self.form.EpfClass.value = listOfDicts[index].EpfClass.toString()
+                                    self.form.SocsoClass.value = listOfDicts[index].SocsoClass.toString()
+                                    self.form.HrdfClass.value = listOfDicts[index].HrdfClass
+                                    var EmployeeName = listOfDicts[index].name
+                                    var criteria: any;
+                                    EmployeeAllowanceService.List({
+                                        Criteria: Criteria.and(criteria, [[EmployeeAllowanceRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
+                                            , [self.form.PayPeriodStart.get_value(), '>=', [EmployeeAllowanceRow.Fields.EffectiveFrom]])
+                                    }, response => {
+                                        console.log(response.Entities)
+                                        $('#AllowanceDeductionBody').empty()
+                                        var TotalAllowance = 0
+                                        for (var index in response.Entities) {
                                             if (!isEmptyOrNull(response.Entities[index].EffectiveUntil)) {
                                                 var timestamp = response.Entities[index].EffectiveUntil;
                                                 var date = new Date(timestamp);
                                                 if (self.form.PayPeriodStart.valueAsDate > date)
                                                     continue
                                             }
-                                            var row = document.createElement('tr')
-                                            row.innerHTML = `<td>${response.Entities[index].DeductionCode}</td><td>${response.Entities[index].Description}</td><td class = "DeductionAmount">-${response.Entities[index].Amount}</td>`
 
+                                            if (response.Entities[index].OneTime == true) {
+                                                if (response.Entities[index].PaidOneTime == true)
+                                                    continue
+                                            }
+                                            if (response.Entities[index].FullAttendance == true) {
+                                                if (
+                                                    response.Entities[index].ExemptAnnualLeave == false &&
+                                                    response.Entities[index].ExemptCompassionateLeave == false &&
+                                                    response.Entities[index].ExemptEmergencyLeave == false &&
+                                                    response.Entities[index].ExemptUnpaidLeave == false &&
+                                                    response.Entities[index].ExemptSickLeave == false &&
+                                                    response.Entities[index].ExemptPaternityLeave == false &&
+                                                    response.Entities[index].ExemptMaternityLeave == false &&
+                                                    response.Entities[index].ExemptMarriageLeave == false &&
+                                                    response.Entities[index].ExemptHospitalisationLeave == false &&
+                                                    response.Entities[index].ExemptGatepassLeave == false
+                                                ) {
+                                                    if (FullAttendance == false)
+                                                        continue
+                                                }
+                                                else {
+                                                    if (response.Entities[index].ExemptAnnualLeave == true && HaveAnnualLeave == true)
+                                                        continue
 
-                                            $('#AllowanceDeductionBody').append(row)
-                                            self.DeductionId.push(response.Entities[index].Id)
-                                            TotalDeductions += response.Entities[index].Amount
+                                                    if (response.Entities[index].ExemptCompassionateLeave == true && HaveCompassionateLeave == true)
+                                                        continue
+
+                                                    if (response.Entities[index].ExemptEmergencyLeave == true && HaveEmergencyLeave == true)
+                                                        continue
+
+                                                    if (response.Entities[index].ExemptUnpaidLeave == true && HaveUnpaidLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptSickLeave == true && HaveSickLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptPaternityLeave == true && HavePaternityLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptMaternityLeave == true && HaveMaternityLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptMarriageLeave == true && HaveMarriageLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptHospitalisationLeave == true && HaveHospitalisationLeave == true)
+                                                        continue
+                                                    if (response.Entities[index].ExemptGatepassLeave == true && HaveGatepassLeave == true)
+                                                        continue
+                                                }
+                                            }
+                                            else if (response.Entities[index].NoAbsence == true && NoAbsence == false)
+                                                continue
+                                            else if (response.Entities[index].NoEarlyLeaving == true && NoEarlyLeaving == false)
+                                                continue
+                                            else if (response.Entities[index].NoLate == true && NoLate == false)
+                                                continue
+                                            var rowBuffer = document.createElement('tr')
+
+                                            rowBuffer.innerHTML = `<td>${response.Entities[index].AllowanceCode}</td><td>${response.Entities[index].Description}</td>
+                                            <td class = "AllowanceAmount" eis =  ${response.Entities[index].SubjectionEis.toString()} epf =  ${response.Entities[index].SubjectionEpf.toString()}
+                                            hrdf =  ${response.Entities[index].SubjectionHrdf.toString()} pcb =  ${response.Entities[index].SubjectionPcb.toString()}
+                                                socso =  ${response.Entities[index].SubjectionSocso.toString()} 
+                                            >${response.Entities[index].Amount}</td>`
+                                            $('#AllowanceDeductionBody').append(rowBuffer)
+                                            self.AllowanceId.push(response.Entities[index].Id)
+                                            TotalAllowance += response.Entities[index].Amount
                                         }
-                                        $('.remove').on('click', async function (e) {
-                                            console.log('haha')
-                                            $(this).closest('tr').remove(); // Remove the row
-                                            self.updatePayroll()
-                                        })
-                                        $('.numberInput').on('change', async function (e) {
-                                            self.updatePayroll()
-                                        })
-                                        $('#TotalDeduction').val(TotalDeductions)
+                                        $('#TotalAllowance').val(TotalAllowance)
+                                        $(PersonNameElement).val(EmployeeName)
+                                        if (PayrollEarningsNode) {
+                                            var rows = PayrollEarningsNode.getElementsByTagName('TR');
+                                            var numRows = rows.length;
+                                            for (var i = numRows - 1; i > 0; i--)
+                                                rows[i].parentNode.removeChild(rows[i]);
+                                        }
                                         var criteria: any;
-                                        MoneyClaimApplicationService.List({
-                                            Criteria: Criteria.and(criteria, [[MoneyClaimApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
-                                                , [[MoneyClaimApplicationRow.Fields.Paid], '=', '0'], [[MoneyClaimApplicationRow.Fields.Status], '=', '1'],
-                                                [[MoneyClaimApplicationRow.Fields.ClaimingDate], '>=', self.form.PayPeriodStart.get_value()],
-                                                [[MoneyClaimApplicationRow.Fields.ClaimingDate], '<=', self.form.PayPeriodEnd.get_value()])
+
+                                        OTApplicationService.List({
+                                            Criteria: Criteria.and(criteria, [[OTApplicationRow.Fields.Status], '=', '1'], [[OTApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                                                [[OTApplicationRow.Fields.OtDate], '>=', self.form.PayPeriodStart.get_value()],
+                                                [[OTApplicationRow.Fields.OtDate], '<=', self.form.PayPeriodEnd.get_value()])
                                         }, response => {
-                                            $('#MoneyClaimingBody').empty()
-                                            for (var index in response.Entities) {
-                                                var rowBuffer = document.createElement('tr')
-                                                rowBuffer.innerHTML = `<td>${response.Entities[index].ClaimingCategory}</td><td>${response.Entities[index].Description}</td>
+                                            let WeekendTime = 0
+                                            let WeekdayTime = 0
+                                            let PublicHolidayTime = 0
+                                            let TwoTimes = 0
+                                            let OnePointFiveTimes = 0
+                                            response.Entities.forEach(data => {
+                                                if (data.WeekendOt)
+                                                    WeekendTime += data.OtMinute;
+                                                else if (data.WeekdayOt)
+                                                    WeekdayTime += data.OtMinute;
+                                                else if (data.PublicHolidayOt)
+                                                    PublicHolidayTime += data.OtMinute;
+                                            })
+                                            if (self.FixedOtRateOption == false) {
+                                                self.PublicHolidayMultiplier == 2.0 ? TwoTimes += PublicHolidayTime : OnePointFiveTimes += PublicHolidayTime
+                                                self.WeekendMultiplier == 2.0 ? TwoTimes += WeekendTime : OnePointFiveTimes += WeekendTime
+                                                self.WeekdayMultiplier == 2.0 ? TwoTimes += WeekdayTime : OnePointFiveTimes += WeekdayTime
+
+                                                TwoTimes = TwoTimes / 60
+                                                OnePointFiveTimes = OnePointFiveTimes / 60
+
+                                                $('#OtOnePointFiveTime').val(OnePointFiveTimes)
+                                                $('#OtTwoTime').val(TwoTimes)
+                                            }
+                                            else {
+                                                WeekdayTime = WeekdayTime / 60;
+                                                WeekendTime = WeekendTime / 60;
+                                                PublicHolidayTime = PublicHolidayTime / 60;
+
+                                                $('#OtOneTime').val(WeekdayTime)
+                                                $('#OtOnePointFiveTime').val(WeekendTime)
+                                                $('#OtTwoTime').val(PublicHolidayTime)
+                                            }
+                                            $('#OtTwoTime').trigger('change')
+
+                                            var criteria: any;
+                                            NoPaidLeaveService.List({
+                                                Criteria: Criteria.and(criteria, [[NoPaidLeaveRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                                                    [[NoPaidLeaveRow.Fields.LeaveDate], '>=', self.form.PayPeriodStart.get_value()],
+                                                    [[NoPaidLeaveRow.Fields.LeaveDate], '<=', self.form.PayPeriodEnd.get_value()]
+                                                )
+                                            }, response => {
+                                                let NoPaidLeaveDays = 0
+
+                                                for (var index in response.Entities) {
+                                                    if (!isEmptyOrNull(response.Entities[index].Deductions)) {
+                                                        self.NoPaidLeaveId.push(response.Entities[index].Id)
+                                                        NoPaidLeaveDays += response.Entities[index].HalfDay ? 0.5 : 1
+                                                    }
+                                                }
+                                                var criteria: any;
+                                                FixedDeductionService.List({
+                                                    Criteria: Criteria.and(criteria, [[FixedDeductionRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
+                                                        , [self.form.PayPeriodStart.get_value(), '>=', [FixedDeductionRow.Fields.EffectiveFrom]])
+                                                }, response => {
+                                                    var TotalDeductions = 0
+                                                    for (var index in response.Entities) {
+                                                        if (response.Entities[index].OneTime == true) {
+                                                            if (response.Entities[index].DeductedOneTime == true)
+                                                                continue
+                                                        }
+                                                        if (!isEmptyOrNull(response.Entities[index].EffectiveUntil)) {
+                                                            var timestamp = response.Entities[index].EffectiveUntil;
+                                                            var date = new Date(timestamp);
+                                                            if (self.form.PayPeriodStart.valueAsDate > date)
+                                                                continue
+                                                        }
+                                                        var row = document.createElement('tr')
+                                                        row.innerHTML = `<td>${response.Entities[index].DeductionCode}</td><td>${response.Entities[index].Description}</td><td class = "DeductionAmount">-${response.Entities[index].Amount}</td>`
+
+
+                                                        $('#AllowanceDeductionBody').append(row)
+                                                        self.DeductionId.push(response.Entities[index].Id)
+                                                        TotalDeductions += response.Entities[index].Amount
+                                                    }
+                                                    $('.remove').on('click', async function (e) {
+                                                        console.log('haha')
+                                                        $(this).closest('tr').remove(); // Remove the row
+                                                        self.updatePayroll()
+                                                    })
+                                                    $('.numberInput').on('change', async function (e) {
+                                                        self.updatePayroll()
+                                                    })
+                                                    $('#TotalDeduction').val(TotalDeductions)
+                                                    var criteria: any;
+                                                    MoneyClaimApplicationService.List({
+                                                        Criteria: Criteria.and(criteria, [[MoneyClaimApplicationRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()]
+                                                            , [[MoneyClaimApplicationRow.Fields.Paid], '=', '0'], [[MoneyClaimApplicationRow.Fields.Status], '=', '1'],
+                                                            [[MoneyClaimApplicationRow.Fields.ClaimingDate], '>=', self.form.PayPeriodStart.get_value()],
+                                                            [[MoneyClaimApplicationRow.Fields.ClaimingDate], '<=', self.form.PayPeriodEnd.get_value()])
+                                                    }, response => {
+                                                        $('#MoneyClaimingBody').empty()
+                                                        for (var index in response.Entities) {
+                                                            var rowBuffer = document.createElement('tr')
+                                                            rowBuffer.innerHTML = `<td>${response.Entities[index].ClaimingCategory}</td><td>${response.Entities[index].Description}</td>
                                             <td  eis =  ${response.Entities[index].SubjectionEis.toString()} epf =  ${response.Entities[index].SubjectionEpf.toString()}
                                             hrdf =  ${response.Entities[index].SubjectionHrdf.toString()} pcb =  ${response.Entities[index].SubjectionPcb.toString()}
                                                 socso =  ${response.Entities[index].SubjectionSocso.toString()} 
                                             >${response.Entities[index].ClaimAmount}</td>`
-                                                $('#MoneyClaimingBody').append(rowBuffer)
+                                                            $('#MoneyClaimingBody').append(rowBuffer)
 
 
-                                            }
-
-                                            var criteria: any;
-                                            EmployeeEarlyLeavingService.List({
-                                                Criteria: Criteria.and(criteria, [[EmployeeEarlyLeavingRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
-                                                    [[EmployeeEarlyLeavingRow.Fields.Date], '>=', self.form.PayPeriodStart.get_value()],
-                                                    [[EmployeeEarlyLeavingRow.Fields.Date], '<=', self.form.PayPeriodEnd.get_value()]
-                                                )
-
-                                            }, response => {
-                                                response.Entities.length > 0 ? NoEarlyLeaving = false : ''
-                                                let EarlyLeavingMinutes = 0
-                                                for (var index in response.Entities) {
-                                                    if (response.Entities[index].Deducted == 0) {
-                                                        EarlyLeavingMinutes += response.Entities[index].EarlyMins
-                                                        self.EarlyLeavingId.push(response.Entities[index].Id)
-                                                    }
-                                                }
-                                                $('#EarlyLeavingMinutes').val(EarlyLeavingMinutes)
-                                                var criteria: any;
-                                                EmployeeLateService.List({
-                                                    Criteria: Criteria.and(criteria, [[EmployeeLateRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
-                                                        [[EmployeeLateRow.Fields.Date], '>=', self.form.PayPeriodStart.get_value()],
-                                                        [[EmployeeLateRow.Fields.Date], '<=', self.form.PayPeriodEnd.get_value()]
-                                                    )
-                                                }, response => {
-                                                    var LateMinutes = 0
-                                                    response.Entities.length > 0 ? NoLate = false : ''
-                                                    for (var index in response.Entities) {
-                                                        if (response.Entities[index].Deducted == 0) {
-                                                            if (!isEmptyOrNull(response.Entities[index].Deductions)) {
-                                                                LateMinutes += response.Entities[index].LateMins
-                                                                self.LateArrivalId.push(response.Entities[index].Id)
-                                                            }
                                                         }
-                                                    }
-                                                    $('#LateArrivalMinutes').val(LateMinutes)
-                                                    self.updatePayroll()
-                                                    //self.updateWages()
+
+                                                        var criteria: any;
+                                                        EmployeeEarlyLeavingService.List({
+                                                            Criteria: Criteria.and(criteria, [[EmployeeEarlyLeavingRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                                                                [[EmployeeEarlyLeavingRow.Fields.Date], '>=', self.form.PayPeriodStart.get_value()],
+                                                                [[EmployeeEarlyLeavingRow.Fields.Date], '<=', self.form.PayPeriodEnd.get_value()]
+                                                            )
+
+                                                        }, response => {
+                                                            response.Entities.length > 0 ? NoEarlyLeaving = false : ''
+                                                            let EarlyLeavingMinutes = 0
+                                                            for (var index in response.Entities) {
+                                                                if (response.Entities[index].Deducted == 0) {
+                                                                    EarlyLeavingMinutes += response.Entities[index].EarlyMins
+                                                                    self.EarlyLeavingId.push(response.Entities[index].Id)
+                                                                }
+                                                            }
+                                                            $('#EarlyLeavingMinutes').val(EarlyLeavingMinutes)
+                                                            var criteria: any;
+                                                            EmployeeLateService.List({
+                                                                Criteria: Criteria.and(criteria, [[EmployeeLateRow.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                                                                    [[EmployeeLateRow.Fields.Date], '>=', self.form.PayPeriodStart.get_value()],
+                                                                    [[EmployeeLateRow.Fields.Date], '<=', self.form.PayPeriodEnd.get_value()]
+                                                                )
+                                                            }, response => {
+                                                                var LateMinutes = 0
+                                                                response.Entities.length > 0 ? NoLate = false : ''
+                                                                for (var index in response.Entities) {
+                                                                    if (response.Entities[index].Deducted == 0) {
+                                                                        if (!isEmptyOrNull(response.Entities[index].Deductions)) {
+                                                                            LateMinutes += response.Entities[index].LateMins
+                                                                            self.LateArrivalId.push(response.Entities[index].Id)
+                                                                        }
+                                                                    }
+                                                                }
+                                                                $('#LateArrivalMinutes').val(LateMinutes)
+                                                                self.updatePayroll()
+                                                                //self.updateWages()
+
+                                                            })
+                                                        })
+
+
+                                                    })
 
                                                 })
+
+
                                             })
-
-
                                         })
-
                                     })
 
+                                    break
+                                }
+                            }
 
-                                })
-                                })
-                            })
-                            
-                            break
-                        }
-                    }
-
+                        })
+                    })
                 })
-          
+
+
+            })
+
+
+        
+           
         }
     }
 
@@ -2298,7 +2582,11 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             this.form.PayrollEarnings.value = ExtraEarningList
             this.form.PayrollDeductions.value = ExtraDeductionList
         }
-
+        this.form.EpfWages.value = $('#TotalEPF').val()
+        this.form.HrdfWages.value = $('#TotalHRD').val()
+        this.form.SocsoWages.value = $('#TotalSOCSO').val()
+        this.form.EisWages.value = $('#TotalEIS').val()
+        this.form.EmployeeCp38.value = $('#Cp38').val()
         this.form.NPLDaily.value = $("#NplDay").val()
         this.form.NPLHourly.value = $("#NplHr").val()
         this.form.AbsentDaily.value = $("#AbsentDay").val()
@@ -2314,6 +2602,13 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
         var self = this
         function toBoolean(value) {
             return value === "true";
+        }
+
+        if (this.isNew()) {
+            this.form.SeperateBonus.value = this.SeperateBonus
+            this.form.SeperateIncentive.value = this.SeperateBonus
+            this.form.AnnualizedBonus.value = this.AnnualizedBonus
+            this.form.AnnualizedIncentive.value = this.AnnualizedIncentive
         }
 
         this.form.EmployeePCB.value = $("#PCB").val()

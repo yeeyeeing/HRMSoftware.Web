@@ -27,11 +27,17 @@ public sealed class MasterCountryRow : LoggingRow<MasterCountryRow.RowFields>, I
         get => fields.Name[this];
         set => fields.Name[this] = value;
     }
-
+    [DisplayName("Country Code"), QuickSearch]
+    public string CountryCode
+    {
+        get => fields.CountryCode[this];
+        set => fields.CountryCode[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
         public StringField Name;
+        public StringField CountryCode;
 
     }
 }

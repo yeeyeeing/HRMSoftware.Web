@@ -8,4 +8,12 @@ export class MasterStateDialog extends EntityDialog<MasterStateRow, any> {
     protected getService() { return MasterStateService.baseUrl; }
 
     protected form = new MasterStateForm(this.idPrefix);
+
+    public dialogOpen(asPanel?: boolean): void {
+        super.dialogOpen(asPanel);
+        var EmployeeRowIdElement = document.getElementById(this.idPrefix + 'StateCode')
+        $(EmployeeRowIdElement).on('change', async function () {
+            console.log('input')
+        })
+    }
 }

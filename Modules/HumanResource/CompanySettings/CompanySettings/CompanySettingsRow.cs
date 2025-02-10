@@ -405,7 +405,15 @@ public sealed class CompanySettingsRow : Row<CompanySettingsRow.RowFields>, IIdR
         get => fields.FixedAbsentDenominator[this];
         set => fields.FixedAbsentDenominator[this] = value;
     }
+    [DisplayName("ProbationPeriod(In Months)"), DefaultValue(3)]
+    public double? ProbationPeriod
+    {
+        get => fields.ProbationPeriod[this];
+        set => fields.ProbationPeriod[this] = value;
+    }
 
+
+    
     [DisplayName("Based On No Paid Leave Rate"), BooleanEditor]
     public bool? HourlyNoPaidLeaveNPL
     {
@@ -770,6 +778,7 @@ public sealed class CompanySettingsRow : Row<CompanySettingsRow.RowFields>, IIdR
         public DoubleField FixedLateArrivalDenominator;
         public DoubleField FixedNPLDenominator;
         public DoubleField FixedAbsentDenominator;
+        public DoubleField ProbationPeriod;
 
 
         public BooleanField EarlyLeavingBasedOnWorkingHour;

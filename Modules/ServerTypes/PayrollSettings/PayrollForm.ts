@@ -1,4 +1,4 @@
-﻿import { LookupEditor, StringEditor, IntegerEditor, DateEditor, TextAreaEditor, DecimalEditor, EnumEditor, BooleanEditor, PrefixedContext } from "@serenity-is/corelib";
+﻿import { BooleanEditor, DecimalEditor, LookupEditor, StringEditor, IntegerEditor, DateEditor, TextAreaEditor, EnumEditor, PrefixedContext } from "@serenity-is/corelib";
 import { EISClass } from "../EmployeeProfile/EISClass";
 import { SOCSOClass } from "../EmployeeProfile/SOCSOClass";
 import { EPFClass } from "../EmployeeProfile/EPFClass";
@@ -12,6 +12,21 @@ import { PayrollDeductionsEditor } from "@/HumanResource/PayrollSettings/Payroll
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface PayrollForm {
+    IncentiveSubjectEpf: BooleanEditor;
+    IncentiveSubjectEis: BooleanEditor;
+    IncentiveSubjectPcb: BooleanEditor;
+    IncentiveSubjectSocso: BooleanEditor;
+    IncentiveSubjectHrdf: BooleanEditor;
+    BonusSubjectEpf: BooleanEditor;
+    BonusSubjectEis: BooleanEditor;
+    BonusSubjectPcb: BooleanEditor;
+    BonusSubjectSocso: BooleanEditor;
+    BonusSubjectHrdf: BooleanEditor;
+    AnnualizedIncentive: BooleanEditor;
+    SeperateIncentive: BooleanEditor;
+    AnnualizedBonus: BooleanEditor;
+    SeperateBonus: BooleanEditor;
+    EmployeeCp38: DecimalEditor;
     EmployeeRowId: LookupEditor;
     EmployeeName: StringEditor;
     PayMonth: IntegerEditor;
@@ -20,6 +35,11 @@ export interface PayrollForm {
     PayPeriodStart: DateEditor;
     PayPeriodEnd: DateEditor;
     Remarks: TextAreaEditor;
+    HrdfWages: DecimalEditor;
+    PcbWages: DecimalEditor;
+    EisWages: DecimalEditor;
+    SocsoWages: DecimalEditor;
+    EpfWages: DecimalEditor;
     DaysWorked: DecimalEditor;
     BasicPay: DecimalEditor;
     DailyRate: DecimalEditor;
@@ -37,6 +57,8 @@ export interface PayrollForm {
     ChildrenInUniversity: DecimalEditor;
     DisabledChild: DecimalEditor;
     DisabledChildInUniversity: DecimalEditor;
+    Bonus: DecimalEditor;
+    Incentive: DecimalEditor;
     EarlyLeavingRate: DecimalEditor;
     LateArrivalRate: DecimalEditor;
     EarlyLeaving: DecimalEditor;
@@ -86,14 +108,14 @@ export class PayrollForm extends PrefixedContext {
         if (!PayrollForm.init)  {
             PayrollForm.init = true;
 
-            var w0 = LookupEditor;
-            var w1 = StringEditor;
-            var w2 = IntegerEditor;
-            var w3 = DateEditor;
-            var w4 = TextAreaEditor;
-            var w5 = DecimalEditor;
-            var w6 = EnumEditor;
-            var w7 = BooleanEditor;
+            var w0 = BooleanEditor;
+            var w1 = DecimalEditor;
+            var w2 = LookupEditor;
+            var w3 = StringEditor;
+            var w4 = IntegerEditor;
+            var w5 = DateEditor;
+            var w6 = TextAreaEditor;
+            var w7 = EnumEditor;
             var w8 = MoneyClaimApplicationEditor;
             var w9 = PayslipPaidOneTimeAllowance;
             var w10 = PayslipDeductedOneTimeDeductions;
@@ -101,68 +123,90 @@ export class PayrollForm extends PrefixedContext {
             var w12 = PayrollDeductionsEditor;
 
             initFormType(PayrollForm, [
-                'EmployeeRowId', w0,
-                'EmployeeName', w1,
-                'PayMonth', w2,
-                'PayYear', w2,
-                'PayDate', w3,
-                'PayPeriodStart', w3,
-                'PayPeriodEnd', w3,
-                'Remarks', w4,
-                'DaysWorked', w5,
-                'BasicPay', w5,
-                'DailyRate', w5,
-                'HourlyRate', w5,
-                'Age', w5,
-                'BirthDay', w3,
-                'EisClass', w6,
-                'SocsoClass', w6,
-                'EpfClass', w6,
-                'HrdfClass', w6,
-                'TaxClass', w2,
-                'MaritalStatus', w6,
-                'WorkingSpouse', w7,
-                'ChildrenUnderEighteen', w5,
-                'ChildrenInUniversity', w5,
-                'DisabledChild', w5,
-                'DisabledChildInUniversity', w5,
-                'EarlyLeavingRate', w5,
-                'LateArrivalRate', w5,
-                'EarlyLeaving', w5,
-                'LateArrival', w5,
-                'FlatOt', w5,
-                'OtOnePointFiveRate', w5,
-                'OtTwoRate', w5,
-                'OtOne', w5,
-                'OtOnePointFive', w5,
-                'OtTwo', w5,
-                'NPLHourlyRate', w5,
-                'NPLDailyRate', w5,
-                'NPLHourly', w5,
-                'NPLDaily', w5,
-                'AbsentDailyRate', w5,
-                'AbsentDaily', w5,
-                'OtSubjectEpf', w7,
-                'OtSubjectEis', w7,
-                'OtSubjectPcb', w7,
-                'OtSubjectSocso', w7,
-                'OtSubjectHrdf', w7,
+                'IncentiveSubjectEpf', w0,
+                'IncentiveSubjectEis', w0,
+                'IncentiveSubjectPcb', w0,
+                'IncentiveSubjectSocso', w0,
+                'IncentiveSubjectHrdf', w0,
+                'BonusSubjectEpf', w0,
+                'BonusSubjectEis', w0,
+                'BonusSubjectPcb', w0,
+                'BonusSubjectSocso', w0,
+                'BonusSubjectHrdf', w0,
+                'AnnualizedIncentive', w0,
+                'SeperateIncentive', w0,
+                'AnnualizedBonus', w0,
+                'SeperateBonus', w0,
+                'EmployeeCp38', w1,
+                'EmployeeRowId', w2,
+                'EmployeeName', w3,
+                'PayMonth', w4,
+                'PayYear', w4,
+                'PayDate', w5,
+                'PayPeriodStart', w5,
+                'PayPeriodEnd', w5,
+                'Remarks', w6,
+                'HrdfWages', w1,
+                'PcbWages', w1,
+                'EisWages', w1,
+                'SocsoWages', w1,
+                'EpfWages', w1,
+                'DaysWorked', w1,
+                'BasicPay', w1,
+                'DailyRate', w1,
+                'HourlyRate', w1,
+                'Age', w1,
+                'BirthDay', w5,
+                'EisClass', w7,
+                'SocsoClass', w7,
+                'EpfClass', w7,
+                'HrdfClass', w7,
+                'TaxClass', w4,
+                'MaritalStatus', w7,
+                'WorkingSpouse', w0,
+                'ChildrenUnderEighteen', w1,
+                'ChildrenInUniversity', w1,
+                'DisabledChild', w1,
+                'DisabledChildInUniversity', w1,
+                'Bonus', w1,
+                'Incentive', w1,
+                'EarlyLeavingRate', w1,
+                'LateArrivalRate', w1,
+                'EarlyLeaving', w1,
+                'LateArrival', w1,
+                'FlatOt', w1,
+                'OtOnePointFiveRate', w1,
+                'OtTwoRate', w1,
+                'OtOne', w1,
+                'OtOnePointFive', w1,
+                'OtTwo', w1,
+                'NPLHourlyRate', w1,
+                'NPLDailyRate', w1,
+                'NPLHourly', w1,
+                'NPLDaily', w1,
+                'AbsentDailyRate', w1,
+                'AbsentDaily', w1,
+                'OtSubjectEpf', w0,
+                'OtSubjectEis', w0,
+                'OtSubjectPcb', w0,
+                'OtSubjectSocso', w0,
+                'OtSubjectHrdf', w0,
                 'PaidMoneyClaimingList', w8,
                 'AllowanceList', w9,
                 'DeductionList', w10,
                 'PayrollEarnings', w11,
                 'PayrollDeductions', w12,
-                'Deduction', w5,
-                'Earnings', w5,
-                'Nett', w5,
-                'EmployeeEIS', w5,
-                'EmployeePCB', w5,
-                'EmployeeSOCSO', w5,
-                'EmployeeEPF', w5,
-                'EmployerHRDF', w5,
-                'EmployerEPF', w5,
-                'EmployerEIS', w5,
-                'EmployerSOCSO', w5
+                'Deduction', w1,
+                'Earnings', w1,
+                'Nett', w1,
+                'EmployeeEIS', w1,
+                'EmployeePCB', w1,
+                'EmployeeSOCSO', w1,
+                'EmployeeEPF', w1,
+                'EmployerHRDF', w1,
+                'EmployerEPF', w1,
+                'EmployerEIS', w1,
+                'EmployerSOCSO', w1
             ]);
         }
     }

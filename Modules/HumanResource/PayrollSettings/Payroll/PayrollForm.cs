@@ -10,6 +10,44 @@ namespace HRMSoftware.PayrollSettings.Forms;
 [BasedOnRow(typeof(PayrollRow), CheckNames = true)]
 public class PayrollForm
 {
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool IncentiveSubjectEpf { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool IncentiveSubjectEis { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool IncentiveSubjectPcb { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool IncentiveSubjectSocso { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool IncentiveSubjectHrdf { get; set; }
+
+
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool BonusSubjectEpf { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool BonusSubjectEis { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool BonusSubjectPcb { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool BonusSubjectSocso { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool BonusSubjectHrdf { get; set; }
+
+
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool AnnualizedIncentive { get; set; }
+
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool SeperateIncentive { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool AnnualizedBonus { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public bool SeperateBonus { get; set; }
+    [HalfWidth, HideOnInsert, HideOnUpdate]
+    public double EmployeeCp38 { get; set; }
+
+
+
     [HalfWidth]
     public int EmployeeRowId { get; set; }
 
@@ -31,6 +69,18 @@ public class PayrollForm
     public string Remarks { get; set; }
 
     //
+   
+    public double HrdfWages { get; set; }
+    public double PcbWages { get; set; }
+    public double EisWages { get; set; }
+    public double SocsoWages { get; set; }
+    public double EpfWages { get; set; }
+    
+
+
+
+
+
     public double DaysWorked { get; set; }
     public double BasicPay { get; set; }
     public double DailyRate { get; set; }
@@ -55,6 +105,8 @@ public class PayrollForm
     public double ChildrenInUniversity { get; set; }
     public double DisabledChild { get; set; }
     public double DisabledChildInUniversity { get; set; }
+    public double Bonus { get; set; }
+    public double Incentive { get; set; }
 
     //
     public double EarlyLeavingRate { get; set; }

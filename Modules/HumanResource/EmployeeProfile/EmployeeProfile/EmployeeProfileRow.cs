@@ -649,7 +649,13 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.EmployeeCareerPath[this];
             set => fields.EmployeeCareerPath[this] = value;
         }
-
+        [MasterDetailRelation(foreignKey: nameof(EmployeeCp38Row.EmployeeRowId), ColumnsType = typeof(EmployeeCp38Columns))]
+        [DisplayName("Employee Cp38"), NotMapped]
+        public List<EmployeeCp38Row> Cp38Lists
+        {
+            get => fields.Cp38Lists[this];
+            set => fields.Cp38Lists[this] = value;
+        }
 
         [MasterDetailRelation(foreignKey: nameof(EmployeeAllowanceRow.EmployeeRowId), ColumnsType = typeof(EmployeeAllowanceColumns))]
         [DisplayName("Employee Allowance"), NotMapped]
@@ -870,8 +876,16 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.TotalWorkingTimeInMinutes[this];
             set => fields.TotalWorkingTimeInMinutes[this] = value;
         }
+
+        [DisplayName("Old Identity Card Number"), Size(1000)]
+        public string OldNRIC
+        {
+            get => fields.OldNRIC[this];
+            set => fields.OldNRIC[this] = value;
+        }
         public class RowFields : LoggingRowFields
         {
+            public StringField OldNRIC;
 
             public DoubleField WorkingHour;
             public DoubleField WorkingDays;
@@ -891,6 +905,7 @@ namespace HRMSoftware.EmployeeProfile
 
 
             public RowListField<EmployeeCareerPathRow> EmployeeCareerPath;
+            public RowListField<EmployeeCp38Row> Cp38Lists;
 
             public RowListField<EmployeeAllowanceRow> AllowanceLists;
             public RowListField<FixedDeductionRow> FixedDeductionList;

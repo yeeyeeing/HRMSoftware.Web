@@ -33,6 +33,8 @@ using Serenity.Navigation;
 [assembly: NavigationMenu(order: int.MaxValue, title: "HumanResource", icon: "fa fa-sitemap")]
 
 [assembly: NavigationMenu(order: int.MaxValue, title: "HumanResource/Announcement Management", icon: "fa-solid fa-paper-plane")]
+[assembly: NavigationMenu(int.MaxValue, title: "HumanResource/Payroll Management", icon: "fa-anchor", Permission = "*")]
+
 //[assembly: NavigationMenu(order: int.MaxValue, title: "HumanResource/Organisation Hierarchy", icon: "fa fa-sitemap")]
 
 

@@ -3,6 +3,7 @@ import { initFormType } from "@serenity-is/corelib/q";
 
 export interface MasterStateForm {
     Name: StringEditor;
+    StateCode: StringEditor;
 }
 
 export class MasterStateForm extends PrefixedContext {
@@ -18,7 +19,8 @@ export class MasterStateForm extends PrefixedContext {
             var w0 = StringEditor;
 
             initFormType(MasterStateForm, [
-                'Name', w0
+                'Name', w0,
+                'StateCode', w0
             ]);
         }
     }

@@ -3,6 +3,7 @@
 export interface MasterStateRow {
     Id?: number;
     Name?: string;
+    StateCode?: string;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

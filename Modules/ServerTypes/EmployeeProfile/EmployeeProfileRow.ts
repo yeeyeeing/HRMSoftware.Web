@@ -1,4 +1,5 @@
 ﻿import { EmployeeCareerPathRow } from "./EmployeeCareerPathRow";
+import { EmployeeCp38Row } from "./EmployeeCp38Row";
 import { EmployeeAllowanceRow } from "./EmployeeAllowanceRow";
 import { FixedDeductionRow } from "./FixedDeductionRow";
 import { MaritalStatus } from "./MaritalStatus";
@@ -12,6 +13,7 @@ import { ProbationClass } from "./ProbationClass";
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface EmployeeProfileRow {
+    OldNRIC?: string;
     WorkingHour?: number;
     WorkingDays?: number;
     DailyRateBase?: number;
@@ -25,6 +27,7 @@ export interface EmployeeProfileRow {
     DisabledChildInUniversity?: number;
     DisabledChild?: number;
     EmployeeCareerPath?: EmployeeCareerPathRow[];
+    Cp38Lists?: EmployeeCp38Row[];
     AllowanceLists?: EmployeeAllowanceRow[];
     FixedDeductionList?: FixedDeductionRow[];
     CountryID?: number;

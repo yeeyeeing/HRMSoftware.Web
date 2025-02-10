@@ -203,6 +203,7 @@ public class CompanySettingsForm
 
 
     [Tab("Working Days Information")]
+    public double ProbationPeriod { get; set; }
     public double MonthlyDays { get; set; }
 
     public bool SundayWeekday { get; set; }

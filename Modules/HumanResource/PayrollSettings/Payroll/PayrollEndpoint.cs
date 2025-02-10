@@ -16,10 +16,10 @@ using MyRow = HRMSoftware.PayrollSettings.PayrollRow;
 using Row1 = HRMSoftware.PayrollSettings.Endpoints.PayrollEndpoint.Ask;
 
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
-//using System.Data.SqlClient;
 using Microsoft.Data.SqlClient;
 
+using Newtonsoft.Json.Linq;
+//using System.Data.SqlClient;
 namespace HRMSoftware.PayrollSettings.Endpoints;
 
 [Route("Services/PayrollSettings/Payroll/[action]")]
@@ -114,6 +114,7 @@ public class PayrollEndpoint : ServiceEndpoint
          int EisCategory, int EpfCategory, int SocsoCategory, int HrdfCategory,
         float EpfAmount, float EisAmount, float PcbAmount, float SocsoAmount, float HrdfAmount,
          float WorkingSpouse, float ChildrenUnderEighteen, float ChildrenInUniversity, float NumberOfDisabledChild, float NumberOfDisabledChildInUni)
+
     {
         ListResponse<MyRow> x = new ListResponse<MyRow>();
         x.Entities = (List<MyRow>)connection.Query<MyRow>("dbo.CalculateGovernmentPaymentSpecial",
@@ -129,6 +130,39 @@ public class PayrollEndpoint : ServiceEndpoint
             @PcbAmount = PcbAmount,
             @SocsoAmount = SocsoAmount,
             @HrdfAmount = HrdfAmount,
+
+            @WorkingSpouse = WorkingSpouse,
+            @ChildrenUnderEighteen = ChildrenUnderEighteen,
+            @ChildrenInUniversity = ChildrenInUniversity,
+            @NumberOfDisabledChild = NumberOfDisabledChild,
+            @NumberOfDisabledChildInUni = NumberOfDisabledChildInUni,
+
+        },
+        commandType: System.Data.CommandType.StoredProcedure);
+        return x;
+    }
+    [HttpGet]
+    public ListResponse<MyRow> CalculateGovernmentPaymentBonus(IDbConnection connection, ListRequest request,
+        int EisCategory, int EpfCategory, int SocsoCategory, int HrdfCategory,
+       float EpfAmount, float EisAmount, float PcbAmount, float SocsoAmount, float HrdfAmount,
+        float WorkingSpouse, float ChildrenUnderEighteen, float ChildrenInUniversity, float NumberOfDisabledChild, float NumberOfDisabledChildInUni,
+        float Bonus)
+    {
+        ListResponse<MyRow> x = new ListResponse<MyRow>();
+        x.Entities = (List<MyRow>)connection.Query<MyRow>("dbo.CalculateGovernmentPaymentBonus",
+        param: new
+        {
+            @HrdfCategory = HrdfCategory,
+
+            @EisCategory = EisCategory,
+            @EpfCategory = EpfCategory,
+            @SocsoCategory = SocsoCategory,
+            @EpfAmount = EpfAmount,
+            @EisAmount = EisAmount,
+            @PcbAmount = PcbAmount,
+            @SocsoAmount = SocsoAmount,
+            @HrdfAmount = HrdfAmount,
+            @Bonus = Bonus,
             @WorkingSpouse = WorkingSpouse,
             @ChildrenUnderEighteen = ChildrenUnderEighteen,
             @ChildrenInUniversity = ChildrenInUniversity,

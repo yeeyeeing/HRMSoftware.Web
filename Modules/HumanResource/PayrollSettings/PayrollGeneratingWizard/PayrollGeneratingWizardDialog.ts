@@ -70,6 +70,7 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
 
         for (let employee of self.EmployeeData) {
             const { JobGradeID, DivisionID, DepartmentID, OccupationID, SectionID, Id } = employee;
+            console.log(employee)
 
             // Check if the employee matches any criteria
             const found =
@@ -94,6 +95,8 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
             // Update the buffer value
             self.form.EmployeeRowListBuffer.value = employeeRowList.join(',');
         }
+        self.form.EmployeeRowList.value = self.form.EmployeeRowListBuffer.value
+
     }
 
     public counter: number;
@@ -120,7 +123,7 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
         EmployeeRowListBuffer.forEach(number => {
             EmployeeRowList.push(parseInt(number)); // Convert string to integer and push to numberList
         })
-
+        /*
         PayrollService.List({
         }, response => {
 
@@ -142,6 +145,7 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
             }
             self.form.EmployeeRowList.value = EmployeeRowList.join(',')
         })
+        */
     }
     protected getToolbarButtons() {
         var self = this;
@@ -247,57 +251,6 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
                 },
             }
         );
-        buttons.push(
-            {
-                title: "Download Txt",	// *** Get button text from translation
-                cssClass: 'text-bg-success p-2 ml-auto',
-                icon: 'fas fa-hat-wizard text-green',
-                onClick: () => {
-
-                    var queryString = "PayMonth=" + encodeURIComponent(self.form.PayMonth.value) +
-                        "&PayYear=" + encodeURIComponent(self.form.PayYear.value);
-                    var url = window.location.origin + '/PayrollSettings/Payroll/TxtGenerate?' + queryString
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', url, true);
-                    xhr.responseType = 'blob';
-                    xhr.onload = function () {
-                        if (xhr.status === 200) {
-                            var blob = xhr.response;
-                            const fileUrl = window.URL.createObjectURL(blob);
-
-                            // Create an anchor element
-                            const a = document.createElement('a');
-                            a.style.display = 'none';
-
-                            // Set the href to the Object URL
-                            a.href = fileUrl;
-
-                            // Set the download attribute with the desired file name
-                            a.download = 'example.txt';  // You can customize the filename here
-
-                            // Append the anchor to the body (required for it to work)
-                            document.body.appendChild(a);
-
-                            // Simulate a click to trigger the download
-                            a.click();
-
-                            // Clean up by removing the anchor and revoking the object URL
-                            document.body.removeChild(a);
-                            window.URL.revokeObjectURL(fileUrl);
-
-                        } else {
-                            notifyError('Error encounter when downloading Payslip Pdf');
-                        }
-                    };
-                    xhr.send() 
-
-
-                        }
-                    
-               
-            }
-        );
-
         return buttons
     }
     public dialogOpen(asPanel?: boolean): void {
@@ -410,36 +363,36 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
             if (isEmptyOrNull($(PayMonthElement).val()) || isEmptyOrNull($(PayYearElement).val())) 
                 self.form.EmployeeRowList.value = ""
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+            //self.SearchEmployeeCallback();
         })
         $(PayYearElement).on('change', async function () {
             if (isEmptyOrNull($(PayMonthElement).val()) || isEmptyOrNull($(PayYearElement).val())) 
                 self.form.EmployeeRowList.value = ""
             
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+            //self.SearchEmployeeCallback();
         })
         $(OccupationListElement).on('change', async function () {
             self.SearchCallback()
-            self.SearchEmployeeCallback();
+          //  self.SearchEmployeeCallback();
 
         })
         $(DivisionListElement).on('change', async function () {
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+           // self.SearchEmployeeCallback();
 
         })
         $(JobGradeListElement).on('change', async function () {
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+            //self.SearchEmployeeCallback();
         })
         $(DepartmentListElement).on('change', async function () {
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+            //self.SearchEmployeeCallback();
         })
         $(SectionListElement).on('change', async function () {
             self.SearchCallback();
-            self.SearchEmployeeCallback();
+            //self.SearchEmployeeCallback();
 
         })
    

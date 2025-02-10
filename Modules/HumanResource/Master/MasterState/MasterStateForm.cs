@@ -8,4 +8,6 @@ namespace HRMSoftware.Master.Forms;
 public class MasterStateForm
 {
     public string Name { get; set; }
+    public string StateCode { get; set; }
+
 }

@@ -1,9 +1,10 @@
-﻿import { DateEditor, ImageUploadEditor, StringEditor, EnumEditor, LookupEditor, IntegerEditor, MultipleImageUploadEditor, BooleanEditor, DecimalEditor, PrefixedContext } from "@serenity-is/corelib";
+﻿import { DateEditor, ImageUploadEditor, StringEditor, EnumEditor, IntegerEditor, LookupEditor, MultipleImageUploadEditor, BooleanEditor, DecimalEditor, PrefixedContext } from "@serenity-is/corelib";
 import { SexType } from "./SexType";
 import { EmployeeType } from "./EmployeeType";
 import { MaritalStatus } from "./MaritalStatus";
 import { ProbationClass } from "./ProbationClass";
 import { EmployeeCareerPathEditor } from "@/HumanResource/EmployeeProfile/EmployeeCareerPath/EmployeeCareerPathEditor";
+import { EmployeeCp38Editor } from "@/HumanResource/EmployeeProfile/EmployeeCp38/EmployeeCp38Editor";
 import { EmployeeAllowanceEditor } from "@/HumanResource/EmployeeProfile/EmployeeAllowance/EmployeeAllowanceEditor";
 import { FixedDeductionEditor } from "@/HumanResource/EmployeeProfile/FixedDeduction/FixedDeductionEditor";
 import { EPFClass } from "./EPFClass";
@@ -28,8 +29,10 @@ export interface EmployeeProfileForm {
     TelNumber1: StringEditor;
     TelNumber2: StringEditor;
     MaritalStatus: EnumEditor;
-    Nric: StringEditor;
+    Age: IntegerEditor;
     RetireDate: DateEditor;
+    Nric: StringEditor;
+    OldNRIC: StringEditor;
     RaceID: LookupEditor;
     NationalityID: LookupEditor;
     StateID: LookupEditor;
@@ -73,6 +76,7 @@ export interface EmployeeProfileForm {
     NightShiftAllowancePerDay: DecimalEditor;
     BankID: LookupEditor;
     BankAccountNumber: StringEditor;
+    Cp38Lists: EmployeeCp38Editor;
     OtPayEntitlement: BooleanEditor;
     FixedOtRateOption: BooleanEditor;
     PayByMonth: BooleanEditor;
@@ -112,14 +116,15 @@ export class EmployeeProfileForm extends PrefixedContext {
             var w1 = ImageUploadEditor;
             var w2 = StringEditor;
             var w3 = EnumEditor;
-            var w4 = LookupEditor;
-            var w5 = IntegerEditor;
+            var w4 = IntegerEditor;
+            var w5 = LookupEditor;
             var w6 = MultipleImageUploadEditor;
             var w7 = EmployeeCareerPathEditor;
             var w8 = BooleanEditor;
             var w9 = DecimalEditor;
-            var w10 = EmployeeAllowanceEditor;
-            var w11 = FixedDeductionEditor;
+            var w10 = EmployeeCp38Editor;
+            var w11 = EmployeeAllowanceEditor;
+            var w12 = FixedDeductionEditor;
 
             initFormType(EmployeeProfileForm, [
                 'ResignationDate', w0,
@@ -137,12 +142,14 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'TelNumber1', w2,
                 'TelNumber2', w2,
                 'MaritalStatus', w3,
-                'Nric', w2,
+                'Age', w4,
                 'RetireDate', w0,
-                'RaceID', w4,
-                'NationalityID', w4,
-                'StateID', w4,
-                'CityID', w4,
+                'Nric', w2,
+                'OldNRIC', w2,
+                'RaceID', w5,
+                'NationalityID', w5,
+                'StateID', w5,
+                'CityID', w5,
                 'PassedProbation', w3,
                 'ProbationPeriodFrom', w0,
                 'ProbationPeriodUntil', w0,
@@ -154,18 +161,18 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'WorkingPermitValidUntil', w0,
                 'PassportNumber', w2,
                 'PassportIssueDate', w0,
-                'PassportValidPeriod', w5,
+                'PassportValidPeriod', w4,
                 'PassportExpiryDate', w0,
                 'Address', w2,
                 'PostalCode', w2,
-                'CountryID', w4,
-                'Cp8dID', w4,
-                'DepartmentID', w4,
-                'DivisionID', w4,
-                'SectionID', w4,
-                'JobGradeID', w4,
-                'OccupationID', w4,
-                'CostCentreID', w4,
+                'CountryID', w5,
+                'Cp8dID', w5,
+                'DepartmentID', w5,
+                'DivisionID', w5,
+                'SectionID', w5,
+                'JobGradeID', w5,
+                'OccupationID', w5,
+                'CostCentreID', w5,
                 'JobDescription', w6,
                 'EmployeeCareerPath', w7,
                 'CreateUser', w8,
@@ -173,22 +180,23 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'UserName', w2,
                 'UserPassword', w2,
                 'WorkingSpouse', w8,
-                'ChildrenInUniversity', w5,
-                'ChildrenUnderEighteen', w5,
-                'DisabledChildInUniversity', w5,
-                'DisabledChild', w5,
+                'ChildrenInUniversity', w4,
+                'ChildrenUnderEighteen', w4,
+                'DisabledChildInUniversity', w4,
+                'DisabledChild', w4,
                 'BasicSalary', w9,
-                'DailyWorkingMinute', w5,
+                'DailyWorkingMinute', w4,
                 'NightShiftAllowancePerDay', w9,
-                'BankID', w4,
+                'BankID', w5,
                 'BankAccountNumber', w2,
+                'Cp38Lists', w10,
                 'OtPayEntitlement', w8,
                 'FixedOtRateOption', w8,
                 'PayByMonth', w8,
                 'PayByHour', w8,
                 'PayByDay', w8,
-                'AllowanceLists', w10,
-                'FixedDeductionList', w11,
+                'AllowanceLists', w11,
+                'FixedDeductionList', w12,
                 'EpfClass', w3,
                 'EpfAccountNumber', w2,
                 'EisClass', w3,

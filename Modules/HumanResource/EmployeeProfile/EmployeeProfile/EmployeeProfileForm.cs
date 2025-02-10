@@ -62,13 +62,21 @@ public class EmployeeProfileForm
     [HalfWidth]
     public int MaritalStatus { get; set; }
 
-    
+
     [HalfWidth]
-    public string Nric { get; set; }
-   
+    public int Age { get; set; }
+
 
     [HalfWidth]
     public DateTime RetireDate { get; set; }
+
+    [HalfWidth]
+    public string Nric { get; set; }
+    [HalfWidth]
+    public string OldNRIC    { get; set; }
+
+
+
 
     //[HalfWidth]
     //public int ProbationPeriod { get; set; }
@@ -244,6 +252,9 @@ public class EmployeeProfileForm
     */
 
 
+    [Category("EmployeeCp38")]
+    [IgnoreName, LabelWidth("0"), EmployeeCp38Editor]
+    public List<EmployeeCp38Row> Cp38Lists { get; set; }
     [Category("Payment Mode")]
 
     public bool OtPayEntitlement { get; set; }
@@ -251,7 +262,6 @@ public class EmployeeProfileForm
     public int PayByMonth { get; set; }
     public int PayByHour { get; set; }
     public int PayByDay { get; set; }
-
 
 
 

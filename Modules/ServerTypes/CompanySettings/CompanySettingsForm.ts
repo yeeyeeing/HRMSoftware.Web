@@ -75,6 +75,7 @@ export interface CompanySettingsForm {
     FixedLateArrivalDenominator: DecimalEditor;
     LateArrivalMonthDays: BooleanEditor;
     LateArrivalDes: StringEditor;
+    ProbationPeriod: DecimalEditor;
     MonthlyDays: DecimalEditor;
     SundayWeekday: BooleanEditor;
     MondayWeekday: BooleanEditor;
@@ -185,6 +186,7 @@ export class CompanySettingsForm extends PrefixedContext {
                 'FixedLateArrivalDenominator', w5,
                 'LateArrivalMonthDays', w3,
                 'LateArrivalDes', w1,
+                'ProbationPeriod', w5,
                 'MonthlyDays', w5,
                 'SundayWeekday', w3,
                 'MondayWeekday', w3,

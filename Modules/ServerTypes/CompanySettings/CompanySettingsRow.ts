@@ -19,6 +19,7 @@ export interface CompanySettingsRow {
     FixedLateArrivalDenominator?: number;
     FixedNPLDenominator?: number;
     FixedAbsentDenominator?: number;
+    ProbationPeriod?: number;
     EarlyLeavingBasedOnWorkingHour?: boolean;
     EarlyLeavingBasedOnFixedDenominator?: boolean;
     LateArrivalBasedOnWorkingHour?: boolean;

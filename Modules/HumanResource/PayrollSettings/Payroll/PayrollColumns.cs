@@ -36,6 +36,8 @@ public class PayrollColumns
     public string DepartmentName { get; set; }
     [DisplayName("Division"), Hidden]
     public string DivisionName { get; set; }
+    [DisplayName("Section"), Hidden]
+    public string SectionName { get; set; }
 
 
 }

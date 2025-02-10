@@ -1,4 +1,5 @@
 using HRMSoftware.EmployeeProfile;
+using HRMSoftware.Master;
 using HRMSoftware.OrganisationHierarchy;
 using Serenity.ComponentModel;
 using Serenity.Data;
@@ -70,6 +71,8 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         get => fields.EmployeeName[this];
         set => fields.EmployeeName[this] = value;
     }
+
+
 
     [DisplayName("Employee Socso"), Column("EmployeeSOCSO")]
     public double? EmployeeSocso
@@ -220,7 +223,14 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         get => fields.PayslipList[this];
         set => fields.PayslipList[this] = value;
     }
+    [NotMapped]
+    public string CompanyRegistrationNumber
+    {
+        get => fields.CompanyRegistrationNumber[this];
+        set => fields.CompanyRegistrationNumber[this] = value;
+    }
 
+    
 
 
     [DisplayName("Pay Month"), Column("PayMonth"), NotNull]
@@ -252,8 +262,108 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         get => fields.EmployeeRowListBuffer[this];
         set => fields.EmployeeRowListBuffer[this] = value;
     }
+
+    [DisplayName("Text Class"), NotMapped,NotNull]
+    public TextClass? TextType
+    {
+        get => fields.TextType[this];
+        set => fields.TextType[this] = value;
+    }
+    [DisplayName("Organisation Name"),NotMapped]
+    public string OrganisationName
+    {
+        get => fields.OrganisationName[this];
+        set => fields.OrganisationName[this] = value;
+    }
+    [DisplayName("All Employee"), NotMapped]
+    [BooleanEditor]
+    public bool? All
+    {
+        get => fields.All[this];
+        set => fields.All[this] = value;
+    }
+    [DisplayName("Organisation Code"), NotMapped]
+    public string OrganisationCode
+    {
+        get => fields.OrganisationCode[this];
+        set => fields.OrganisationCode[this] = value;
+    }
+    [DisplayName("Crediting Date"), NotNull]
+    public DateTime? CreditingDate
+    {
+        get => fields.CreditingDate[this];
+        set => fields.CreditingDate[this] = value;
+    }
+
+
+    [NotMapped, DisplayName("E-mail address "), NotNull]
+    public string Email
+    {
+        get => fields.Email[this];
+        set => fields.Email[this] = value;
+    }
+    [NotMapped, DisplayName("Phone Number"), NotNull]
+    public string PhoneNumber
+    {
+        get => fields.PhoneNumber[this];
+        set => fields.PhoneNumber[this] = value;
+    }
+    [NotMapped, DisplayName("Contact Person Name"), NotNull]
+    public string ContactPerson
+    {
+        get => fields.ContactPerson[this];
+        set => fields.ContactPerson[this] = value;
+    }
+    [DisplayName("State Code"),LookupEditor(typeof(MasterStateRow)), NotNull]
+    public int? StateCodeId
+    {
+        get => fields.StateCodeId[this];
+        set => fields.StateCodeId[this] = value;
+    }
+   
+    [DisplayName("EIS/SOCSO Format"), NotNull,NotMapped]
+    public TextFormatEisSocso? TextFormatEisSocsoId
+    {
+        get => fields.TextFormatEisSocsoId[this];
+        set => fields.TextFormatEisSocsoId[this] = value;
+    }
+    [DisplayName("EPF Format"), NotNull, NotMapped]
+    public TextFormatEpf? TextFormatEpfId
+    {
+        get => fields.TextFormatEpfId[this];
+        set => fields.TextFormatEpfId[this] = value;
+    }
+    [DisplayName("Autopay Format"), NotNull, NotMapped]
+    public TextFormatAutopay? TextFormatAutopayId
+    {
+        get => fields.TextFormatAutopayId[this];
+        set => fields.TextFormatAutopayId[this] = value;
+    }
+    [DisplayName("LHDN Format"), NotNull, NotMapped]
+    public TextFormatLHDN? TextFormatLhdnId
+    {
+        get => fields.TextFormatLhdnId[this];
+        set => fields.TextFormatLhdnId[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
+        
+        public Int32Field StateCodeId;
+
+        public StringField Email;
+        public StringField PhoneNumber;
+        public StringField ContactPerson;
+        public StringField OrganisationName;
+        public StringField OrganisationCode;
+        public DateTimeField CreditingDate;
+
+        public EnumField<TextClass> TextType;
+
+        public EnumField<TextFormatEisSocso> TextFormatEisSocsoId;
+        public EnumField<TextFormatEpf> TextFormatEpfId;
+        public EnumField<TextFormatAutopay> TextFormatAutopayId;
+        public EnumField<TextFormatLHDN> TextFormatLhdnId;
+
         public Int32Field PayMonth;
         public Int32Field PayYear;
         public BooleanField Download;
@@ -269,7 +379,8 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         public ListField<int> SectionList;
 
         public StringField PayslipList;
-
+        public StringField CompanyRegistrationNumber;
+        public BooleanField All;
 
 
         public Int32Field Id;

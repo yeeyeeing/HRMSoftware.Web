@@ -1,6 +1,23 @@
-﻿import { fieldsProxy } from "@serenity-is/corelib/q";
+﻿import { TextClass } from "./TextClass";
+import { TextFormatEisSocso } from "./TextFormatEisSocso";
+import { TextFormatEpf } from "./TextFormatEpf";
+import { TextFormatAutopay } from "./TextFormatAutopay";
+import { TextFormatLHDN } from "./TextFormatLHDN";
+import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface PayrollGeneratingWizardRow {
+    StateCodeId?: number;
+    Email?: string;
+    PhoneNumber?: string;
+    ContactPerson?: string;
+    OrganisationName?: string;
+    OrganisationCode?: string;
+    CreditingDate?: string;
+    TextType?: TextClass;
+    TextFormatEisSocsoId?: TextFormatEisSocso;
+    TextFormatEpfId?: TextFormatEpf;
+    TextFormatAutopayId?: TextFormatAutopay;
+    TextFormatLhdnId?: TextFormatLHDN;
     PayMonth?: number;
     PayYear?: number;
     Download?: boolean;
@@ -12,6 +29,8 @@ export interface PayrollGeneratingWizardRow {
     JobGradeList?: number[];
     SectionList?: number[];
     PayslipList?: string;
+    CompanyRegistrationNumber?: string;
+    All?: boolean;
     Id?: number;
     EmployeeRowId?: number;
     EmployeeId?: string;

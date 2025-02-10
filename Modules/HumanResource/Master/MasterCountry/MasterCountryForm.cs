@@ -8,4 +8,6 @@ namespace HRMSoftware.Master.Forms;
 public class MasterCountryForm
 {
     public string Name { get; set; }
+    public string CountryCode { get; set; }
+
 }

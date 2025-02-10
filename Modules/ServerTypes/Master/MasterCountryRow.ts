@@ -3,6 +3,7 @@
 export interface MasterCountryRow {
     Id?: number;
     Name?: string;
+    CountryCode?: string;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;
