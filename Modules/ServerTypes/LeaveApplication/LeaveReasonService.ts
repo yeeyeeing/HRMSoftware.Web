@@ -1,6 +1,6 @@
 ﻿import { SaveRequest, SaveResponse, DeleteRequest, DeleteResponse, RetrieveRequest, RetrieveResponse, ListRequest, ListResponse } from "@serenity-is/corelib";
 import { LeaveReasonRow } from "./LeaveReasonRow";
-import { ServiceOptions, serviceRequest } from "@serenity-is/corelib/q";
+import { ServiceOptions, ServiceRequest, serviceRequest } from "@serenity-is/corelib/q";
 
 export namespace LeaveReasonService {
     export const baseUrl = 'LeaveApplication/LeaveReason';
@@ -10,13 +10,15 @@ export namespace LeaveReasonService {
     export declare function Delete(request: DeleteRequest, onSuccess?: (response: DeleteResponse) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function Retrieve(request: RetrieveRequest, onSuccess?: (response: RetrieveResponse<LeaveReasonRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function List(request: ListRequest, onSuccess?: (response: ListResponse<LeaveReasonRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
+    export declare function LeaveReasonList(request: ServiceRequest, onSuccess?: (response: ListResponse<LeaveReasonRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
 
     export const Methods = {
         Create: "LeaveApplication/LeaveReason/Create",
         Update: "LeaveApplication/LeaveReason/Update",
         Delete: "LeaveApplication/LeaveReason/Delete",
         Retrieve: "LeaveApplication/LeaveReason/Retrieve",
-        List: "LeaveApplication/LeaveReason/List"
+        List: "LeaveApplication/LeaveReason/List",
+        LeaveReasonList: "LeaveApplication/LeaveReason/LeaveReasonList"
     } as const;
 
     [
@@ -24,7 +26,8 @@ export namespace LeaveReasonService {
         'Update', 
         'Delete', 
         'Retrieve', 
-        'List'
+        'List', 
+        'LeaveReasonList'
     ].forEach(x => {
         (<any>LeaveReasonService)[x] = function (r, s, o) {
             return serviceRequest(baseUrl + '/' + x, r, s, o);

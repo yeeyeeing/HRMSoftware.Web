@@ -170,7 +170,7 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
 
 
 
-    [DisplayName("Employee List"), NotMapped,
+    [DisplayName("Employee List"), NotMapped,NotNull,
      LookupEditor(typeof(EmployeeProfileRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
 
     public List<int> EmployeeRowList
@@ -314,11 +314,11 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         get => fields.ContactPerson[this];
         set => fields.ContactPerson[this] = value;
     }
-    [DisplayName("State Code"),LookupEditor(typeof(MasterStateRow)), NotNull]
-    public int? StateCodeId
+    [DisplayName("State"), NotNull,NotMapped]
+    public int? MasterStateId
     {
-        get => fields.StateCodeId[this];
-        set => fields.StateCodeId[this] = value;
+        get => fields.MasterStateId[this];
+        set => fields.MasterStateId[this] = value;
     }
    
     [DisplayName("EIS/SOCSO Format"), NotNull,NotMapped]
@@ -345,10 +345,17 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         get => fields.TextFormatLhdnId[this];
         set => fields.TextFormatLhdnId[this] = value;
     }
+    [DisplayName("Testing Mode"), NotNull, NotMapped]
+    public TestingMode? TestingMode
+    {
+        get => fields.TestingMode[this];
+        set => fields.TestingMode[this] = value;
+    }
+    
     public class RowFields : LoggingRowFields
     {
         
-        public Int32Field StateCodeId;
+        public Int32Field MasterStateId;
 
         public StringField Email;
         public StringField PhoneNumber;
@@ -358,6 +365,7 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
         public DateTimeField CreditingDate;
 
         public EnumField<TextClass> TextType;
+        public EnumField<TestingMode> TestingMode;
 
         public EnumField<TextFormatEisSocso> TextFormatEisSocsoId;
         public EnumField<TextFormatEpf> TextFormatEpfId;

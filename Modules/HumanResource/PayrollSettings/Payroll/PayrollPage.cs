@@ -976,7 +976,7 @@ namespace HRMSoftware.PayrollSettings.Pages
         [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
         public IActionResult TxtGenerate([FromServices] ISqlConnections sqlConnections, int PayMonth,int PayYear,int Type,string EmployeeArrayString, int StateCodeId,int TextFormat
             , string CompanyCode,string CompanyName, string CreditingDate
-       , string Email, string PhoneNumber, string ContactPerson)
+       , string Email, string PhoneNumber, string ContactPerson,int testMode)
         {
             // int[] EmployeeArray = EmployeeArrayString.Split(',').Select(int.Parse).ToArray();
             List<int> EmployeeArray = EmployeeArrayString.Split(',')
@@ -998,81 +998,173 @@ namespace HRMSoftware.PayrollSettings.Pages
             var json = JsonSerializer.Serialize(x);
             int jsonLength = json.Length;
             var deserializedList = JsonSerializer.Deserialize<List<MyRow>>(json);
+            var CreationDate = deserializedList[0].CurrentDateTime;
+            DateTime CreationDateTime = DateTime.Parse(CreationDate);
+            string CreationTime = CreationDateTime.ToString("HHmmss"); // e.g., "142530" for 14:25:30
+            string formattedCreationDateTime = CreationDateTime.ToString("yyyyMMdd");
+            string formattedCreationTimeStamp = ($"{formattedCreationDateTime}{CreationTime}").PadRight(16,'0');
             // var filteredList = deserializedList.Where(row => EmployeeArray.Contains(row.EmployeeRowId)).ToList();
-           // var filteredList = deserializedList.Where(row => EmployeeArray.Contains(row.EmployeeRowId)).ToList();
-
+            // var filteredList = deserializedList.Where(row => EmployeeArray.Contains(row.EmployeeRowId)).ToList();
             string fileContent = "";
-         
             if (Type == (int)TextClass.SOCSO)
             {
-                foreach (var item in deserializedList)
+                if (TextFormat == (int)TextFormatEisSocso.CIMB)
                 {
-                    if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
-                        continue;
-                    var EmployeeSocso = item.EmployeeSOCSO;
-                    var EmployerSocso = item.EmployerSOCSO;
-                    var TotalSocso = EmployeeSocso + EmployerSocso;
-                    if (TotalSocso <= 0)
-                        continue;
-                    var companySocso = item.CompanySocsoAccountNumber;
-                    var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
-                    var FirstPart = $"{companySocso}{CompanyRegistrationNumber}";
-                    var NRIC = item.NRIC;
-                    var Name = item.EmployeeName;
-                    string amountString = ((int)(TotalSocso * 100)).ToString();
-                    string paddedAmount = amountString.PadLeft(14, '0');
-                    string employeeDetails = $"{NRIC}{Name}".PadRight(92); // Combine NRIC + Name to 92 chars
-                    string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}".PadRight(24); // Year, Month, Amount (24 chars)
-                    string formattedRecord = $"{FirstPart.PadRight(23)}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                    formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
-                    fileContent += formattedRecord;
+                    foreach (var item in deserializedList)
+                    {
+                        if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
+                            continue;
+                        var EmployeeSocso = item.EmployeeSOCSO;
+                        var EmployerSocso = item.EmployerSOCSO;
+                        var TotalSocso = EmployeeSocso + EmployerSocso;
+                        if (TotalSocso <= 0)
+                            continue;
+                        var companySocso = item.CompanySocsoAccountNumber;
+                        var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
+                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20,' ')}";
+                        var identity = "";
+                        if(item.EmployeeType == (int)EmployeeType.Local)
+                            identity = item.NRIC;
+                       else if (item.EmployeeType == (int)EmployeeType.Foreigner)
+                            identity = item.EmployeeSsfw;
+                        identity = identity.PadRight(12, '0');
+                        var Name = item.EmployeeName.PadRight(150,' ');
+                        string amountString = ((int)(TotalSocso * 100)).ToString();
+                        string paddedAmount = amountString.PadLeft(14, '0');
+                        string employeeDetails = $"{identity}{Name}";
+                        string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}"; // Year, Month, Amount (24 chars)
+                        string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
+                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
+                        fileContent += formattedRecord;
+                    }
+                }
+                else if (TextFormat == (int)TextFormatEisSocso.SOCSO)
+                {
+                    foreach (var item in deserializedList)
+                    {
+                        if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
+                            continue;
+                        var EmployeeSocso = item.EmployeeSOCSO;
+                        var EmployerSocso = item.EmployerSOCSO;
+
+                        var EmployeeEIS = item.EmployeeEIS;
+                        var EmployerEIS = item.EmployerEIS;
+                        var TotalSocso = EmployeeSocso + EmployerSocso;
+                        if (TotalSocso <= 0)
+                            continue;
+                        var companySocso = item.CompanySocsoAccountNumber;
+                        var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
+                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20, ' ')}";
+                        var identity = "";
+                        if (item.EmployeeType == (int)EmployeeType.Local)
+                            identity = item.NRIC;
+                        else if (item.EmployeeType == (int)EmployeeType.Foreigner)
+                            identity = item.EmployeeSsfw;
+                        identity = identity.PadRight(12, '0');
+                        var Name = item.EmployeeName.PadRight(150, ' ');
+                        string EmployeeSocsoString = ((int)(EmployeeSocso * 100)).ToString().PadLeft(6, ' ');
+                        string EmployerSocsoString = ((int)(EmployerSocso * 100)).ToString().PadLeft(6, ' ');
+                        string EmployeeEisString = ((int)(EmployeeEIS * 100)).ToString().PadLeft(6,' ');
+                        string EmployerEisString = ((int)(EmployerEIS * 100)).ToString().PadLeft(6, ' ');
+                        string amountString = (item.SocsoWages.Value * 100).ToString();
+                        string paddedAmount = amountString.PadLeft(14, ' ');
+                        string employeeDetails = $"{identity}{Name}";
+                        string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}{EmployerSocsoString}{EmployeeSocsoString}{EmployerEisString}{EmployeeEisString}"; // Year, Month, Amount (24 chars)
+                        string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
+                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
+                        fileContent += formattedRecord;
+                    }
                 }
 
             }
             else if (Type == (int)TextClass.EIS)
             {
-
-                foreach (var item in deserializedList)
+                if (TextFormat == (int)TextFormatEisSocso.CIMB)
                 {
-                    Console.WriteLine(EmployeeArray);
-                    if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
-                        continue;
-                    var EmployeeEIS = item.EmployeeEIS;
-                    var EmployerEIS = item.EmployerEIS;
-                    var TotalSocso = EmployerEIS + EmployeeEIS;
-                    if (TotalSocso <= 0)
-                        continue;
+                    foreach (var item in deserializedList)
+                    {
+                        if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
+                            continue;
+                        var EmployeeEIS = item.EmployeeEIS;
+                        var EmployerEIS = item.EmployerEIS;
+                        var TotalSocso = EmployerEIS + EmployeeEIS;
+                        if (TotalSocso <= 0)
+                            continue;
 
-                    var companySocso = item.CompanySocsoAccountNumber;
-                    var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
-                    var FirstPart = $"{companySocso}{CompanyRegistrationNumber}";
-                    var NRIC = item.NRIC;
-                    var Name = item.EmployeeName;
-                    var CapitalisedName = Name.ToUpper();
-                    string amountString = ((int)(TotalSocso * 100)).ToString();
-                    string paddedAmount = amountString.PadLeft(14, '0');
-                    string employeeDetails = $"{NRIC}{CapitalisedName}".PadRight(92); // Combine NRIC + Name to 92 chars
-                    string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}".PadRight(24); // Year, Month, Amount (24 chars)
-                    string formattedRecord = $"{FirstPart.PadRight(23)}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                    formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
+                        var companySocso = item.CompanySocsoAccountNumber;
+                        var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
+                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber}";
+                        var NRIC = item.NRIC;
+                        var Name = item.EmployeeName;
+                        var CapitalisedName = Name.ToUpper();
+                        string amountString = ((int)(TotalSocso * 100)).ToString();
+                        string paddedAmount = amountString.PadLeft(14, '0');
+                        string employeeDetails = $"{NRIC}{CapitalisedName}".PadRight(92); // Combine NRIC + Name to 92 chars
+                        string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}".PadRight(24); // Year, Month, Amount (24 chars)
+                        string formattedRecord = $"{FirstPart.PadRight(23)}{employeeDetails}{contributionDetails}{Environment.NewLine}";
+                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
 
-                    fileContent += formattedRecord;
+                        fileContent += formattedRecord;
+                    }
                 }
+                else if (TextFormat == (int)TextFormatEisSocso.SOCSO)
+                {
+                    foreach (var item in deserializedList)
+                    {
+                        if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
+                            continue;
+                        var EmployeeSocso = item.EmployeeSOCSO;
+                        var EmployerSocso = item.EmployerSOCSO;
+
+                        var EmployeeEIS = item.EmployeeEIS;
+                        var EmployerEIS = item.EmployerEIS;
+                        var TotalSocso = EmployeeSocso + EmployerSocso;
+                        if (TotalSocso <= 0)
+                            continue;
+                        var companySocso = item.CompanySocsoAccountNumber;
+                        var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
+                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20, ' ')}";
+                        var identity = "";
+                        if (item.EmployeeType == (int)EmployeeType.Local)
+                            identity = item.NRIC;
+                        else if (item.EmployeeType == (int)EmployeeType.Foreigner)
+                            identity = item.EmployeeSsfw;
+                        identity = identity.PadRight(12, '0');
+                        var Name = item.EmployeeName.PadRight(150, ' ');
+                        string EmployeeSocsoString = ((int)(EmployeeSocso * 100)).ToString().PadLeft(6, ' ');
+                        string EmployerSocsoString = ((int)(EmployerSocso * 100)).ToString().PadLeft(6, ' ');
+                        string EmployeeEisString = ((int)(EmployeeEIS * 100)).ToString().PadLeft(6, ' ');
+                        string EmployerEisString = ((int)(EmployerEIS * 100)).ToString().PadLeft(6, ' ');
+                        string amountString = (item.SocsoWages.Value * 100).ToString();
+                        string paddedAmount = amountString.PadLeft(14, ' ');
+                        string employeeDetails = $"{identity}{Name}";
+                        string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}{EmployerSocsoString}{EmployeeSocsoString}{EmployerEisString}{EmployeeEisString}"; // Year, Month, Amount (24 chars)
+                        string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
+                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
+                        fileContent += formattedRecord;
+                    }
+                }
+
             }
             else if (Type == (int)TextClass.EPF)
             {
+
                 DateTime today = DateTime.Parse(CreditingDate);
                 string formattedDate = today.ToString("yyyyMMdd");
                 string formattedDate2 = today.ToString("yyyyMM");
+                string formattedDate3 = today.ToString("MMyyyy");
+
+                string formattedTimeStamp = ($"{formattedDate}{CreationTime}").PadRight(8,'0');
+
                 List<string> myList = new List<string> { };
-                float EmployerTotal = 0;
-                float EmployeeTotal = 0;
+                double EmployerTotal = 0;
+                double EmployeeTotal = 0;
                 var CompanyEpfNumber = deserializedList[0].CompanyEPFAccountNumber;
                 int NumberOfEmployee = deserializedList.Count();
                 int EpfAccountSum = 0;
+                var StateCode = deserializedList[0].StateCode;
                 foreach (var item in deserializedList)
                 {
-
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                         continue;
                     if (item.EPFAccountNumber is null || item.EPFAccountNumber == "")
@@ -1082,6 +1174,9 @@ namespace HRMSoftware.PayrollSettings.Pages
                     EpfAccountSum += EpfInteger;
                     var EmployeeEPF = item.EmployeeEPF;
                     var EmployerEPF = item.EmployerEPF;
+                    EmployerTotal += EmployerEPF.Value;
+                    EmployeeTotal += EmployeeEPF.Value;
+
                     var EpfStatutory = item.EpfWages;
                     var TotalEPF = EmployerEPF + EmployeeEPF;
                     if (TotalEPF <= 0)
@@ -1091,7 +1186,7 @@ namespace HRMSoftware.PayrollSettings.Pages
                     var EmployeeString = (EmployeeEPF * 100).ToString().PadLeft(15, '0');
                     var EpfStatutoryString = (EpfStatutory * 100).ToString().PadLeft(15, '0');
                     string amountPart = $"{EmployerString}{EmployeeString}{EpfStatutoryString}{Environment.NewLine}";
-                    string firstPart = $"02{item.EPFAccountNumber.PadLeft(19, '0')}{item.NRIC}   {item.EmployeeName}";
+                    string firstPart = $"02{item.EPFAccountNumber.PadLeft(19, '0')}{item.NRIC}   {item.EmployeeName.PadRight(40,' ')}";
                     string secondPart = $"{item.EmployeeId.PadLeft(20, ' ')}   {amountPart}";
                     string formattedRecord = $"{firstPart}{secondPart}";
                     myList.Add(formattedRecord);
@@ -1099,15 +1194,41 @@ namespace HRMSoftware.PayrollSettings.Pages
                 }
                 var EmployerTotalString = (EmployerTotal * 100).ToString().PadLeft(15, '0');
                 var EmployeeTotalString = (EmployeeTotal * 100).ToString().PadLeft(15, '0');
+                var header = "";
+                var TestChar = testMode == (int)TestingMode.Yes ? 'Y' : 'N';
+                Console.WriteLine("hereeee");
 
-                var header1 = $"00EPF MONTHLY FORM A{formattedDate}00001{EmployerTotalString}{EmployeeTotalString}{(CompanyEpfNumber).PadLeft(21, '0')}{Environment.NewLine}";
-                var header2 = $"01{(CompanyEpfNumber).ToString().PadLeft(19, '0')}{formattedDate2}DSK0000100000000{Environment.NewLine}";
+                Console.WriteLine(TestChar);
+                Console.WriteLine(TestChar);
+                Console.WriteLine(TestChar);
+                Console.WriteLine(TestChar);
+                Console.WriteLine(TestChar);
+                Console.WriteLine(TestChar);
+
+                Console.WriteLine("hereeee");
+                Console.WriteLine("hereeee");
+                Console.WriteLine("hereeee");
+                Console.WriteLine("hereeee");
+                Console.WriteLine("hereeee");
+
+                if (TextFormat == (int)TextFormatEpf.CIMB)
+                {
+                    string EpfContactPerson = ContactPerson.PadRight(40, ' ');
+                    string EpfPhoneNumber = PhoneNumber.PadRight(20, ' ');
+
+                    header = $"01{("EPF MONTHLY FORM A").ToString().PadRight(20, ' ')}{(CompanyEpfNumber).ToString().PadLeft(19, '0')}{formattedDate3}ITB{("03").ToString().PadLeft(9, '0')}{(StateCode).ToString().PadLeft(3, '0')}" +
+                        $"{EpfContactPerson}{EpfPhoneNumber}N00{formattedCreationTimeStamp}{formattedTimeStamp}{TestChar}{Environment.NewLine}";
+                }
+                else if (TextFormat == (int)TextFormatEpf.KWSP)
+                {
+                    var header1 = $"00EPF MONTHLY FORM A{formattedDate}00001{EmployerTotalString}{EmployeeTotalString}{(CompanyEpfNumber).PadLeft(21, '0')}{Environment.NewLine}";
+                    var header2 = $"01{(CompanyEpfNumber).ToString().PadLeft(19, '0')}{formattedDate2}DSK0000100000000{Environment.NewLine}";
+                    header = $"{header1}{header2}";
+                }
                 //01EPF MONTHLY FORM A  0000000000017142593122024ITB000000003014GOH KIOK                                075099119           N0020241213141511002024121114151100N
                 //var newHeader = $"01EPF MONTHLY FORM A  {(CompanyEpfNumber).ToString().PadLeft(19, '0')}{formattedDate2}ITB{"3".PadLeft(9,'0')}";
                 var ender = $"99{NumberOfEmployee.ToString().PadLeft(7, '0')}{EmployerTotalString}{EmployeeTotalString}{EpfAccountSum.ToString().PadLeft(21, '0')}";
-
-                fileContent += header1;
-                fileContent += header2;
+                fileContent += header;
                 foreach (var item in myList)
                     fileContent += item;
                 fileContent += ender;
@@ -1121,7 +1242,7 @@ namespace HRMSoftware.PayrollSettings.Pages
                 float EmployerTotal = 0;
                 float EmployeeTotal = 0;
                 var CompanyTaxNumber = deserializedList[0].CompanyIncomeTaxAccountNumber;
-                var CompanyTaxNumberRemovedChar = Regex.Replace(CompanyTaxNumber, "[a-zA-Z]", "");
+                var CompanyTaxNumberRemovedChar = Regex.Replace(CompanyTaxNumber, "[a-zA-Z]", "").PadLeft(10,'0');
 
                 int NumberOfEmployee = 0;
                 int PcbSum = 0;
@@ -1130,10 +1251,9 @@ namespace HRMSoftware.PayrollSettings.Pages
                 double Cp38AmountSum = 0;
                 foreach (var item in deserializedList)
                 {
-
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                         continue;
-                    NumberOfEmployee +=1;
+                    NumberOfEmployee += 1;
                     double EmployeePcb = item.EmployeePCB.Value;
                     double EmployeeCp38 = item.EmployeeCp38.Value;
                     if (EmployeePcb > 0)
@@ -1149,10 +1269,12 @@ namespace HRMSoftware.PayrollSettings.Pages
                     var WifeNumber = "0";
                     if ((int)item.MaritalStatus.Value == (int)MaritalStatus.Married)
                         WifeNumber = "1";
-                    
                     string PcbString = (EmployeePcb * 100).ToString().PadLeft(8, '0');
                     string Cp38String = (EmployeeCp38 * 100).ToString().PadLeft(8, '0');
-                    string formattedRecord = $"D{item.PCBnumber.PadLeft(10, '0')}{WifeNumber}{item.EmployeeName.PadLeft(60, ' ')}{item.OldNRIC.PadLeft(9, ' ')}   {item.NRIC.PadLeft(12, ' ')}{item.PassportNumber.PadLeft(12, ' ')}{item.CountryCode.PadLeft(2, ' ')}{PcbString}{Cp38String}{item.EmployeeId.PadLeft(10, ' ')}";
+                    string formattedRecord = $"D{item.PCBnumber.PadLeft(10, '0')}{WifeNumber}" +
+                        $"{item.EmployeeName.PadRight(60, ' ')}{item.OldNRIC.PadRight(9, ' ')}" +
+                        $"{"".PadLeft(3,' ')}{item.NRIC.PadRight(12, ' ')}{item.PassportNumber.PadRight(12, ' ')}" +
+                        $"{item.CountryCode.PadRight(2, ' ')}{PcbString}{Cp38String}{item.EmployeeId.PadLeft(10, ' ')}";
                     myList.Add(formattedRecord);
 
                 }
@@ -1166,14 +1288,15 @@ namespace HRMSoftware.PayrollSettings.Pages
                 var EmployeeTotalString = (EmployeeTotal * 100).ToString().PadLeft(15, '0');
 
 
-                var header1 = $"H{"".PadLeft(10)}{CompanyTaxNumberRemovedChar}{formattedDate2}{PcbAmountString}{PcbTotalRecordString}{Cp38AmountString}{Cp38TotalRecordString}{Email}{PhoneNumber}{ContactPerson}";
+                var header1 = $"H{"".PadLeft(10,' ')}{CompanyTaxNumberRemovedChar}{formattedDate2}{PcbAmountString}{PcbTotalRecordString}{Cp38AmountString}{Cp38TotalRecordString}{Email.PadRight(40,' ')}{PhoneNumber.PadRight(15, ' ')}{ContactPerson.PadRight(25, ' ')}";
 
                 fileContent += header1;
                 foreach (var item in myList)
                     fileContent += item;
 
             }
-            else if (Type == (int)TextClass.AUTOPAY) {
+            else if (Type == (int)TextClass.AUTOPAY)
+            {
                 //0120393TSH CONTRACT MANUFACTURING SDN.BHD      010120250000000000000000  
                 DateTime today = DateTime.Parse(CreditingDate);
                 string formattedDate = today.ToString("ddMMyyyy");
@@ -1185,9 +1308,17 @@ namespace HRMSoftware.PayrollSettings.Pages
                 {
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                         continue;
+                    var identity = "";
+                    if (item.EmployeeType == (int)EmployeeType.Local)
+                        identity = item.NRIC;
+                    
+                    identity = identity.PadLeft(34, ' ');
+
                     totalSalary += item.Nett.Value;
                     totalEmployee += 1;
-                    string formattedRecord = $"023500000{item.BankAccountNumber}      {item.EmployeeName.PadRight(40, ' ')}{(item.Nett*100).ToString().PadLeft(11,'0')}{(item.EmployeeId).ToString().PadLeft(3,'0')}{item.NRIC.PadLeft(34,' ')}{"2".PadLeft(13,' ')}{Environment.NewLine}";
+                    string formattedRecord = $"023500000{item.BankAccountNumber.PadRight(16,' ')}{item.EmployeeName.PadRight(40, ' ')}" +
+                        $"{(item.Nett * 100).ToString().PadLeft(11, '0')}{(item.EmployeeId).ToString().PadLeft(4, '0')}" +
+                        $"{identity}{"2".PadLeft(13, ' ')}{Environment.NewLine}";
                     myList.Add(formattedRecord);
                 }
                 var header1 = $"01{CompanyCode}{CompanyName.PadRight(40, ' ')}{formattedDate}0000000000000000{Environment.NewLine}";
@@ -1195,7 +1326,7 @@ namespace HRMSoftware.PayrollSettings.Pages
 
                 foreach (var item in myList)
                     fileContent += item;
-                var ender1 = $"03{totalEmployee.ToString().PadLeft(6,'0')}{(totalSalary * 100).ToString().PadLeft(13, '0')}";
+                var ender1 = $"03{totalEmployee.ToString().PadLeft(6, '0')}{(totalSalary * 100).ToString().PadLeft(13, '0')}";
                 fileContent += ender1;
 
             }

@@ -28,12 +28,13 @@ public class TextDownloadingWizardForm
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public string ContactPerson { get; set; }
-    public int StateCodeId { get; set; }
+    public int MasterStateId { get; set; }
     public int TextFormatEisSocsoId { get; set; }
     public int TextFormatEpfId { get; set; }
     public int TextFormatAutopayId { get; set; }
     public int TextFormatLhdnId { get; set; }
 
+    public int TestingMode { get; set; }
 
 
     [HalfWidth]

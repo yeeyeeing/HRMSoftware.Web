@@ -1,5 +1,5 @@
 import { Decorators, EntityDialog, EditorUtils, ListResponse, Criteria } from '@serenity-is/corelib';
-import { PayrollGeneratingWizardForm, PayrollGeneratingWizardRow, PayrollGeneratingWizardService, PayrollRow, PayrollService, PayrollSettingsService, TextClass, TextDownloadingWizardForm } from '../../../ServerTypes/PayrollSettings';
+import { PayrollGeneratingWizardForm, PayrollGeneratingWizardRow, PayrollGeneratingWizardService, PayrollRow, PayrollService, PayrollSettingsService, TextClass, TextDownloadingWizardForm, TextFormatEpf } from '../../../ServerTypes/PayrollSettings';
 import { alertDialog, isEmptyOrNull } from '@serenity-is/corelib/q';
 import { confirm, serviceCall, notifySuccess, notifyError } from '@serenity-is/corelib/q';
 import {  Select2Editor } from '@serenity-is/corelib';
@@ -10,6 +10,7 @@ import { PayrollWizardDialog } from '../PayrollWizard/PayrollWizardDialog';
 import { CompanySettingsService } from '../../../ServerTypes/CompanySettings';
 import { AnnouncementWizardService } from '../../../ServerTypes/Announcement';
 import { Authorization } from '@serenity-is/corelib/q';
+import { MasterStateService } from '../../../ServerTypes/Master';
 
 @Decorators.registerClass('HRMSoftware.PayrollSettings.TextDownloadingWizardDialog')
 export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingWizardRow, any> {
@@ -84,7 +85,17 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
                 cssClass: 'text-bg-success p-2 ml-auto',
                 icon: 'fas fa-hat-wizard text-green',
                 onClick: () => {
+                    if (isEmptyOrNull(self.form.TextType.value)) {
+                        alertDialog('Please fill in the type of government payment to generate')
+                        return;
+                    }
+                    if (isEmptyOrNull(self.form.EmployeeRowList.value)) {
+                        alertDialog('Please select the employee to include in the report')
+                        return;
+                    }
                     console.log(self.form.EmployeeRowList.value)
+                    console.log(self.form.MasterStateId.value)
+
 
                     if (parseInt(self.form.TextType.value) == TextClass.LHDN.valueOf()) {
                         PayrollSettingsService.Update({
@@ -109,24 +120,33 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
                         });
                     }
                     else if (parseInt(self.form.TextType.value) == TextClass.EPF.valueOf()) {
-                        if (isEmptyOrNull(self.form.StateCodeId.value)) {
+                        if (isEmptyOrNull(self.form.MasterStateId.value)) {
                             alertDialog('Please fill in the State Code')
                             return
                         }
-                           PayrollSettingsService.Update({
-                            EntityId: self.payrollSettingId,
-                            Entity:
-                            {
-                                "StateCodeId": parseInt(self.form.StateCodeId.value)
+                        if (parseInt(self.form.TextFormatEpfId.value) == TextFormatEpf.CIMB.valueOf()) {
+                            PayrollSettingsService.Update({
+                                EntityId: self.payrollSettingId,
+                                Entity:
+                                {
+                                    "ContactPerson": self.form.ContactPerson.value,
+                                    "PhoneNumber": self.form.PhoneNumber.value
+                                },
+                            });
+                        }
+                        PayrollSettingsService.Update({
+                        EntityId: self.payrollSettingId,
+                        Entity:
+                        {
+                            "StateCodeId": self.form.MasterStateId.value,
+                            "OrganisationName": self.form.OrganisationName.value,
+                            "OrganisationCode": self.form.OrganisationCode.value
 
-                            },
+                        },
                         });
                         
                     }
-                    if (isEmptyOrNull(self.form.TextType.value)) {
-                        alertDialog('Please fill in the type of government payment to generate')
-                        return;
-                    }
+                    
                     var TextFormat;
                     if (parseInt(self.form.TextType.value) == TextClass.LHDN.valueOf())
                         TextFormat = self.form.TextFormatLhdnId.value;
@@ -143,7 +163,7 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
 
 
 
-
+                    
                     var queryString = "PayMonth=" + encodeURIComponent(self.form.PayMonth.value) +
                         "&PayYear=" + encodeURIComponent(self.form.PayYear.value) +
                         "&Type=" + encodeURIComponent(self.form.TextType.value) +
@@ -154,8 +174,11 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
                         "&PhoneNumber=" + encodeURIComponent(self.form.PhoneNumber.value) +
                         "&ContactPerson=" + encodeURIComponent(self.form.ContactPerson.value) +
                         "&EmployeeArrayString=" + encodeURIComponent(self.form.EmployeeRowList.value) +
-                        "&StateCodeId=" + encodeURIComponent(self.form.StateCodeId.value) +
-                        "&TextFormat=" + encodeURIComponent(TextFormat)
+                        "&StateCodeId=" + encodeURIComponent(self.form.MasterStateId.value) +
+                        "&TextFormat=" + encodeURIComponent(TextFormat) +
+                        "&testMode=" + encodeURIComponent(self.form.TestingMode.value)
+                    console.log(self.form.MasterStateId.value)
+                    console.log(queryString)
 
 
 
@@ -203,6 +226,48 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
     public dialogOpen(asPanel?: boolean): void {
         super.dialogOpen();
         var self = this;
+        var ContactPersonElement = document.getElementById(this.idPrefix + 'ContactPerson')
+        $(ContactPersonElement).on('input', async function () {
+            let value = this.value;
+
+            
+            // Limit to 3 characters
+            if (value.length > 40) {
+                value = value.slice(0, 40);
+            }
+
+            // Update input value
+            this.value = value;
+        })
+        var EmailElement = document.getElementById(this.idPrefix + 'Email')
+        $(EmailElement).on('input', async function () {
+            let value = this.value;
+
+
+            // Limit to 3 characters
+            if (value.length > 40) {
+                value = value.slice(0, 40);
+            }
+
+            // Update input value
+            this.value = value;
+        })
+
+        var PhoneNumberElement = document.getElementById(this.idPrefix + 'PhoneNumber')
+        $(PhoneNumberElement).on('input', async function () {
+            let value = this.value;
+
+            // Remove non-numeric characters
+            value = value.replace(/\D/g, '');
+
+            // Limit to 3 characters
+            if (value.length > 20) {
+                value = value.slice(0, 20);
+            }
+
+            // Update input value
+            this.value = value;
+        })
 
         serviceCall<ListResponse<any>>({
             service: AnnouncementWizardService.baseUrl + '/GetTodayDateTime',
@@ -240,11 +305,23 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
         this.cloneButton.hide()
         this.undeleteButton.hide()
         //EditorUtils.setReadonly(this.form.EmployeeRowList.element, true);
+        var MasterStateElement = document.getElementById(this.idPrefix + 'MasterStateId')
     
         var PayMonthElement = document.getElementById(this.idPrefix + 'PayMonth')
         var PayYearElement = document.getElementById(this.idPrefix + 'PayYear')
         let PayMonthEditor = new Select2Editor($(PayMonthElement))
         let PayYearEditor = new Select2Editor($(PayYearElement))
+        let StateEditor = new Select2Editor($(MasterStateElement))
+        
+
+        MasterStateService.List({
+            //Criteria: Criteria('EmployeeRowId').in(self.form.EmployeeRowListBuffer.values),
+        }, response => {
+            for (var res in response.Entities) {
+                if (!isEmptyOrNull(response.Entities[res].StateCode))
+                    StateEditor.addItem({ id: (response.Entities[res].Id).toString(), text: (response.Entities[res].Name).toString(), }); // 8am - 6pm , will consider lates
+            }
+        })
         const months: string[] = [
             'January',   // 0
             'February',  // 1
@@ -272,12 +349,26 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
         
         PayYearEditor.set_value(todayYear.toString())
 
+        var MasterStateIdElement = document.getElementById(this.idPrefix + 'MasterStateId')
+        $(MasterStateIdElement).on('change', async function () {
+
+        })
+        var TextFormatEpfElement = document.getElementById(this.idPrefix + 'TextFormatEpfId')
+        $(TextFormatEpfElement).on('change', async function () {
+            if (parseInt(self.form.TextFormatEpfId.value) == TextFormatEpf.CIMB.valueOf()) 
+                $(`.PhoneNumber, .ContactPerson`).show()
+            
+            else 
+                $(`.PhoneNumber, .ContactPerson`).hide()
+
+           
+        });
 
         var TextTypeElement = document.getElementById(this.idPrefix + 'TextType')
-        $(`.TextFormatEisSocsoId, .TextFormatEpfId, .TextFormatAutopayId, .TextFormatLhdnId`).hide();
+        $(`.TextFormatEisSocsoId, .TextFormatEpfId, .TextFormatAutopayId, .TextFormatLhdnId, .TestingMode, .MasterStateId`).hide();
         $(TextTypeElement).on('change', async function () {
-            $(`.Email, .PhoneNumber, .ContactPerson, .CreditingDate, .OrganisationName, .OrganisationCode, .StateCodeId`).hide()
-            $(`.TextFormatEisSocsoId, .TextFormatEpfId, .TextFormatAutopayId, .TextFormatLhdnId`).hide();
+            $(`.Email, .PhoneNumber, .ContactPerson, .CreditingDate, .OrganisationName, .OrganisationCode, .MasterStateId`).hide()
+            $(`.TextFormatEisSocsoId, .TextFormatEpfId, .TextFormatAutopayId, .TextFormatLhdnId, .TestingMode`).hide();
             if (parseInt(self.form.TextType.value) == TextClass.LHDN.valueOf()) {
                 self.form.Email.value = self.Email
                 self.form.PhoneNumber.value = self.PhoneNumber
@@ -289,13 +380,17 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
             else if (parseInt(self.form.TextType.value) == TextClass.AUTOPAY.valueOf()) {
                 $(`.TextFormatAutopayId`).show();
                 var dateGenerated = new Date(todayYear, todayMonth, self.payDay)
-                self.form.CreditingDate.value = dateGenerated.toString()
+                var DateObjYear = dateGenerated.getFullYear().toString()
+                var DateObjMonth = (dateGenerated.getMonth() + 1).toString()
+                var DateObjDay = dateGenerated.getDate().toString()
+                var LatestDateFormat = DateObjMonth.padStart(2, '0') + '/' + DateObjDay.padStart(2, '0') + '/' + DateObjYear
+                self.form.CreditingDate.value = LatestDateFormat
                 self.form.OrganisationName.value = self.OrganisationName
                 self.form.OrganisationCode.value = self.OrganisationCode
                 $(` .CreditingDate, .OrganisationName, .OrganisationCode`).show()
             }            
             else if (parseInt(self.form.TextType.value) == TextClass.EPF.valueOf()) {
-                $(`.TextFormatEpfId`).show();
+                $(`.TextFormatEpfId, .TestingMode`).show();
                 var dateGenerated = new Date(todayYear, todayMonth, self.payDay)
                 var DateObjYear = dateGenerated.getFullYear().toString()
                 var DateObjMonth = (dateGenerated.getMonth() + 1).toString()
@@ -303,7 +398,7 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
                 var LatestDateFormat = DateObjMonth.padStart(2, '0') + '/' + DateObjDay.padStart(2, '0') + '/' + DateObjYear
 
                 self.form.CreditingDate.value = LatestDateFormat
-                $(` .CreditingDate, .StateCodeId`).show()
+                $(` .CreditingDate, .MasterStateId`).show()
             }
             else if (parseInt(self.form.TextType.value) == TextClass.EIS.valueOf()
                 || parseInt(self.form.TextType.value) == TextClass.SOCSO.valueOf()) {
@@ -374,7 +469,7 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
             self.AllButton()
 
         })
-        $(`.Email, .PhoneNumber, .ContactPerson, .CreditingDate, .OrganisationName, .OrganisationCode, .StateCodeId, .TextFormatId`).hide()
+        $(`.Email, .PhoneNumber, .ContactPerson, .CreditingDate, .OrganisationName, .OrganisationCode, .MasterStateId, .TextFormatId`).hide()
       
     }
     public AllButton(): void {

@@ -27,7 +27,7 @@ public sealed class MasterStateRow : LoggingRow<MasterStateRow.RowFields>, IIdRo
         get => fields.Name[this];
         set => fields.Name[this] = value;
     }
-    [DisplayName("State Code"), NotNull]
+    [DisplayName("State Code")]
     public string StateCode
     {
         get => fields.StateCode[this];

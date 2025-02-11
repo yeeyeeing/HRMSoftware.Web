@@ -740,6 +740,12 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.CountryCode[this];
         set => fields.CountryCode[this] = value;
     }
+    [NotMapped]
+    public string StateCode
+    {
+        get => fields.StateCode[this];
+        set => fields.StateCode[this] = value;
+    }
 
     [NotMapped]
     public string OldNRIC
@@ -902,9 +908,32 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         get => fields.IncentiveSubjectHrdf[this];
         set => fields.IncentiveSubjectHrdf[this] = value;
     }
+    [NotMapped]
+    public string CurrentDateTime
+    {
+        get => fields.CurrentDateTime[this];
+        set => fields.CurrentDateTime[this] = value;
+    }
+    [NotMapped]
+    public string EmployeeSsfw
+    {
+        get => fields.EmployeeSsfw[this];
+        set => fields.EmployeeSsfw[this] = value;
+    }
+    [NotMapped]
+    public int? EmployeeType
+    {
+        get => fields.EmployeeType[this];
+        set => fields.EmployeeType[this] = value;
+    }
 
     public class RowFields : LoggingRowFields
     {
+        public Int32Field EmployeeType;
+
+        public StringField EmployeeSsfw;
+        public StringField CurrentDateTime;
+
         public BooleanField BonusSubjectEpf;
         public BooleanField BonusSubjectEis;
         public BooleanField BonusSubjectPcb;
@@ -947,6 +976,7 @@ public sealed class PayrollRow : LoggingRow<PayrollRow.RowFields>, IIdRow, IName
         public StringField OldNRIC;
         public StringField PassportNumber;
         public StringField CountryCode;
+        public StringField StateCode;
 
         public StringField CompanySocsoAccountNumber;
         public StringField CompanyBankAccountNumber;

@@ -72,9 +72,11 @@ public class EmployeeProfileForm
 
     [HalfWidth]
     public string Nric { get; set; }
+
+    [HalfWidth]
+    public string SsfwNumber { get; set; }
     [HalfWidth]
     public string OldNRIC    { get; set; }
-
 
 
 

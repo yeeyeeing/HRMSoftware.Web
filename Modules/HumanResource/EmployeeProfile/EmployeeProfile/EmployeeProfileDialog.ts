@@ -204,18 +204,49 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
     protected onDialogOpen() {
         super.onDialogOpen()
         var self = this
+
+        var EpfAccountNumberElement = document.getElementById(this.idPrefix + 'EpfAccountNumber')
+        $(EpfAccountNumberElement).on('input', async function () {
+            let value = this.value;
+
+            // Remove non-numeric characters
+            value = value.replace(/\D/g, '');
+
+            // Limit to 3 characters
+            if (value.length > 19) 
+                value = value.slice(0, 19);
+            
+
+            // Update input value
+            this.value = value;
+        })
+
+
+        var NricElement = document.getElementById(this.idPrefix + 'Nric')
+        $(NricElement).on('input', async function () {
+            let value = this.value;
+            // Remove non-numeric characters
+            value = value.replace(/\D/g, '');
+            // Limit to 3 characters
+            if (value.length > 12)
+                value = value.slice(0, 12);
+            // Update input value
+            this.value = value;
+        })
+        var SsfwNumberElement = document.getElementById(this.idPrefix + 'SsfwNumber')
+        $(SsfwNumberElement).on('input', async function () {
+            let value = this.value;
+            // Remove non-numeric characters
+            value = value.replace(/\D/g, '');
+            // Limit to 3 characters
+            if (value.length > 12)
+                value = value.slice(0, 12);
+            // Update input value
+            this.value = value;
+        })
+
         EditorUtils.setReadonly(self.form.Age.element, true);
 
-        if (!this.isNew()) {
-            EditorUtils.setReadonly(self.form.BasicSalary.element, true);
-            EditorUtils.setReadonly(self.form.DivisionID.element, true);
-            EditorUtils.setReadonly(self.form.DepartmentID.element, true);
-            EditorUtils.setReadonly(self.form.OccupationID.element, true);
-            EditorUtils.setReadonly(self.form.SectionID.element, true);
-            EditorUtils.setReadonly(self.form.JobGradeID.element, true);
-        }
-        else
-            $('.CareerPahth').parent().hide()
 
 
 
@@ -264,6 +295,28 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             });
         });
         $('.FixedOtRateOption').hide();
+
+        var EmployeeTypeElement = document.getElementById(`${this.idPrefix}EmployeeType`)
+        $(EmployeeTypeElement).on('change', async function () {
+            $(`.SsfwNumber, .Nric`).hide()
+            if (parseInt(self.form.EmployeeType.value) == EmployeeType.Local.valueOf())
+                $(`.Nric`).show()
+            else if (parseInt(self.form.EmployeeType.value) == EmployeeType.Foreigner.valueOf())
+                $(`.SsfwNumber`).show()
+
+        })
+        if (!this.isNew()) {
+            $(EmployeeTypeElement).trigger('change')
+            EditorUtils.setReadonly(self.form.BasicSalary.element, true);
+            EditorUtils.setReadonly(self.form.DivisionID.element, true);
+            EditorUtils.setReadonly(self.form.DepartmentID.element, true);
+            EditorUtils.setReadonly(self.form.OccupationID.element, true);
+            EditorUtils.setReadonly(self.form.SectionID.element, true);
+            EditorUtils.setReadonly(self.form.JobGradeID.element, true);
+        }
+        else
+            $('.CareerPahth').parent().hide()
+
         var OtPayEntitlement = document.getElementById(`${this.idPrefix}OtPayEntitlement`)
         $(OtPayEntitlement).on('change', async function () {
             if (self.form.OtPayEntitlement.value == true)
@@ -827,6 +880,22 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         }
         if (this.form.UserName.value == 'Username Cannot Start With Number, No Special Characters')
             this.form.UserName.value = ''
+        var self = this
+        if (parseInt(self.form.EmployeeType.value) == EmployeeType.Local.valueOf()) {
+            if (isEmptyOrNull(self.form.Nric.value))
+                list_of_errors.push('Please fill in NRIC number')
+            else if (self.form.Nric.value.length < 12)
+                list_of_errors.push('The length of NRIC should be 12')
+        }
+
+        else if (parseInt(self.form.EmployeeType.value) == EmployeeType.Foreigner.valueOf() ) {
+            if (isEmptyOrNull(self.form.SsfwNumber.value))
+                list_of_errors.push('Please fill in SSFW number')
+            else if (self.form.SsfwNumber.value.length < 12)
+                list_of_errors.push('The length of SSFW should be 12')
+
+        }
+
         if (this.isNew() || (this.Username.toLowerCase() != this.form.UserName.value.toLowerCase()) && !isEmptyOrNull(this.Username)) {
             for (var index in this.ListOfUserName)
                 if (this.form.UserName.value.toLowerCase() == this.ListOfUserName[index].toLowerCase())

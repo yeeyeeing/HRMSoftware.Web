@@ -130,6 +130,13 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.EmployeeEmail[this] = value;
         }
 
+        [DisplayName("SSFW Number"), Size(1000)]
+        public string SsfwNumber
+        {
+            get => fields.SsfwNumber[this];
+            set => fields.SsfwNumber[this] = value;
+        }
+
         [DisplayName("Epf Account Number"), Column("EPFAccountNumber"), Size(1000)]
         public string EpfAccountNumber
         {
@@ -620,7 +627,7 @@ namespace HRMSoftware.EmployeeProfile
         const string jCountry = nameof(jCountry);
 
 
-        [DisplayName("Country"), Column("CountryID"), ForeignKey("MasterCountries", "ID"), LeftJoin(jCountry)]
+        [DisplayName("Country"), Column("CountryID"), ForeignKey("MasterCountries", "ID"), LeftJoin(jCountry),NotNull]
         [LookupEditor(typeof(Master.MasterCountryRow))]
         public int? CountryID
         {
@@ -886,6 +893,7 @@ namespace HRMSoftware.EmployeeProfile
         public class RowFields : LoggingRowFields
         {
             public StringField OldNRIC;
+            public StringField SsfwNumber;
 
             public DoubleField WorkingHour;
             public DoubleField WorkingDays;
