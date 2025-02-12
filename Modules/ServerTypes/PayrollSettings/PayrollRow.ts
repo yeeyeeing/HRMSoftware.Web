@@ -11,9 +11,6 @@ import { PayslipPaidMoneyClaimingRow } from "./PayslipPaidMoneyClaimingRow";
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface PayrollRow {
-    EmployeeType?: number;
-    EmployeeSsfw?: string;
-    CurrentDateTime?: string;
     BonusSubjectEpf?: boolean;
     BonusSubjectEis?: boolean;
     BonusSubjectPcb?: boolean;
@@ -45,7 +42,6 @@ export interface PayrollRow {
     OldNRIC?: string;
     PassportNumber?: string;
     CountryCode?: string;
-    StateCode?: string;
     CompanySocsoAccountNumber?: string;
     CompanyBankAccountNumber?: string;
     CompanyEPFAccountNumber?: string;

@@ -14,7 +14,6 @@ import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface EmployeeProfileRow {
     OldNRIC?: string;
-    SsfwNumber?: string;
     WorkingHour?: number;
     WorkingDays?: number;
     DailyRateBase?: number;

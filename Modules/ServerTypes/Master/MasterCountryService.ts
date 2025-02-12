@@ -1,6 +1,6 @@
 ﻿import { SaveRequest, SaveResponse, DeleteRequest, DeleteResponse, RetrieveRequest, RetrieveResponse, ListRequest, ListResponse } from "@serenity-is/corelib";
 import { MasterCountryRow } from "./MasterCountryRow";
-import { ServiceOptions, serviceRequest } from "@serenity-is/corelib/q";
+import { ServiceOptions, ServiceRequest, serviceRequest } from "@serenity-is/corelib/q";
 
 export namespace MasterCountryService {
     export const baseUrl = 'Master/MasterCountry';
@@ -10,13 +10,15 @@ export namespace MasterCountryService {
     export declare function Delete(request: DeleteRequest, onSuccess?: (response: DeleteResponse) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function Retrieve(request: RetrieveRequest, onSuccess?: (response: RetrieveResponse<MasterCountryRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function List(request: ListRequest, onSuccess?: (response: ListResponse<MasterCountryRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
+    export declare function NationalityList(request: ServiceRequest, onSuccess?: (response: ListResponse<MasterCountryRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
 
     export const Methods = {
         Create: "Master/MasterCountry/Create",
         Update: "Master/MasterCountry/Update",
         Delete: "Master/MasterCountry/Delete",
         Retrieve: "Master/MasterCountry/Retrieve",
-        List: "Master/MasterCountry/List"
+        List: "Master/MasterCountry/List",
+        NationalityList: "Master/MasterCountry/NationalityList"
     } as const;
 
     [
@@ -24,7 +26,8 @@ export namespace MasterCountryService {
         'Update', 
         'Delete', 
         'Retrieve', 
-        'List'
+        'List', 
+        'NationalityList'
     ].forEach(x => {
         (<any>MasterCountryService)[x] = function (r, s, o) {
             return serviceRequest(baseUrl + '/' + x, r, s, o);

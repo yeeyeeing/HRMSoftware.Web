@@ -32,7 +32,6 @@ export interface EmployeeProfileForm {
     Age: IntegerEditor;
     RetireDate: DateEditor;
     Nric: StringEditor;
-    SsfwNumber: StringEditor;
     OldNRIC: StringEditor;
     RaceID: LookupEditor;
     NationalityID: LookupEditor;
@@ -146,7 +145,6 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'Age', w4,
                 'RetireDate', w0,
                 'Nric', w2,
-                'SsfwNumber', w2,
                 'OldNRIC', w2,
                 'RaceID', w5,
                 'NationalityID', w5,

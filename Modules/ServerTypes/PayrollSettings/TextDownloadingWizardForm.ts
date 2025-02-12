@@ -4,7 +4,6 @@ import { TextFormatEisSocso } from "./TextFormatEisSocso";
 import { TextFormatEpf } from "./TextFormatEpf";
 import { TextFormatAutopay } from "./TextFormatAutopay";
 import { TextFormatLHDN } from "./TextFormatLHDN";
-import { TestingMode } from "./TestingMode";
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface TextDownloadingWizardForm {
@@ -17,12 +16,11 @@ export interface TextDownloadingWizardForm {
     Email: StringEditor;
     PhoneNumber: StringEditor;
     ContactPerson: StringEditor;
-    MasterStateId: IntegerEditor;
+    StateCodeId: LookupEditor;
     TextFormatEisSocsoId: EnumEditor;
     TextFormatEpfId: EnumEditor;
     TextFormatAutopayId: EnumEditor;
     TextFormatLhdnId: EnumEditor;
-    TestingMode: EnumEditor;
     OccupationList: LookupEditor;
     DepartmentList: LookupEditor;
     DivisionList: LookupEditor;
@@ -60,12 +58,11 @@ export class TextDownloadingWizardForm extends PrefixedContext {
                 'Email', w3,
                 'PhoneNumber', w3,
                 'ContactPerson', w3,
-                'MasterStateId', w0,
+                'StateCodeId', w4,
                 'TextFormatEisSocsoId', w1,
                 'TextFormatEpfId', w1,
                 'TextFormatAutopayId', w1,
                 'TextFormatLhdnId', w1,
-                'TestingMode', w1,
                 'OccupationList', w4,
                 'DepartmentList', w4,
                 'DivisionList', w4,
@@ -79,4 +76,4 @@ export class TextDownloadingWizardForm extends PrefixedContext {
     }
 }
 
-[TextClass, TextFormatEisSocso, TextFormatEpf, TextFormatAutopay, TextFormatLHDN, TestingMode]; // referenced types
+[TextClass, TextFormatEisSocso, TextFormatEpf, TextFormatAutopay, TextFormatLHDN]; // referenced types
