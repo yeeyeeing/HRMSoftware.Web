@@ -4,6 +4,7 @@ using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.Master.MasterStateRow;
@@ -59,4 +60,15 @@ public class MasterStateEndpoint : ServiceEndpoint
         return ExcelContentResult.Create(bytes, "MasterStateList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
     }
+    [HttpGet, Route("/StateList"), ServiceAuthorize("*")]
+        public ListResponse<MyRow> StateList(IDbConnection connection)
+        {
+            ListResponse<MyRow> latest = new ListResponse<MyRow>();
+            latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.MasterStates WHERE IsActive = 1",
+    
+                commandType: System.Data.CommandType.Text);
+    
+            return latest;
+    
+        }
 }

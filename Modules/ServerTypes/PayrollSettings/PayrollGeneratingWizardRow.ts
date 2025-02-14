@@ -1,4 +1,5 @@
 ﻿import { TextClass } from "./TextClass";
+import { TestingMode } from "./TestingMode";
 import { TextFormatEisSocso } from "./TextFormatEisSocso";
 import { TextFormatEpf } from "./TextFormatEpf";
 import { TextFormatAutopay } from "./TextFormatAutopay";
@@ -6,7 +7,7 @@ import { TextFormatLHDN } from "./TextFormatLHDN";
 import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface PayrollGeneratingWizardRow {
-    StateCodeId?: number;
+    MasterStateId?: number;
     Email?: string;
     PhoneNumber?: string;
     ContactPerson?: string;
@@ -14,6 +15,7 @@ export interface PayrollGeneratingWizardRow {
     OrganisationCode?: string;
     CreditingDate?: string;
     TextType?: TextClass;
+    TestingMode?: TestingMode;
     TextFormatEisSocsoId?: TextFormatEisSocso;
     TextFormatEpfId?: TextFormatEpf;
     TextFormatAutopayId?: TextFormatAutopay;

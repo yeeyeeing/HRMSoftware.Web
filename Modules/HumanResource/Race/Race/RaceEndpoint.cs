@@ -4,6 +4,7 @@ using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.Race.RaceRow;
@@ -58,5 +59,16 @@ public class RaceEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.RaceColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "RaceList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+    [HttpGet, Route("/RaceList"), ServiceAuthorize("*")]
+    public ListResponse<MyRow> RaceList(IDbConnection connection)
+    {
+        ListResponse<MyRow> latest = new ListResponse<MyRow>();
+        latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.HumanResourcesRace WHERE IsActive = 1",
+
+            commandType: System.Data.CommandType.Text);
+
+        return latest;
+
     }
 }
