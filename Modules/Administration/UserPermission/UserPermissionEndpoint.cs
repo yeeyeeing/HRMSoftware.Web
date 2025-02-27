@@ -39,5 +39,7 @@ namespace HRMSoftware.Administration.Endpoints
                     includeRoles: false).ToList()
             };
         }
+      
     }
+
 }

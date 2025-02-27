@@ -18,10 +18,16 @@ namespace HRMSoftware.PublicHoliday;
 
 
 
-public sealed class PublicHolidayRow : LoggingRow<PublicHolidayRow.RowFields>, IIdRow, INameRow
+public sealed class PublicHolidayRow : Row<PublicHolidayRow.RowFields>, IIdRow, INameRow
 {
     [DisplayName("Id"), Column("ID"), Identity, IdProperty]
     public int? Id
+    {
+        get => fields.Id[this];
+        set => fields.Id[this] = value;
+    }
+    [PublicHolidayStatusFormatter]
+    public int? IsActive
     {
         get => fields.Id[this];
         set => fields.Id[this] = value;
@@ -46,9 +52,11 @@ public sealed class PublicHolidayRow : LoggingRow<PublicHolidayRow.RowFields>, I
         set => fields.Date[this] = value;
     }
 
-    public class RowFields : LoggingRowFields
+    public class RowFields : RowFieldsBase
     {
         public Int32Field Id;
+        public Int32Field IsActive;
+
         public StringField Name;
         public DateTimeField Date;
         public StringField CountryCode;

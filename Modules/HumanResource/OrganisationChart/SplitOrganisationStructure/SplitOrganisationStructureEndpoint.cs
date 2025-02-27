@@ -60,4 +60,13 @@ public class SplitOrganisationStructureEndpoint : ServiceEndpoint
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
     }
     */
+    [HttpPost, AuthorizeDelete(typeof(MyRow))]
+    public DeleteResponse DeleteAll(IDbConnection connection)
+    {
+
+        connection.Execute(@"
+      delete from HumanResourcesSplitOrganisationStructure ", new { });
+
+        return new DeleteResponse();
+    }
 }

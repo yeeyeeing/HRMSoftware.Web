@@ -1,18 +1,17 @@
 import { Decorators, EntityDialog, Select2Editor, EditorUtils } from '@serenity-is/corelib';
 import { disableSelection } from '@serenity-is/sleekgrid';
-import { EmployeeGroupForm, EmployeeGroupRow, EmployeeGroupService, EmployeeGroupShiftRow, EmployeeGroupShiftService } from '../../../ServerTypes/EmployeeGroup';
-import { EmployeeGroupingsService } from '../../../ServerTypes/EmployeeGroupings';
-import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
+import { EmployeeGroupForm, EmployeeGroupingsRow, EmployeeGroupingsService, EmployeeGroupRow, EmployeeGroupService, EmployeeGroupShiftPatternRow, EmployeeGroupShiftPatternService, EmployeeGroupShiftRow, EmployeeGroupShiftService } from '../../../ServerTypes/EmployeeGroup';
+import { EmployeeProfileRow, EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { getLookup, getLookupAsync } from '@serenity-is/corelib/q';
 import 'toolcool-color-picker';
 import { serviceCall, RetrieveResponse, alertDialog } from '@serenity-is/corelib/q';
 import ColorPicker from '@thednp/color-picker';
 import { ViewShiftHistoryService } from '../../../ServerTypes/ViewShiftHistory';
 import { ShiftService } from '../../../ServerTypes/Shift';
-import { EmployeeGroupShiftPatternRow, EmployeeGroupShiftPatternService } from '../../../ServerTypes/EmployeeGroup';
 import { SetEmployeeShiftService } from '../../../ServerTypes/SetEmployeeShift';
 import { isEmptyOrNull } from '@serenity-is/corelib/q';
 import { ShiftHistoryRow, ShiftHistoryService } from '../../../ServerTypes/ShiftHistory';
+import { Criteria, ToolButton } from '@serenity-is/corelib';
 
 @Decorators.registerClass('HRMSoftware.EmployeeGroup.EmployeeGroupDialog')
 export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
@@ -22,10 +21,29 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
     public ColorCode: string;
     protected form = new EmployeeGroupForm(this.idPrefix);
     public EmployeeProfileTable: any;
+    public EmployeeData: EmployeeProfileRow[];
+    public GroupingData: EmployeeGroupingsRow[];
 
     constructor() {
         super();
          this.EmployeeProfileTable = getLookup("EmployeeProfile.EmployeeProfile")
+        var criteria: any;
+
+        EmployeeProfileService.List({
+            Criteria: Criteria.and(criteria, [[EmployeeProfileRow.Fields.Retired], '=', '0'],
+                [[EmployeeProfileRow.Fields.Terminated], '=', '0'],
+                [[EmployeeProfileRow.Fields.Resigned], '=', '0']
+            )
+        }, response => {
+            console.log(response.Entities)
+            this.EmployeeData = response.Entities
+        })
+        EmployeeGroupingsService.List({
+        }, response => {
+            console.log(response.Entities)
+            this.GroupingData = response.Entities
+        })
+
 
     }
 
@@ -37,11 +55,71 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
         opt.width = 1000
         return opt
     }
-   
+    public SearchCallback(): void {
+        var self = this
+        var OccupationListElement = document.getElementById(this.idPrefix + 'OccupationList');
+        var DepartmentListElement = document.getElementById(this.idPrefix + 'DepartmentList');
+        var DivisionListElement = document.getElementById(this.idPrefix + 'DivisionList');
+        var JobGradeListElement = document.getElementById(this.idPrefix + 'JobGradeList');
+        var SectionListElement = document.getElementById(this.idPrefix + 'SectionList');
+       
+        function parseListFromElement(element) {
+            const valueStr = $(element).val();
+            return valueStr.length
+                ? valueStr.split(',').map(number => parseInt(number, 10))
+                : [];
+        }
+        // Use the utility function for each list
+        const JobGradeList = parseListFromElement(JobGradeListElement);
+        const DivisionList = parseListFromElement(DivisionListElement);
+        const DepartmentList = parseListFromElement(DepartmentListElement);
+        const OccupationList = parseListFromElement(OccupationListElement);
+        const SectionList = parseListFromElement(SectionListElement);
+        // Convert the lists to Sets for faster lookup
+        const jobGradeSet = new Set(JobGradeList);
+        const divisionSet = new Set(DivisionList);
+        const departmentSet = new Set(DepartmentList);
+        const occupationSet = new Set(OccupationList);
+        const sectionSet = new Set(SectionList);
+        var employeeRowList = self.form.EmployeeList.value ? self.form.EmployeeList.value.split(',').map(Number) : [];
+        for (let employee of self.EmployeeData) {
+            const { JobGradeID, DivisionID, DepartmentID, OccupationID, SectionID, Id } = employee;
+            const found =
+                jobGradeSet.has(JobGradeID) ||
+                divisionSet.has(DivisionID) ||
+                departmentSet.has(DepartmentID) ||
+                occupationSet.has(OccupationID) ||
+                sectionSet.has(SectionID);
+
+            console.log(employeeRowList)
+            if (!found) 
+                employeeRowList = employeeRowList.filter(num => num !== Id);
+             else {
+                if (!employeeRowList.includes(Id)) 
+                    employeeRowList.push(Id);
+            }
+            // Update the buffer value
+        }
+        let finalOutput: number[] = [];
+        for (let i = 0; i < employeeRowList.length; i++) {
+            var employeeGroup = self.GroupingData.find(item => item.EmployeeRowId === employeeRowList[i]);
+        
+            if (isEmptyOrNull(employeeGroup))
+                finalOutput.push(employeeRowList[i])
+            // employeeRowList = employeeRowList.filter(num => num !== Id);
+        }
+
+        self.form.EmployeeList.value = finalOutput.join(',');
+
+
+        //const result = data.find(item => item.Id === 12);
+
+    }
+
   
     protected save_submitHandler(response): void
     {
-        var res = response
+        var originalRes = response
         var self = this
         function parseDate(dateStr: string): Date {
             return new Date(dateStr);
@@ -77,10 +155,26 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
             }
             return result; // No overlaps
         }
+
+        for (let i = 0; i < self.form.Shifts.value.length; i++) {
+            for (let j = 0; j < self.form.Shifts.value.length; j++) {
+                if (self.form.Shifts.value[i] != self.form.Shifts.value[j]) {
+                    if (areShiftsOverlapping(parseDate(self.form.Shifts.value[i].ShiftStartDate), parseDate(self.form.Shifts.value[i].ShiftEndDate),
+                        parseDate(self.form.Shifts.value[j].ShiftStartDate), parseDate(self.form.Shifts.value[j].ShiftEndDate))) {
+                        var concatenatedString = `There is a clash of date at ${self.form.Shifts.value[i].ShiftStartDate}-${self.form.Shifts.value[i].ShiftEndDate} and ${self.form.Shifts.value[j].ShiftStartDate}-${self.form.Shifts.value[j].ShiftEndDate} `
+                        alertDialog(concatenatedString)
+                    }
+
+                }
+                            }
+        }
         var Results: any[] = []
+        var IdToBypass: number[] = []
 
         if (areAnyShiftsOverlapping(this.form.Shifts.value))//check for overlapping shift dates
             return
+        for (let i = 0; i < this.form.ActualShifts.value.length; i++)
+            IdToBypass.push(this.form.ActualShifts.value[i].Id)
 
         for (let i = 0; i < this.form.EmployeeList.values.length; i++) {
             for (let j = 0; j < this.form.Shifts.value.length; j++) {
@@ -94,10 +188,48 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
         }
         this.form.ActualShifts.value = Results
         this.form.ActualShifts.refresh()
+
+        //super.save_submitHandler(response)
+
+        ViewShiftHistoryService.List({
+            Criteria: Criteria(EmployeeGroupShiftRow.Fields.EmployeeRowId).in(this.form.EmployeeList.values),
+        }, response => {
+            console.log(response.Entities)
+            for (var res in response.Entities) {
+                if (IdToBypass.indexOf(response.Entities[res].Id) != -1)
+                    continue
+                var Start1 = parseDate(response.Entities[res].ShiftStartDate)
+                var End1 = parseDate(response.Entities[res].ShiftEndDate)
+                for (let i = 0; i < self.form.Shifts.value.length; i++) {
+                    var Start2 = parseDate(self.form.Shifts.value[i].ShiftStartDate)
+                    var End2 = parseDate(self.form.Shifts.value[i].ShiftEndDate)
+                    if (areShiftsOverlapping(Start1, End1, Start2, End2) == true) {
+                        var EmployeeID
+                        for (var index in self.EmployeeProfileTable.items) {
+                            if (self.EmployeeProfileTable.items[index].Id == response.Entities[res].EmployeeRowID) {
+                                EmployeeID = self.EmployeeProfileTable.items[index].EmployeeID
+                                break
+                            }
+                        }
+
+
+                        var concatenatedString = 'Employee ' + EmployeeID + ' Already has a Shift from ' + response.Entities[res].ShiftStartDate.substring(0,10) +
+                            ' until ' + response.Entities[res].ShiftEndDate.substring(0, 10)
+
+                        alertDialog(concatenatedString)
+                        return
+
+                    }
+                }
+
+            }
+            super.save_submitHandler(originalRes)
+
+        })
+        /*
         if (this.isNew()) {
-            var EmployeeListElement = document.getElementById(this.idPrefix + 'EmployeeList')
             EmployeeGroupShiftPatternService.List({
-                Criteria: [[EmployeeGroupShiftPatternRow.Fields.EmployeeRowId], '=', $(EmployeeListElement).val()]
+                Criteria: Criteria(EmployeeGroupShiftRow.Fields.EmployeeRowId).in(this.form.EmployeeList.values),
             }, response => {
                 var save = true
                 console.log(response)
@@ -142,8 +274,7 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
         }
         else {
             EmployeeGroupShiftPatternService.List({
-                Criteria: [[EmployeeGroupShiftPatternRow.Fields.EmployeeRowId], '=', self.form.EmployeeList.values]
-
+                Criteria: Criteria(EmployeeGroupShiftRow.Fields.EmployeeRowId).in(this.form.EmployeeList.values),
             }, response => {
                 var save = true
                 for (res in response.Entities) {
@@ -179,7 +310,7 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
                 if (save == true) {
                     for (res in response.Entities) {
                         if (response.Entities[res].EmployeeGroupId == self.entityId) {
-                            EmployeeShiftPatternService.Delete({
+                            EmployeeGroupService.Delete({
                                 EntityId: response.Entities[res].Id
                             });
                         }
@@ -206,11 +337,11 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
                                 },
                             });
                             for (let j = 0; j < self.form.EmployeeList.values.length; j++) {
-                                EmployeeShiftPatternService.Create({
+                                EmployeeGroupShiftPatternService.Create({
                                     Entity:
                                     {
                                         "EmployeeRowId": parseInt(self.form.EmployeeList.values[j]),
-                                        "EmployeeGroupID": self.entityId,
+                                        "EmployeeGroupId": self.entityId,
                                         "ShiftStartDate": self.form.Shifts.value[i].ShiftStartDate,
                                         "ShiftEndDate": self.form.Shifts.value[i].ShiftEndDate,
                                         "ShiftId": self.form.Shifts.value[i].ShiftId,
@@ -235,7 +366,7 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
 
 
         }
-            
+        */
         
         
     }
@@ -244,6 +375,7 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
     protected onDialogOpen()
     {
         super.onDialogOpen()
+        var self = this
         if (!this.isNew()) {
             this.form.Shifts.value = this.form.Shifts.value.sort((a, b) => new Date(a.ShiftStartDate).getTime() - new Date(b.ShiftStartDate).getTime());
             this.form.Shifts.refresh()
@@ -280,6 +412,44 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
         }
         )
 
+
+        var SectionListElement = document.getElementById(this.idPrefix + 'SectionList');
+        var OccupationListElement = document.getElementById(this.idPrefix + 'OccupationList');
+        var DepartmentListElement = document.getElementById(this.idPrefix + 'DepartmentList');
+        var DivisionListElement = document.getElementById(this.idPrefix + 'DivisionList');
+        var JobGradeListElement = document.getElementById(this.idPrefix + 'JobGradeList');
+
+        console.log(this.idPrefix)
+        $(`#s2id_${this.idPrefix}EmployeeList`).on('click', async function (e) {
+            $(`.select2-drop`).hide()
+            return
+
+        })
+
+
+        $(OccupationListElement).on('change', async function () {
+            self.SearchCallback()
+            //  self.SearchEmployeeCallback();
+
+        })
+        $(DivisionListElement).on('change', async function () {
+            self.SearchCallback();
+            // self.SearchEmployeeCallback();
+
+        })
+        $(JobGradeListElement).on('change', async function () {
+            self.SearchCallback();
+            //self.SearchEmployeeCallback();
+        })
+        $(DepartmentListElement).on('change', async function () {
+            self.SearchCallback();
+            //self.SearchEmployeeCallback();
+        })
+        $(SectionListElement).on('change', async function () {
+            self.SearchCallback();
+            //self.SearchEmployeeCallback();
+
+        })
 
 
 

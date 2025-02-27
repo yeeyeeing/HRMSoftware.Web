@@ -1,4 +1,4 @@
-﻿import { LookupEditor, DateEditor, StringEditor, PrefixedContext } from "@serenity-is/corelib";
+﻿import { LookupEditor, DateEditor, StringEditor, TextAreaEditor, PrefixedContext } from "@serenity-is/corelib";
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface ShiftAttendanceRecordForm {
@@ -12,6 +12,9 @@ export interface ShiftAttendanceRecordForm {
     ShiftStartTimeHour: StringEditor;
     ShiftEndTime: DateEditor;
     ShiftEndTimeHour: StringEditor;
+    EmpRemark: TextAreaEditor;
+    SupRemark: TextAreaEditor;
+    LvPhRemark: TextAreaEditor;
 }
 
 export class ShiftAttendanceRecordForm extends PrefixedContext {
@@ -27,6 +30,7 @@ export class ShiftAttendanceRecordForm extends PrefixedContext {
             var w0 = LookupEditor;
             var w1 = DateEditor;
             var w2 = StringEditor;
+            var w3 = TextAreaEditor;
 
             initFormType(ShiftAttendanceRecordForm, [
                 'EmployeeRowId', w0,
@@ -38,7 +42,10 @@ export class ShiftAttendanceRecordForm extends PrefixedContext {
                 'ShiftStartTime', w1,
                 'ShiftStartTimeHour', w2,
                 'ShiftEndTime', w1,
-                'ShiftEndTimeHour', w2
+                'ShiftEndTimeHour', w2,
+                'EmpRemark', w3,
+                'SupRemark', w3,
+                'LvPhRemark', w3
             ]);
         }
     }

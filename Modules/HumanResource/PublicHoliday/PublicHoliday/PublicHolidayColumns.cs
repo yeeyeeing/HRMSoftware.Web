@@ -8,8 +8,10 @@ namespace HRMSoftware.PublicHoliday.Columns;
 [BasedOnRow(typeof(PublicHolidayRow), CheckNames = true)]
 public class PublicHolidayColumns
 {
-   // [EditLink, DisplayName("Db.Shared.RecordId"), AlignRight]
-   // public int Id { get; set; }
+    // [EditLink, DisplayName("Db.Shared.RecordId"), AlignRight]
+    // public int Id { get; set; }
+    public int IsActive { get; set; }
+
     [EditLink]
     public string Name { get; set; }
     public DateTime Date { get; set; }

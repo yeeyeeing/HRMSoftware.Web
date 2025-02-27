@@ -4,6 +4,7 @@ using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.Master.MasterCostCentreRow;
@@ -58,5 +59,16 @@ public class MasterCostCentreEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.MasterCostCentreColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "MasterCostCentreList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+    [HttpGet, Route("/CostCentreList"), ServiceAuthorize("*")]
+    public ListResponse<MyRow> CostCentreList(IDbConnection connection)
+    {
+        ListResponse<MyRow> latest = new ListResponse<MyRow>();
+        latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.MasterCostCentre WHERE IsActive = 1",
+
+            commandType: System.Data.CommandType.Text);
+
+        return latest;
+
     }
 }

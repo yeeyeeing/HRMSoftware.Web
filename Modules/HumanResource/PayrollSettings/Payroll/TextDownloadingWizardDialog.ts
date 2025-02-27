@@ -95,8 +95,6 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
                     }
                     console.log(self.form.EmployeeRowList.value)
                     console.log(self.form.MasterStateId.value)
-
-
                     if (parseInt(self.form.TextType.value) == TextClass.LHDN.valueOf()) {
                         PayrollSettingsService.Update({
                             EntityId: self.payrollSettingId,

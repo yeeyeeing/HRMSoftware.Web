@@ -110,7 +110,7 @@ namespace HRMSoftware.Administration
             set => fields.UserImage[this] = value;
         }
 
-        [DisplayName("Password"), Size(50), NotMapped]
+        [DisplayName("Password"), Size(50)]
         public string Password
         {
             get => fields.Password[this];

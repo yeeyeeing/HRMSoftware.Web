@@ -378,7 +378,6 @@ public sealed class PayrollGeneratingWizardRow : LoggingRow<PayrollGeneratingWiz
 
 
         public ListField<int> EmployeeRowListBuffer;
-
         public ListField<int> EmployeeRowList;
         public ListField<int> OccupationList;
         public ListField<int> DepartmentList;

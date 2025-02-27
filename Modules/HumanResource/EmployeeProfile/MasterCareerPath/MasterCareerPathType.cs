@@ -11,5 +11,7 @@ public enum MasterCareerPathType
     [Description("PROMOTION")]
     promotion = 2,
     [Description("DEMOTION")]
-    demotion = 3
+    demotion = 3,
+    [Description("TRANSFER")]
+    transfer = 4
 }

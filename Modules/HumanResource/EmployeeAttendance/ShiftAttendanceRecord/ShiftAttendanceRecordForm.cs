@@ -33,6 +33,13 @@ public class ShiftAttendanceRecordForm
     public DateTime ShiftEndTime { get; set; }
     [HalfWidth]
     public string ShiftEndTimeHour { get; set; }
+    [TextAreaEditor(Rows = 3)]
+    public string EmpRemark { get; set; }
+    [TextAreaEditor(Rows = 3)]
+    public string SupRemark { get; set; }
+    [TextAreaEditor(Rows = 3)]
+    public string LvPhRemark { get; set; }
+
     //public int ShiftId { get; set; }
     /*
     public int LateIn { get; set; }

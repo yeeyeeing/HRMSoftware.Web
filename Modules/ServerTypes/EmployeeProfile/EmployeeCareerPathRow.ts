@@ -1,15 +1,38 @@
 ﻿import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface EmployeeCareerPathRow {
+    ManDesc?: string;
     Id?: number;
+    Executed?: number;
+    CategoryId?: number;
+    careerPaathType?: number;
     Description?: string;
     CareerPathCode?: string;
     ValueString?: string;
     EmployeeName?: string;
     CareerPathId?: number;
     EffectiveDate?: string;
+    oldValue?: number;
     NewValue?: number;
     EmployeeRowId?: number;
+    oldDivision?: number;
+    oldDepartment?: number;
+    oldSection?: number;
+    oldOccupation?: number;
+    oldJobGrade?: number;
+    oldCostCentre?: number;
+    newDivision?: number;
+    newDepartment?: number;
+    newSection?: number;
+    newOccupation?: number;
+    newJobGrade?: number;
+    newCostCentre?: number;
+    Division?: string;
+    DepartmentDept?: string;
+    Section?: string;
+    Occupation?: string;
+    JobGrade?: string;
+    CostCentreName?: string;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

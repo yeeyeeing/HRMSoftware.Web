@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.Master.MasterCp8dRow;
@@ -58,5 +59,16 @@ public class MasterCp8dEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.MasterCp8dColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "MasterCp8dList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+    [HttpGet, Route("/Cp8dList"), ServiceAuthorize("*")]
+    public ListResponse<MyRow> Cp8dList(IDbConnection connection)
+    {
+        ListResponse<MyRow> latest = new ListResponse<MyRow>();
+        latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.MasterCp8d WHERE IsActive = 1",
+
+            commandType: System.Data.CommandType.Text);
+
+        return latest;
+
     }
 }

@@ -51,6 +51,7 @@ namespace HRMSoftware.Web.Modules.PerformanceAppraisal
             {
                 var today = DateTime.Now;
                 
+                
                 var recordsToUpdate = connection.List<PerformanceAppraisalFormRow>(
                     new Criteria("SubmissionStatus") == PerformanceAppraisalFormStatus.Draft &&
                     new Criteria("EndDate") <= today);

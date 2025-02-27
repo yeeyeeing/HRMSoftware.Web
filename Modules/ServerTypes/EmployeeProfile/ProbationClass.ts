@@ -2,6 +2,7 @@
 
 export enum ProbationClass {
     UnderProbation = 0,
-    PassedProbation = 1
+    NoProbation = 1,
+    PassedProbation = 2
 }
 Decorators.registerEnumType(ProbationClass, 'HRMSoftware.EmployeeProfile.ProbationClass', 'HumanResource.EmployeeProfile.ProbationClass');

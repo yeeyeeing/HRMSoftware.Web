@@ -9,6 +9,8 @@ export interface SplitOrganisationStructureRow {
     ClassName?: string;
     HierarchyLevel?: number;
     EmployeeRowId?: number;
+    hierarchyId?: number;
+    childrenIndex?: number;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

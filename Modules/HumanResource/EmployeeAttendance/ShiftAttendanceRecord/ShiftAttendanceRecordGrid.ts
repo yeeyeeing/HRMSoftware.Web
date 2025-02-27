@@ -2,18 +2,45 @@ import { Decorators, EntityGrid, ListResponse, QuickFilter, Select2Editor, Widge
 import { ShiftAttendanceRecordColumns, ShiftAttendanceRecordRow, ShiftAttendanceRecordService } from '../../../ServerTypes/EmployeeAttendance';
 import { ShiftAttendanceRecordDialog } from './ShiftAttendanceRecordDialog';
 import { OccupationService, JobGradeService, DepartmentService, DivisionService } from '../../../ServerTypes/OrganisationHierarchy';
+import { confirmDialog, confirm, serviceCall, notifySuccess, notifyError, notifyInfo } from '@serenity-is/corelib/q';
 
 import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { MasterCostCentreService } from '../../../ServerTypes/Master';
 import { Authorization } from '@serenity-is/corelib/q';
 import { PermissionKeys } from '../../../ServerTypes/Administration';
+import { ShiftAttendanceDownloaderDialog } from './ShiftAttendanceRecordDownloaderDialog';
 @Decorators.registerClass('HRMSoftware.EmployeeAttendance.ShiftAttendanceRecordGrid')
 export class ShiftAttendanceRecordGrid extends EntityGrid<ShiftAttendanceRecordRow, any> {
     protected getColumnsKey() { return ShiftAttendanceRecordColumns.columnsKey; }
     protected getDialogType() { return ShiftAttendanceRecordDialog; }
     protected getRowDefinition() { return ShiftAttendanceRecordRow; }
     protected getService() { return ShiftAttendanceRecordService.baseUrl; }
+    protected getButtons() {
+        var buttons = super.getButtons();
+        var self = this
 
+        buttons.push({
+            title: 'Shift Attendance Record Generator',
+            cssClass: 'fas fa-hat-wizard text-bg-success',
+            onClick: e => {
+                confirm(
+                    "Do you want to generate Timesheet?",
+                    () => {
+                        var ShiftAttendanceRecordDownloader = new ShiftAttendanceDownloaderDialog()
+                        ShiftAttendanceRecordDownloader.dialogOpen()
+                        ShiftAttendanceRecordDownloader.element.on("dialogclose", function () {
+                            //self.refresh()
+                            //location.reload()
+                            self.internalRefresh()
+
+                        })
+                    }
+                )
+            },
+        });
+        return buttons
+
+    }
 
     protected getQuickFilters(): QuickFilter<Widget<any>, any>[] {
         //Gets the Filters defined in the Columns or in parent grids.

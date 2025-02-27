@@ -1,21 +1,70 @@
 export default function appendStyle() {
-    `
+
+    var Linkx = document.createElement('style')
+    Linkx.textContent = `
+
+.left-panel-class {
+  position: fixed; /* Sticks to the left side of the page */
+display: flex;
+     flex-direction: row; /* Align children in a row */
+z-index: 9999; /* Bring the panel to the front */
+  background-color: #f4f4f4; /* Light gray background */
+  border-right: 1px solid #ccc; /* Optional border */
+  padding: 15px; /* Padding inside the panel */
+}
+
+.nested {
+    list-style-type: none;
+    padding-left: 20px; /* Indent nested lists */
+    margin-left: 10px; /* Provide left margin for nested lists */
+    display: block; /* Ensure it's vertically aligned */
+}
 
 
+
+/* Add some space between the checkbox and text */
+.filterCheckBox {
+    margin-left: 10px;
+}
+.OrgChartFilterCheckBox {
+    margin-left: 10px;
+}
+/* Optional: Style the toggle button */
+.toggle {
+    cursor: pointer;
+    color: #007BFF;
+    text-decoration: underline;
+    margin-right: 10px; /* Space between the toggle and checkbox */
+}
+.select2-container {
+    width: 100% !important;  /* Ensure Select2 matches the input width */
+    box-sizing: border-box;
+}
+
+.select2-selection {
+    height: 100% !important;  /* Match input height */
+    line-height: normal;
+}
+
+.select2-selection__rendered {
+    padding: 8px !important;  /* Adjust text alignment */
+}
+
+.select2-selection__arrow {
+    height: 100% !important;
+}
+
+.select2-container .select2-choice {
+    height: 100% !important;
+    line-height: normal;
+    padding: 0 8px;
+}
 
     .flex-container {
         display: flex;
      flex-direction: row; /* Align children in a row */
 }
-.flex-child {
-    flex: 1;
-    border: 2px solid yellow;
-     align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
-}
-    `
-    var Linkx = document.createElement('style')
-    Linkx.textContent = `
+
     .icon {
     position: fixed; /* Fix the position relative to the viewport */
     bottom: 20px;    /* Distance from the bottom */
@@ -74,7 +123,6 @@ export default function appendStyle() {
 }
   .wrapper{
     overflow-x: auto;
-
 }
 
   .chart-side-div {
@@ -136,14 +184,10 @@ export default function appendStyle() {
 }
 
 #orgChartContainer {
-    height: 800px;
     background-color: #f8f9fa;
-   position: relative;
   height: auto;
   border: 1px solid #aaa;
   margin: 0.5rem;
-  overflow: auto;
-  text-align: center;
 }
 
   .content {

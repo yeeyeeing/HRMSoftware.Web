@@ -2,7 +2,6 @@ import { Decorators, EditorUtils, EntityDialog, RetrieveResponse, Select2Editor 
 import { MoneyClaimApplicationForm, MoneyClaimApplicationRow, MoneyClaimApplicationService, MoneyClaimingStatus } from '../../../ServerTypes/MoneyClaimApplication';
 import { Authorization, isEmptyOrNull, getLookup, confirm } from '@serenity-is/corelib/q';
 import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
-import { EpfSubjectionService } from '../../../ServerTypes/PayrollSettings';
 import { PermissionKeys } from '../../../ServerTypes/Administration';
 import { serviceCall, ListResponse } from '@serenity-is/corelib/q';
 import { EisSubjectionService, EmployerContributionsRow, EpfSubjectionService, HrdfSubjectionService, NoPaidLeaveRow, NoPaidLeaveService, PayrollDeductionsRow, PayrollEarningsRow, PayrollForm, PayrollRow, PayrollService, PcbSubjectionService, SocsoSubjectionService } from '../../../ServerTypes/PayrollSettings';
@@ -277,7 +276,7 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
                 var applicant = response.Entity.EmployeeRowId
                 var HrStatus = response.Entity.HrStatus
                 var EmployeeStatus = response.Entity.EmployeeStatus
-                self.EmployeeApproval = response.Entity.EmployeeStatus
+                self.EmployeeApproval = response.Entity.EmployeeStatus.valueOf()
                 self.HrApproval = response.Entity.HrStatus
                 var applicationStatus = response.Entity.Status
                 if (applicationStatus == MoneyClaimingStatus.Pending) {
@@ -290,17 +289,12 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
                         method: "GET",
                         async: false,
                         onSuccess: (response) => {
-                            var PermissionToAck = response
-                            self.SuperiorPermission = response
+                            var PermissionToAck = self.SuperiorPermission= response
                             if (self.form.EmployeeRowId.value != Authorization.userDefinition.EmployeeRowID)
                                 this.set_readOnly(true)
                             $('.delete-button').removeClass('disabled');
-                            console.log(response)
                             if (HrStatus == 0 || EmployeeStatus == 0)//if one of the condition still pending
                             {
-                                console.log(EmployeeStatus)
-                                console.log(HrStatus)
-
                                 if (PermissionToAck == true && !EmployeeStatus )
                                     $('.tool-button').removeClass('hidden');
 
@@ -513,7 +507,7 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
         );
         buttons.push(
             {
-                title: "Rejected Application",	// *** Get button text from translation
+                title: "Reject Application",	// *** Get button text from translation
                 cssClass: 'text-bg-danger p-2 hidden',
                 icon: 'fa-times text-red',
                 onClick: () => {

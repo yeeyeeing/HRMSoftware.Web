@@ -48,6 +48,16 @@ public class SplitOrganisationChartEndpoint : ServiceEndpoint
     {
         return handler.List(connection, request);
     }
+    [HttpPost, AuthorizeDelete(typeof(MyRow))]
+    public DeleteResponse DeleteAll(IDbConnection connection)
+    {
+
+        connection.Execute(@"
+      delete from HumanResourcesSplitOrganisationChart ", new { });
+
+
+        return new DeleteResponse();
+    }
     /*
     [HttpPost, AuthorizeList(typeof(MyRow))]
     public FileContentResult ListExcel(IDbConnection connection, ListRequest request,

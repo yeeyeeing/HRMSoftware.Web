@@ -488,7 +488,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                                 text.Line("EMPLOYEE PAYSLIP").Bold().FontSize(25);
                             });
                         });
-                        
                         column.Item().Row(row =>
                         {
                             row.RelativeItem(300).Column(column =>
@@ -972,8 +971,16 @@ namespace HRMSoftware.PayrollSettings.Pages
             return File(pdfbytes, "application/pdf", path);
 
         }
-        
-        [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
+
+        static IContainer CellStyle(IContainer container)
+        {
+            return container
+                .Padding(5)
+                .Border(1)
+                .AlignCenter()
+                .Background(Colors.Grey.Lighten3);
+        }
+            [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
         public IActionResult TxtGenerate([FromServices] ISqlConnections sqlConnections, int PayMonth,int PayYear,int Type,string EmployeeArrayString, int StateCodeId,int TextFormat
             , string CompanyCode,string CompanyName, string CreditingDate
        , string Email, string PhoneNumber, string ContactPerson,int testMode)
@@ -1014,11 +1021,13 @@ namespace HRMSoftware.PayrollSettings.Pages
                     {
                         if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                             continue;
+
                         var EmployeeSocso = item.EmployeeSOCSO;
                         var EmployerSocso = item.EmployerSOCSO;
                         var TotalSocso = EmployeeSocso + EmployerSocso;
                         if (TotalSocso <= 0)
                             continue;
+
                         var companySocso = item.CompanySocsoAccountNumber;
                         var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
                         var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20,' ')}";
@@ -1028,6 +1037,8 @@ namespace HRMSoftware.PayrollSettings.Pages
                        else if (item.EmployeeType == (int)EmployeeType.Foreigner)
                             identity = item.EmployeeSsfw;
                         identity = identity.PadRight(12, '0');
+                        if (identity.IsEmptyOrNull() == true)
+                            continue;
                         var Name = item.EmployeeName.PadRight(150,' ');
                         string amountString = ((int)(TotalSocso * 100)).ToString();
                         string paddedAmount = amountString.PadLeft(14, '0');

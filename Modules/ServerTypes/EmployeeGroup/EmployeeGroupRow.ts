@@ -6,12 +6,18 @@ export interface EmployeeGroupRow {
     ShiftColor?: string;
     Id?: number;
     EmployeeList?: number[];
+    NewAddedEmployee?: number[];
     Shifts?: EmployeeGroupShiftRow[];
     ActualShifts?: EmployeeGroupShiftPatternRow[];
     Name?: string;
     Description?: string;
     StartDate?: string;
     EndDate?: string;
+    OccupationList?: number[];
+    DepartmentList?: number[];
+    DivisionList?: number[];
+    JobGradeList?: number[];
+    SectionList?: number[];
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

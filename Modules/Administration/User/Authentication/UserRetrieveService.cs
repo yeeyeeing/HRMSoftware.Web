@@ -28,6 +28,7 @@ namespace HRMSoftware.Administration
             var user = connection.TrySingle<MyRow>(criteria);
 
             if (user != null)
+                if (user.EmployeeRowID.HasValue)
                 return new UserDefinition
                 {
                     UserId = user.UserId.Value,
@@ -46,6 +47,24 @@ namespace HRMSoftware.Administration
                     LastDirectoryUpdate = user.LastDirectoryUpdate,
                     EmployeeRowID = user.EmployeeRowID.Value
                 };
+                else
+                    return new UserDefinition
+                    {
+                        UserId = user.UserId.Value,
+                        Username = user.Username,
+                        Email = user.Email,
+                        MobilePhoneNumber = user.MobilePhoneNumber,
+                        MobilePhoneVerified = user.MobilePhoneVerified ?? false,
+                        TwoFactorAuth = user.TwoFactorAuth,
+                        UserImage = user.UserImage,
+                        DisplayName = user.DisplayName,
+                        IsActive = user.IsActive.Value,
+                        Source = user.Source,
+                        PasswordHash = user.PasswordHash,
+                        PasswordSalt = user.PasswordSalt,
+                        UpdateDate = user.UpdateDate,
+                        LastDirectoryUpdate = user.LastDirectoryUpdate,
+                    };
 
             return null;
         }

@@ -141,7 +141,7 @@ export default function pageInit() {
 
 
             for (var index in response.Entities) {
-
+                if (response.Entities[index].IsActive == 1)
                 ListOfPublicHolidayData.push({
                     PublicHolidayDate: response.Entities[index].Date,
                     PublicHolidayName: response.Entities[index].Name,

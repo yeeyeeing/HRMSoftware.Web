@@ -10,14 +10,22 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Text.Json;
 using MyRow = HRMSoftware.OrganisationChart.OrganisationChartRow;
 
 namespace HRMSoftware.OrganisationChart.Endpoints;
 public class Rights
 {
-    public string EmployeeRights { get; set; }
-    public string children { get; set; }
+ public int LeaveApproval { get; set; }
+    public int OtApprobal { get; set; }
+    public int MoneyClaiming { get; set; }
+    public int Appraisal { get; set; }
+    public int Training { get; set; }
+    public int EmployeeRowId { get; set; }
+
 }
+
+
 [Route("Services/OrganisationChart/OrganisationChart/[action]")]
 [ConnectionKey(typeof(MyRow)), ServiceAuthorize(typeof(MyRow))]
 public class OrganisationChartEndpoint : ServiceEndpoint
@@ -35,7 +43,7 @@ public class OrganisationChartEndpoint : ServiceEndpoint
     {
         return handler.Update(uow, request);
     }
- 
+
     [HttpPost, AuthorizeDelete(typeof(MyRow))]
     public DeleteResponse Delete(IUnitOfWork uow, DeleteRequest request,
         [FromServices] IOrganisationChartDeleteHandler handler)
@@ -79,18 +87,18 @@ public class OrganisationChartEndpoint : ServiceEndpoint
         // Add EmployeeRowId to the list if it exists
         if (child.ContainsKey("EmployeeRowId"))
         {
-         
+
             JToken employeeRowIdToken = child["EmployeeRowId"];
-           
+
             if (employeeRowIdToken != null && employeeRowIdToken.Type != JTokenType.Null)
                 numbers.Add(employeeRowIdToken.Value<int>());
         }
-        // Check for 'children' key and process recursively
         JToken childrenToken = child["children"];
         if (childrenToken != null)
             ProcessChildren(childrenToken, numbers);
 
     }
+    /*
     public List<int> GetEmployeeUserCanView(IDbConnection connection, int EmployeeRowID,string PermissionKey) {
 
         string prefix = "Administration:";
@@ -147,7 +155,6 @@ public class OrganisationChartEndpoint : ServiceEndpoint
                 {
                     JArray childrenObj = JArray.Parse(obj["children"].ToString());
                     ProcessChildren(childrenObj, numbers);
-
                     canView = numbers.Contains(ApplicantEmployeeRowID);
                 }
             }
@@ -156,5 +163,69 @@ public class OrganisationChartEndpoint : ServiceEndpoint
         return canView;
     }
 
+    */
+    public bool PermissionToAcknowledge(IDbConnection connection, int UserEmployeeRowID, int ApplicantEmployeeRowID)
+    {
+        bool superiorPermission = false;
 
+        List<Rights> json = new List<Rights>();
+        json = (List<Rights>)connection.Query<Rights>("dbo.GetEmployeeSubordinates",
+            param: new
+            {
+                @EmployeeRowId = UserEmployeeRowID
+            },
+        commandType: System.Data.CommandType.StoredProcedure);
+        var newJson = JsonSerializer.Serialize(json);
+        foreach (var right in json)
+            {
+            if (right.EmployeeRowId == ApplicantEmployeeRowID)
+            {
+                superiorPermission = true;
+                break;
+            }
+               }
+        
+
+        return superiorPermission;
+
+    }
+
+
+    public List<int> GetEmployeeUserCanView(IDbConnection connection, int EmployeeRowID, string PermissionKey)
+    {
+        if (connection.State == ConnectionState.Closed)
+            connection.Open();
+        
+        List<int> numbers = new List<int>();
+        List<Rights> json = new List<Rights>();
+        json = (List<Rights>)connection.Query<Rights>("dbo.GetEmployeeSubordinates",
+            param: new
+            {
+                @EmployeeRowId = EmployeeRowID
+            },
+        commandType: System.Data.CommandType.StoredProcedure);
+        if (json.Count == 0)
+            return numbers;
+        var newJson = JsonSerializer.Serialize(json);
+       // var right = JsonSerializer.Deserialize<List<Rights>>(newJson);
+
+        var permissionMapping = new Dictionary<string, Func<Rights, int>>
+        {
+            { PermissionKeys.MoneyClaiming, r => r.MoneyClaiming },
+            { PermissionKeys.OtApproval, r => r.OtApprobal },
+            { PermissionKeys.LeaveApproval, r => r.LeaveApproval },
+            { PermissionKeys.Appraisal, r => r.Appraisal },
+            { PermissionKeys.Training, r => r.Training }
+        };
+
+        if (permissionMapping.TryGetValue(PermissionKey, out var checkPermission))
+        {
+            foreach (var right in json)
+            {
+                if (checkPermission(right) == 1)
+                    numbers.Add(right.EmployeeRowId);
+            }
+        }
+        return numbers;
+    }
 }

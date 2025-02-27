@@ -29,6 +29,9 @@ export class EmployeeCareerPathEditor extends GridEditorBase<EmployeeCareerPathR
 
         return true;
     }
-
+    protected getItems() {
+        let items = super.getItems();
+        return items.sort((a, b) => a.Id - b.Id); // Sort by ID
+    }
     
 }

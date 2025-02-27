@@ -8,6 +8,10 @@ using Serenity.Data.Mapping;
 using System;
 using System.ComponentModel;
 
+using HRMSoftware.Master;
+using HRMSoftware.OrganisationHierarchy;
+using System.Collections.Generic;
+
 namespace HRMSoftware.EmployeeAttendance;
 
 [ConnectionKey("Default"), Module("EmployeeAttendance"), TableName("HumanResourcesShiftAttendanceRecord")]
@@ -43,6 +47,19 @@ public sealed class ShiftAttendanceRecordRow : Row<ShiftAttendanceRecordRow.RowF
     {
         get => fields.EmployeeID[this];
         set => fields.EmployeeID[this] = value;
+    }
+    [DisplayName("End Date"),  NotMapped]
+    public DateTime? endDate
+    {
+        get => fields.endDate[this];
+        set => fields.endDate[this] = value;
+    }
+
+    [DisplayName("Start Date"),NotMapped]
+    public DateTime? startDate
+    {
+        get => fields.startDate[this];
+        set => fields.startDate[this] = value;
     }
     [DisplayName("Clock In Time"), ShiftTimeToHours, NotNull]
     public DateTime? TimeIn
@@ -221,20 +238,104 @@ public sealed class ShiftAttendanceRecordRow : Row<ShiftAttendanceRecordRow.RowF
         get => fields.CostCentreName[this];
         set => fields.CostCentreName[this] = value;
     }
-    
 
+
+    [DisplayName("Employee List"), NotMapped, NotNull,
+     LookupEditor(typeof(EmployeeProfileRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+
+    public List<int> EmployeeRowList
+    {
+        get => fields.EmployeeRowList[this];
+        set => fields.EmployeeRowList[this] = value;
+    }
+    [DisplayName("Occupation List"), NotMapped,
+        LookupEditor(typeof(OccupationRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+    public List<int> OccupationList
+    {
+        get => fields.OccupationList[this];
+        set => fields.OccupationList[this] = value;
+    }
+
+    [DisplayName("Department List"), NotMapped,
+        LookupEditor(typeof(DepartmentRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+    public List<int> DepartmentList
+    {
+        get => fields.DepartmentList[this];
+        set => fields.DepartmentList[this] = value;
+    }
+    [DisplayName("Division List"), NotMapped,
+        LookupEditor(typeof(DivisionRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+    public List<int> DivisionList
+    {
+        get => fields.DivisionList[this];
+        set => fields.DivisionList[this] = value;
+    }
+    [DisplayName("Job Grade List"), NotMapped,
+        LookupEditor(typeof(OrganisationHierarchy.JobGradeRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+    public List<int> JobGradeList
+    {
+        get => fields.JobGradeList[this];
+        set => fields.JobGradeList[this] = value;
+    }
+
+    [DisplayName("Section List"), NotMapped,
+    LookupEditor(typeof(SectionRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+    public List<int> SectionList
+    {
+        get => fields.SectionList[this];
+        set => fields.SectionList[this] = value;
+    }
+
+    [DisplayName("Employee List"), NotMapped, HideOnInsert, HideOnUpdate,
+      LookupEditor(typeof(EmployeeProfileRow), Multiple = true, FilterField = "IsActive", FilterValue = 1)]
+
+    public List<int> EmployeeRowListBuffer
+    {
+        get => fields.EmployeeRowListBuffer[this];
+        set => fields.EmployeeRowListBuffer[this] = value;
+    }
+
+
+    [DisplayName("Sup Remark"), QuickSearch]
+    public string EmpRemark
+    {
+        get => fields.EmpRemark[this];
+        set => fields.EmpRemark[this] = value;
+    }
+
+    [DisplayName("Sup Remark"),  QuickSearch]
+    public string SupRemark
+    {
+        get => fields.SupRemark[this];
+        set => fields.SupRemark[this] = value;
+    }
+
+    [DisplayName("LV/PH Remark"),  QuickSearch]
+    public string LvPhRemark
+    {
+        get => fields.LvPhRemark[this];
+        set => fields.LvPhRemark[this] = value;
+    }
     public class RowFields : RowFieldsBase
     {
         public Int32Field Id;
         public Int32Field EmployeeRowId;
         public DateTimeField TimeIn;
         public DateTimeField TimeOut;
+
+        public DateTimeField startDate;
+        public DateTimeField endDate;
+
+
         public StringField TimeInHour;
         public StringField TimeOutHour;
 
         public Int32Field ShiftId;
         public StringField ShiftName;
-     
+
+        public StringField EmpRemark;
+        public StringField SupRemark;
+        public StringField LvPhRemark;
 
 
 
@@ -268,5 +369,12 @@ public sealed class ShiftAttendanceRecordRow : Row<ShiftAttendanceRecordRow.RowF
         public StringField JobGradeName;
 
 
+        public ListField<int> EmployeeRowListBuffer;
+        public ListField<int> EmployeeRowList;
+        public ListField<int> OccupationList;
+        public ListField<int> DepartmentList;
+        public ListField<int> DivisionList;
+        public ListField<int> JobGradeList;
+        public ListField<int> SectionList;
     }
 }

@@ -5,10 +5,15 @@ export interface ShiftAttendanceRecordRow {
     EmployeeRowId?: number;
     TimeIn?: string;
     TimeOut?: string;
+    startDate?: string;
+    endDate?: string;
     TimeInHour?: string;
     TimeOutHour?: string;
     ShiftId?: number;
     ShiftName?: string;
+    EmpRemark?: string;
+    SupRemark?: string;
+    LvPhRemark?: string;
     LateIn?: number;
     Ot?: number;
     EarlyLeave?: number;
@@ -31,6 +36,13 @@ export interface ShiftAttendanceRecordRow {
     OccupationName?: string;
     JobGradeID?: number;
     JobGradeName?: string;
+    EmployeeRowListBuffer?: number[];
+    EmployeeRowList?: number[];
+    OccupationList?: number[];
+    DepartmentList?: number[];
+    DivisionList?: number[];
+    JobGradeList?: number[];
+    SectionList?: number[];
 }
 
 export abstract class ShiftAttendanceRecordRow {

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["external-global:jQuery"],
-  "sourcesContent": ["module.exports = jQuery;"],
-  "mappings": "wCAAA,IAAAA,EAAAC,EAAA,CAAAC,EAAAC,IAAA,CAAAA,EAAO,QAAU",
-  "names": ["require_jQuery", "__commonJSMin", "exports", "module"]
-}

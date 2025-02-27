@@ -111,7 +111,7 @@ public class PayrollEndpoint : ServiceEndpoint
 
     [HttpGet]
     public ListResponse<MyRow> CalculateGovernmentPaymentSpecial(IDbConnection connection, ListRequest request,
-         int EisCategory, int EpfCategory, int SocsoCategory, int HrdfCategory,
+         int EisCategory, int EpfCategory, int SocsoCategory, int HrdfCategory,float PcbOffset,
         float EpfAmount, float EisAmount, float PcbAmount, float SocsoAmount, float HrdfAmount,
          float WorkingSpouse, float ChildrenUnderEighteen, float ChildrenInUniversity, float NumberOfDisabledChild, float NumberOfDisabledChildInUni)
 
@@ -130,6 +130,7 @@ public class PayrollEndpoint : ServiceEndpoint
             @PcbAmount = PcbAmount,
             @SocsoAmount = SocsoAmount,
             @HrdfAmount = HrdfAmount,
+            @PcbOffset = PcbOffset,
 
             @WorkingSpouse = WorkingSpouse,
             @ChildrenUnderEighteen = ChildrenUnderEighteen,

@@ -4,6 +4,7 @@ export enum MasterCareerPathType {
     increment = 0,
     decrement = 1,
     promotion = 2,
-    demotion = 3
+    demotion = 3,
+    transfer = 4
 }
 Decorators.registerEnumType(MasterCareerPathType, 'HRMSoftware.EmployeeProfile.MasterCareerPathType', 'HumanResource.EmployeeProfile.MasterCareerPathType');

@@ -17,7 +17,7 @@ export class UserDialog extends EntityDialog<UserRow, any> {
     protected getService() { return UserService.baseUrl; }
 
     protected form = new UserForm(this.idPrefix);
-
+    public originalOwner: number;
     constructor() {
         super();
 
@@ -60,7 +60,6 @@ export class UserDialog extends EntityDialog<UserRow, any> {
 
     protected updateInterface() {
         super.updateInterface();
-
         this.toolbar.findButton("edit-permissions-button").toggleClass("disabled", this.isNewOrDeleted());
     }
     
@@ -68,8 +67,8 @@ export class UserDialog extends EntityDialog<UserRow, any> {
         super.dialogOpen(asPanel);
         
         var self = this
+        self.originalOwner = self.form.EmployeeRowID.value
         var CurrentEmployeeRowId = self.form.EmployeeRowID.value
-        console.log(CurrentEmployeeRowId)
         var EmployeeRowID = document.getElementById(this.idPrefix + 'EmployeeRowID')
         let EmployeeRowEditor = new Select2Editor($(EmployeeRowID))
         
@@ -98,16 +97,61 @@ export class UserDialog extends EntityDialog<UserRow, any> {
     }
 
     protected save_submitHandler(response): void {
+        var self = this
         super.save_submitHandler(response);
+        
+    }
+    protected onSaveSuccess(response): void {
+        var self = this
         if (!isEmptyOrNull(this.form.EmployeeRowID.value)) {
             EmployeeProfileService.Update({
                 EntityId: this.form.EmployeeRowID.value,
                 Entity:
                 {
-                    "UserPassword": this.form.Password.value
+                    "UserRowID": self.entityId,
+                    "UserName": self.form.Username.value,
+                    "CreateUser": true,
+                    "UserPassword": self.form.Password.value
                 },
             });
         }
-        
+
+        if (self.form.EmployeeRowID.value != self.originalOwner
+            && !isEmptyOrNull(self.originalOwner)) {
+            EmployeeProfileService.Update({
+                EntityId: self.originalOwner,
+                Entity:
+                {
+                    "UserRowID": null,
+                    "UserName": null,
+                    "CreateUser": false,
+                    "UserPassword": null
+                },
+            });
+        }
+
+        super.onSaveSuccess(response)
+    }
+
+    protected onDeleteSuccess(response): void
+    {
+        if (!isEmptyOrNull(this.originalOwner))
+        {
+            EmployeeProfileService.Update({
+                EntityId: this.originalOwner,
+                Entity:
+                {
+                    "UserRowID": null,
+                    "UserName": null,
+                    "CreateUser": false,
+                    "UserPassword": null
+                },
+            });
+        }
+
+
+        super.onDeleteSuccess(response)
+
+
     }
 }

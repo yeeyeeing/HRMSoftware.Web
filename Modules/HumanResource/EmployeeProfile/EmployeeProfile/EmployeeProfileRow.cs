@@ -71,12 +71,6 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.Age[this];
             set => fields.Age[this] = value;
         }
-        [DisplayName("Ending")]
-        public DateTime? ProbationPeriodEnd
-        {
-            get => fields.ProbationPeriodEnd[this];
-            set => fields.ProbationPeriodEnd[this] = value;
-        }
         [DisplayName("Last Payment Date")]
         public DateTime? LastPaymentDate
         {
@@ -106,6 +100,12 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
+        [DisplayName("Join Date")]
+        public DateTime? JoinDate
+        {
+            get => fields.JoinDate[this];
+            set => fields.JoinDate[this] = value;
+        }
 
 
         [DisplayName("Birthday"), NotNull]
@@ -115,7 +115,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.Birthday[this] = value;
         }
 
-        [DisplayName("Ssfw Effective Date")]
+        [DisplayName("SSFW Effective Date")]
         public DateTime? SsfwEffectiveDate
         {
             get => fields.SsfwEffectiveDate[this];
@@ -145,7 +145,7 @@ namespace HRMSoftware.EmployeeProfile
         }
 
         [DisplayName("Probation Period")]
-        public int? ProbationPeriod
+        public double? ProbationPeriod
         {
             get => fields.ProbationPeriod[this];
             set => fields.ProbationPeriod[this] = value;
@@ -967,11 +967,12 @@ namespace HRMSoftware.EmployeeProfile
             public DateTimeField TerminateDate;
             public DateTimeField TerminateLeaveDate;
             public DateTimeField ResignLeaveDate;
+            public DateTimeField JoinDate;
 
             public DateTimeField Birthday;
             public StringField EmployeeEmail;
             public StringField EpfAccountNumber;
-            public Int32Field ProbationPeriod;
+            public DoubleField ProbationPeriod;
             public Int32Field NoticePeriod;
             public StringField Address;
             public StringField TelNumber1;
@@ -999,7 +1000,6 @@ namespace HRMSoftware.EmployeeProfile
             public Int32Field StateID;
             public StringField EmployeeImg;
             public Int32Field NationalityID;
-            public DateTimeField ProbationPeriodEnd;
             public StringField Race;
             public StringField DepartmentDept;
             public StringField Division;

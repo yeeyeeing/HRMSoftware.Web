@@ -1,4 +1,5 @@
 using HRMSoftware.Administration.Repositories;
+using OfficeOpenXml.FormulaParsing.Utilities;
 using Serenity;
 using Serenity.Abstractions;
 using Serenity.ComponentModel;
@@ -47,7 +48,9 @@ namespace HRMSoftware.Administration
             result.Username = user.Username;
             result.DisplayName = user.DisplayName;
             result.IsAdmin = user.Username == "admin";
-            result.EmployeeRowID = user.EmployeeRowID;
+            if(user.EmployeeRowID.IsNumeric() == true )
+                result.EmployeeRowID = user.EmployeeRowID;
+
             result.UserId = user.UserId;
 
             result.Permissions = Cache.GetLocalStoreOnly("ScriptUserPermissions:" + user.Id, TimeSpan.Zero,

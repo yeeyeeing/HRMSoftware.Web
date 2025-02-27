@@ -14,6 +14,14 @@ namespace HRMSoftware.OrganisationChart.Endpoints;
 [ConnectionKey(typeof(MyRow)), ServiceAuthorize(typeof(MyRow))]
 public class EmployeeRightsEndpoint : ServiceEndpoint
 {
+
+    [HttpPost, AuthorizeDelete(typeof(MyRow))]
+    public DeleteResponse ClearOldAdminRightRecord(IDbConnection connection)
+    {
+        connection.Execute(@"
+      delete from HumanResourcesEmployeeAdminRights ", new { });
+        return new DeleteResponse();
+    }
     [HttpPost, AuthorizeCreate(typeof(MyRow))]
     public SaveResponse Create(IUnitOfWork uow, SaveRequest<MyRow> request,
         [FromServices] IEmployeeRightsSaveHandler handler)

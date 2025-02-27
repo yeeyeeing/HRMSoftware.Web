@@ -6,7 +6,9 @@ public enum ProbationClass
 {
     [Description("Under Probation")]
     UnderProbation = 0,
+    [Description("No Probation")]
+    NoProbation = 1,
     [Description("Passed Probation")]
-    PassedProbation = 1
+    PassedProbation = 2
    
 }

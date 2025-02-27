@@ -1,3 +1,4 @@
+using HRMSoftware.Administration;
 using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
@@ -63,8 +64,11 @@ public class PublicHolidayEndpoint : ServiceEndpoint
         commandType: System.Data.CommandType.StoredProcedure);
 
         var required_country_code = latest.Entities[0].CountryCode;
-        request.Criteria = new Criteria("CountryCode") == required_country_code;
+        request.Criteria = new Criteria(PublicHolidayRow.Fields.CountryCode.Name) == required_country_code;
         request.Sort = new[] { new SortBy("Date", false) };
+        if (Permissions.HasPermission(PermissionKeys.HumanResources)==false)//if user is HR guy
+            request.Criteria = new Criteria(PublicHolidayRow.Fields.IsActive.Name) == 1;
+
 
         return handler.List(connection, request);
     }

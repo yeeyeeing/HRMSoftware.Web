@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../../../Modules/HumanResource/TrainingManagement/ApplyNewProgram/ApplyNewProgramPage.ts"],
   "sourcesContent": ["import {MasterProgramApplyDialog} from '../MasterProgram/MasterProgramApplyDialog';\nimport {\n    MasterProgramRow,\n    MasterProgramStatusType,\n    ProgramFlowType,\n    ProgramGradeType,\n} from \"@/ServerTypes/TrainingManagement\";\n\nexport default function pageInit() {\n    var dlg = new MasterProgramApplyDialog();\n    dlg.loadEntityAndOpenDialog(<MasterProgramRow>{\n        DepartmentList: [2],\n        Status: MasterProgramStatusType.WaitingApproval,\n        FlowList: [{\n            FlowType: ProgramFlowType.Attendance,\n            GradeType: ProgramGradeType.Na,\n        }]\n    }, true);\n}"],
-  "mappings": "2jBAQe,SAARA,GAA4B,CAC/B,IAAIC,EAAM,IAAIC,EACdD,EAAI,wBAA0C,CAC1C,eAAgB,CAAC,CAAC,EAClB,SACA,SAAU,CAAC,CACP,WACA,WACJ,CAAC,CACL,EAAG,EAAI,CACX,CAVwBE,EAAAH,EAAA",
+  "mappings": "ymBAQe,SAARA,GAA4B,CAC/B,IAAIC,EAAM,IAAIC,EACdD,EAAI,wBAA0C,CAC1C,eAAgB,CAAC,CAAC,EAClB,SACA,SAAU,CAAC,CACP,WACA,WACJ,CAAC,CACL,EAAG,EAAI,CACX,CAVwBE,EAAAH,EAAA",
   "names": ["pageInit", "dlg", "MasterProgramApplyDialog", "__name"]
 }

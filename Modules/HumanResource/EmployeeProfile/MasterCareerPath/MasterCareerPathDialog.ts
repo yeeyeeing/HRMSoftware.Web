@@ -1,5 +1,5 @@
 import { Decorators, EntityDialog,  } from '@serenity-is/corelib';
-import { MasterCareerPathForm, MasterCareerPathRow, MasterCareerPathService } from '../../../ServerTypes/EmployeeProfile';
+import { MasterCareerPathForm, MasterCareerPathRow, MasterCareerPathService, MasterCareerPathType } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 import { isEmptyOrNull } from '@serenity-is/corelib/q';
 
@@ -16,7 +16,8 @@ export class MasterCareerPathDialog extends EntityDialog<MasterCareerPathRow, an
         $('.CategoryId').hide()
         var CareerPathTypeElement = document.getElementById(`${this.idPrefix}CareerPathType`)
         $(CareerPathTypeElement).on('change', async function () {
-            if ( parseInt(self.form.CareerPathType.value) >= 2)
+            if (self.form.CareerPathType.value >= MasterCareerPathType.promotion.valueOf().toString()
+                && self.form.CareerPathType.value < MasterCareerPathType.transfer.valueOf().toString())
                 $('.CategoryId').show()
             else
                 $('.CategoryId').hide()
@@ -26,13 +27,14 @@ export class MasterCareerPathDialog extends EntityDialog<MasterCareerPathRow, an
             $(CareerPathTypeElement).trigger('change')
     }
     protected save_submitHandler(response): void {
+        var self = this
 
-        if (parseInt(this.form.CareerPathType.value) >= 2) {
-            if (isEmptyOrNull(this.form.CategoryId.value)) {
-                alertDialog('Please Choose A Category')
-                return
-            }
+        if (self.form.CareerPathType.value >= MasterCareerPathType.promotion.valueOf().toString()
+            && self.form.CareerPathType.value < MasterCareerPathType.transfer.valueOf().toString()) { 
+            alertDialog('Please Choose A Category')
+            return
         }
+        
         super.save_submitHandler(response)
     }
 }

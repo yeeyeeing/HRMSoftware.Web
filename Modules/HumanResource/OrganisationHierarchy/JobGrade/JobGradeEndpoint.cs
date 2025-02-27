@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.OrganisationHierarchy.JobGradeRow;
@@ -58,5 +59,16 @@ public class JobGradeEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.JobGradeColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "JobGradeList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+    [HttpGet, Route("/JobGradeList"), ServiceAuthorize("*")]
+    public ListResponse<MyRow> JobGradeList(IDbConnection connection)
+    {
+        ListResponse<MyRow> latest = new ListResponse<MyRow>();
+        latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.HumanResourcesJobGrade WHERE IsActive = 1",
+
+            commandType: System.Data.CommandType.Text);
+
+        return latest;
+
     }
 }

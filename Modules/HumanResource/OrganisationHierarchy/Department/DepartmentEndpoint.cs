@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
 using Serenity.Services;
 using Serenity.Web;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using MyRow = HRMSoftware.OrganisationHierarchy.DepartmentRow;
@@ -58,5 +59,16 @@ public class DepartmentEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.DepartmentColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "DepartmentList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+    [HttpGet, Route("/DepartmentList"), ServiceAuthorize("*")]
+    public ListResponse<MyRow> DepartmentList(IDbConnection connection)
+    {
+        ListResponse<MyRow> latest = new ListResponse<MyRow>();
+        latest.Entities = (List<MyRow>)connection.Query<MyRow>("SELECT * FROM dbo.HumanResourcesDepartment WHERE IsActive = 1",
+
+            commandType: System.Data.CommandType.Text);
+
+        return latest;
+
     }
 }

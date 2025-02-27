@@ -1,5 +1,5 @@
 import { DataGrid, Decorators, EditorUtils, EntityDialog, Select2Editor } from '@serenity-is/corelib';
-import { EmployeeProfileForm, EmployeeProfileRow, EmployeeProfileService, EmployeeType, ProbationClass, SOCSOClass } from '../../../ServerTypes/EmployeeProfile';
+import { EmployeeCareerPathRow, EmployeeCareerPathService, EmployeeProfileForm, EmployeeProfileRow, EmployeeProfileService, EmployeeType, ProbationClass, SOCSOClass } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 import { ShiftService } from '../../../ServerTypes/Shift';
 import { UserDialog } from '../../../Administration/User/UserDialog';
@@ -15,8 +15,16 @@ import { EmployeeResignDialog } from '../EmployeeResign/EmployeeResignDialog';
 import { ListResponse, confirm } from '@serenity-is/corelib/q';
 import { AnnouncementWizardService } from '../../../ServerTypes/Announcement';
 import { OTApplicationService } from '../../../ServerTypes/OTApplication';
+import {   informationDialog, notifyError, notifySuccess, successDialog, warningDialog } from "@serenity-is/corelib";
+import { confirmDialog, notifyInfo } from '@serenity-is/corelib/q';
 
+interface EmployeeUser {
+    EmployeeRowId: number;
+    UserName: string;
+    UserId: number;
+}
 @Decorators.registerClass('HRMSoftware.EmployeeProfile.EmployeeProfileDialog')
+
 export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any> {
     protected getFormKey() { return EmployeeProfileForm.formKey; }
     protected getRowDefinition() { return EmployeeProfileRow; }
@@ -25,7 +33,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
     protected form = new EmployeeProfileForm(this.idPrefix);
     public list_of_employee_id: string[] = [];
     public list_of_employee_row_id: number[] = [];
-    public ListOfUserName: string[] = [];
+
+    //public ListOfUserName: string[] = [];
+    public ListOfUser: EmployeeUser[] = [];
 
 
     public OriginalEmployeeId: string;
@@ -39,13 +49,13 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
     public EditedValue: Record<string, string> = {};
     public RetireAge: number;
     public OriginalCreateUserValue: number;
+    private refreshInterval: number;
 
     constructor() {
         super();
         this.form.FixedDeductionList.slickGrid.setOptions({ rowHeight: 30 });
         this.form.AllowanceLists.slickGrid.setOptions({ rowHeight: 30 });
         this.form.EmployeeCareerPath.slickGrid.setOptions({ rowHeight: 30 });
-
         this.cloneButton.remove()
         EmployeeProfileService.List({
         }, response => {
@@ -54,35 +64,61 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 this.list_of_employee_row_id.push(response.Entities[key].Id)
             }
         });
-        CompanySettingsService.List({
-        }, response => {
-            for (var key in response.Entities) {
-                if (response.Entities[key].IsActive == 1) {
-                    this.ProbationMonths = response.Entities[key].ProbationPeriod
-                    this.RetireAge = response.Entities[key].RetireAge
-                }
-            }
-        });
-
+        
+        
     }
-    public createUser() {
-        var self = this
 
-        UserService.Create({
+    public onDeleteSuccess(response) {
+
+        super.onDeleteSuccess(response)
+        var self = this
+        UserService.Update({
+            EntityId: self.form.UserRowID.value,
             Entity:
             {
+                "EmployeeRowID": null,
+                "Email": null,
+
+            },
+        });
+
+
+    }
+    public createUser(res) {
+        var self = this
+        UserService.Create({
+            Entity: {
                 "Username": this.form.UserName.value,
                 "DisplayName": this.form.EmployeeName.value,
                 "Password": this.form.UserPassword.value,
                 "PasswordConfirm": this.form.UserPassword.value,
                 "Email": this.form.EmployeeEmail.value,
                 "MobilePhoneNumber": this.form.TelNumber1.value
-            },
+            }
+        }, response => {
+            var newUserId = response.EntityId; // Get the new user ID
+            EmployeeProfileService.Update({
+                EntityId: self.entityId,
+                Entity:
+                {
+                    "UserRowID": newUserId
+                },
+            });
+            UserService.Update({
+                EntityId: newUserId,
+                Entity:
+                {
+                    "EmployeeRowID": self.entityId
+                },
+            });
+            super.onSaveSuccess(res)
         });
+
     }
     protected onSaveSuccess(response): void {
-        var self = this
         var entity_id = this.entityId
+        var self = this
+        var res = response
 
         if (this.isNew()) {
             var UserName = Authorization.userDefinition.Username
@@ -96,91 +132,32 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     "OldValue": null,
                     "NewValue": null,
                     "FieldName": null,
-                    "EmployeeRowId": this.EmployeeRowID
+                    "EmployeeRowId": entity_id
 
                 },
             });
-            if (this.form.CreateUser.value == true)
-                this.createUser()
+        
+
         }
         else if (!this.isNew())//not new
         {
-            if (this.form.CreateUser.value == true) {
-                UserService.List({
-                }, response => {
-                    var found = 0
-                    for (var index in response.Entities) {
-                        if (response.Entities[index].EmployeeRowID == entity_id) {
-                            found = 1
-                            UserService.Update({
-                                EntityId: response.Entities[index].UserId,
-                                Entity:
-                                {
-                                    "DisplayName": this.form.EmployeeName.value,
-                                    "Email": this.form.EmployeeEmail.value,
-                                    "MobilePhoneNumber": this.form.TelNumber1.value
-                                },
-                            });
-
-                        }
-                    }
-                    if (found == 0)
-                        self.createUser()
-                    this.Record(this.EditedValue)
-                    var keys = Object.keys(this.EditedValue);
-                    var UserName = Authorization.userDefinition.Username
-                    var Today = new Date()
-                    for (const key of keys) {
-                        if (this.EditedValue[key] != this.OriginalValue[key] && typeof this.OriginalValue[key] != "object"
-                            && typeof this.EditedValue[key] != "object") {
-                            var Word = key
-                            Word = Word.replace(/ID/g, "")
-                            if (isEmptyOrNull(this.OriginalValue[key])) {
-                                var Description = Word + ' of ' + this.form.EmployeeName.value + ' is set by ' + UserName
-                                    + ' to ' + this.EditedValue[key] + ' on ' + Today
-                            }
-                            else {
-                                var Description = Word + ' of ' + this.form.EmployeeName.value + ' is changed by ' + UserName
-                                    + ' from ' + this.OriginalValue[key] + ' to ' + this.EditedValue[key] + ' on ' + Today
-                            }
-
-
-                            EmployeeEditHistoryService.Create({
-                                Entity:
-                                {
-                                    "Description": Description,
-                                    "OldValue": this.OriginalValue[key],
-                                    "NewValue": this.EditedValue[key],
-                                    "FieldName": key,
-                                    "EmployeeRowId": this.EmployeeRowID
-                                },
-                            });
-
-                        }
-
-                    }
-
-                });
-            }
-
-            else {
                 this.Record(this.EditedValue)
                 var keys = Object.keys(this.EditedValue);
                 var UserName = Authorization.userDefinition.Username
-
+                var Today = new Date()
                 for (const key of keys) {
-                    if (this.EditedValue[key] !== this.OriginalValue[key] && typeof this.OriginalValue[key] != "object"
+                    if (this.EditedValue[key] != this.OriginalValue[key] && typeof this.OriginalValue[key] != "object"
                         && typeof this.EditedValue[key] != "object") {
-                        var Today = new Date()
                         var Word = key
                         Word = Word.replace(/ID/g, "")
-                        if (isEmptyOrNull(this.OriginalValue[key]))
+                        if (isEmptyOrNull(this.OriginalValue[key])) {
                             var Description = Word + ' of ' + this.form.EmployeeName.value + ' is set by ' + UserName
                                 + ' to ' + this.EditedValue[key] + ' on ' + Today
-                        else
+                        }
+                        else {
                             var Description = Word + ' of ' + this.form.EmployeeName.value + ' is changed by ' + UserName
                                 + ' from ' + this.OriginalValue[key] + ' to ' + this.EditedValue[key] + ' on ' + Today
-
+                        }
                         EmployeeEditHistoryService.Create({
                             Entity:
                             {
@@ -188,23 +165,137 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                                 "OldValue": this.OriginalValue[key],
                                 "NewValue": this.EditedValue[key],
                                 "FieldName": key,
-                                "EmployeeRowId": this.EmployeeRowID
+                                "EmployeeRowId": entity_id
                             },
                         });
-
                     }
                 }
-            }
-
-
         }
 
-        super.onSaveSuccess(response);
+        if (self.form.CreateUser.value == true && isEmptyOrNull(self.form.UserRowID.value)) {
+            console.log('heree')
+            UserService.Create({
+                Entity: {
+                    "Username": this.form.UserName.value,
+                    "DisplayName": this.form.EmployeeName.value,
+                    "Password": this.form.UserPassword.value,
+                    "PasswordConfirm": this.form.UserPassword.value,
+                    "Email": this.form.EmployeeEmail.value,
+                    "MobilePhoneNumber": this.form.TelNumber1.value
+                }
+            }, response => {
+                var newUserId = response.EntityId; // Get the new user ID
+                EmployeeProfileService.Update({
+                    EntityId: self.entityId,
+                    Entity:
+                    {
+                        "UserRowID": newUserId
+                    },
+                });
+                UserService.Update({
+                    EntityId: newUserId,
+                    Entity:
+                    {
+                        "EmployeeRowID": self.entityId
+                    },
+                });
+                super.onSaveSuccess(res)
+            });
+
+        }
+        else
+            super.onSaveSuccess(response);
+    }
+    protected onDialogClose() {
+        super.onDialogClose();
+        clearInterval(this.refreshInterval); // Stop refreshing when closed
+    }
+    protected dialogOpen() {
+        super.dialogOpen()
+        var self = this
+        $(document).on('click', '.tool-button.add-button', function () {
+            console.log('Add button clicked');
+            var prevLength = self.form.EmployeeCareerPath.value.length
+            $('.s-HRMSoftware-EmployeeProfile-EmployeeCareerPathEditDialog').on("dialogclose", function () {
+                if (prevLength != self.form.EmployeeCareerPath.value.length) {
+                    self.loadById(self.entityId);
+                    for (let i = 0; i < self.form.EmployeeCareerPath.value.length; i++) {
+                        console.log(self.form.EmployeeCareerPath.value[i])
+                        if (isEmptyOrNull(self.form.EmployeeCareerPath.value[i].IsActive)) {
+                            self.form.EmployeeCareerPath.value[i].IsActive = 1
+                            EmployeeCareerPathService.Create({
+                                Entity:
+                                {
+                                    "EmployeeRowId": self.entityId,
+                                    "CareerPathId": self.form.EmployeeCareerPath.value[i].CareerPathId,
+                                    "CareerPathCode": self.form.EmployeeCareerPath.value[i].CareerPathCode,
+                                    "careerPaathType": self.form.EmployeeCareerPath.value[i].careerPaathType,
+                                    "CategoryId": self.form.EmployeeCareerPath.value[i].CategoryId,
+                                    "NewValue": self.form.EmployeeCareerPath.value[i].NewValue,
+                                    "newCostCentre": self.form.EmployeeCareerPath.value[i].newCostCentre,
+                                    "newDivision": self.form.EmployeeCareerPath.value[i].newDivision,
+                                    "oldValue": self.form.EmployeeCareerPath.value[i].oldValue,
+                                    "newDepartment": self.form.EmployeeCareerPath.value[i].newDepartment,
+                                    "newSection": self.form.EmployeeCareerPath.value[i].newSection,
+                                    "newOccupation": self.form.EmployeeCareerPath.value[i].newOccupation,
+                                    "newJobGrade": self.form.EmployeeCareerPath.value[i].newJobGrade,
+                                    "EffectiveDate": self.form.EmployeeCareerPath.value[i].EffectiveDate,
+                                    "Description": self.form.EmployeeCareerPath.value[i].Description,
+                                    "ManDesc": self.form.EmployeeCareerPath.value[i].ManDesc
+                                }
+                            }, response => {
+                                let count = 0;
+                                let isChanged = false;
+
+                                // Detect form changes
+                                let initialData = JSON.stringify(self.getSaveEntity());
+
+                                let checkForChanges = () => {
+                                    let currentData = JSON.stringify(self.getSaveEntity());
+                                    if (initialData !== currentData) {
+                                        isChanged = true;
+                                        clearInterval(refreshInterval); // Stop refreshing if values change
+                                    }
+                                };
+
+                                // Auto-refresh every second for 5 seconds or until change detected
+                                let refreshInterval = setInterval(() => {
+                                    if (count >= 5 || isChanged) {
+                                        clearInterval(refreshInterval); // Stop refreshing
+                                    } else {
+                                        self.loadById(self.entityId); // Refresh form
+                                        checkForChanges(); // Check if form values have changed
+                                        count++;
+                                    }
+                                }, 1000);
+                            
+                            });
+
+                        }
+                    }
+                }
+            })
+        });
+
+        
+
     }
     protected onDialogOpen() {
         super.onDialogOpen()
         var self = this
-
+        CompanySettingsService.List({
+        }, response => {
+            for (var key in response.Entities) {
+                if (response.Entities[key].IsActive == 1) {
+                    this.ProbationMonths = response.Entities[key].ProbationPeriod
+                    this.RetireAge = response.Entities[key].RetireAge
+                    if (self.isNew())
+                    self.form.ProbationPeriod.value = this.ProbationMonths
+                }
+            }
+        });
+        
+        $('.UserRowID').hide()
         var EpfAccountNumberElement = document.getElementById(this.idPrefix + 'EpfAccountNumber')
         $(EpfAccountNumberElement).on('input', async function () {
             let value = this.value;
@@ -246,23 +337,6 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         })
 
         EditorUtils.setReadonly(self.form.Age.element, true);
-
-
-
-
-
-
-
-        const addButton = $('.EmployeeCareerPath .add-button');
-        addButton.on("click", function () {
-            $('.s-HRMSoftware-EmployeeProfile-EmployeeCareerPathEditDialog .s-TemplatedDialog .s-DialogContent .s-Form .EmployeeRowId .s-LookupEditor').val(self.entityId).trigger('change')
-
-        })
-
-
-
-
-
         $('.OtPayEntitlement').parent().after(`<ul role="tablist" class="nav nav-tabs property-tabs">
             <li class="nav-item" role="presentation"> <a class="nav-link custom active AllowanceLists" data-bs-toggle="tab" role="tab">Allowance</a> </li>
             <li class="nav-item" role="presentation"> <a class="nav-link custom FixedDeductionList" data-bs-toggle="tab" role="tab"> Deductions</a></li>
@@ -298,24 +372,99 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
         var EmployeeTypeElement = document.getElementById(`${this.idPrefix}EmployeeType`)
         $(EmployeeTypeElement).on('change', async function () {
-            $(`.SsfwNumber, .Nric`).hide()
+            $(`.SsfwNumber, .Nric, .OldNRIC`).hide()
             if (parseInt(self.form.EmployeeType.value) == EmployeeType.Local.valueOf())
-                $(`.Nric`).show()
+                $(`.Nric, .OldNRIC`).show()
             else if (parseInt(self.form.EmployeeType.value) == EmployeeType.Foreigner.valueOf())
                 $(`.SsfwNumber`).show()
 
         })
         if (!this.isNew()) {
             $(EmployeeTypeElement).trigger('change')
-            EditorUtils.setReadonly(self.form.BasicSalary.element, true);
-            EditorUtils.setReadonly(self.form.DivisionID.element, true);
-            EditorUtils.setReadonly(self.form.DepartmentID.element, true);
-            EditorUtils.setReadonly(self.form.OccupationID.element, true);
-            EditorUtils.setReadonly(self.form.SectionID.element, true);
-            EditorUtils.setReadonly(self.form.JobGradeID.element, true);
+            var originalDivision = self.form.DivisionID.value
+            var originalDepartment = self.form.DepartmentID.value
+            var originalOccupation = self.form.OccupationID.value
+            var originalSection= self.form.SectionID.value
+            var originalJobGrade = self.form.JobGradeID.value
+            var originalSalary = self.form.BasicSalary.value
+
+
+            var DivisionIdElement = document.getElementById(`${this.idPrefix}DivisionID`)
+            var Cp8dIdElement = document.getElementById(`${this.idPrefix}Cp8dID`)
+            var DepartmentIdElement = document.getElementById(`${this.idPrefix}DepartmentID`)
+            var SectionIdElement = document.getElementById(`${this.idPrefix}SectionID`)
+            var JobGradeIdElement = document.getElementById(`${this.idPrefix}JobGradeID`)
+            var OccupationIdElement = document.getElementById(`${this.idPrefix}OccupationID`)
+            var CostCentreIdElement = document.getElementById(`${this.idPrefix}CostCentreID`)
+            var BasicSalaryElement = document.getElementById(`${this.idPrefix}BasicSalary`)
+            /*
+
+            $(DivisionIdElement).find('.select2-selection__clear').remove();
+            self.form.DivisionID.element.next('.select2-container').find('.select2-selection__clear').remove();
+            function removeNewRecords() {
+                console.log(originalSalary)
+                console.log(self.form.BasicSalary.value)
+
+                if (self.form.DivisionID.value == originalDivision
+                    && self.form.DepartmentID.value == originalDepartment
+                    && self.form.OccupationID.value == originalOccupation
+                    && self.form.JobGradeID.value == originalJobGrade
+                    && self.form.JobGradeID.value == originalJobGrade
+                    && self.form.SectionID.value == originalSection
+                    && self.form.BasicSalary.value == originalSalary
+                )
+                {
+                    $('.EmployeeCareerPath').parent().show()
+                }
+                else {
+                    if ($('.EmployeeCareerPath').parent().is(":hidden") == false) {
+                        alertDialog("The edits to Basic Salary, Division, Department, Occupation, Job Grade and Section must be saved before Making employee progressions")
+                        $('.EmployeeCareerPath').parent().hide()
+                    }
+                    var Results: ConcreteEmployeeCareerPathRow[] = []
+                    for (let i = 0; i < self.form.EmployeeCareerPath.value.length; i++) {
+                        if (!isEmptyOrNull(self.form.EmployeeCareerPath.value[i].Id)) {
+                            var result = new ConcreteEmployeeCareerPathRow()
+                            result = self.form.EmployeeCareerPath.value[i]
+                            Results.push(result)
+                        }
+                    }
+                    self.form.EmployeeCareerPath.value = Results
+
+                }
+            }
+            
+            $(BasicSalaryElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(DivisionIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(Cp8dIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(DepartmentIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(SectionIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(JobGradeIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(OccupationIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            $(CostCentreIdElement).on('change', async function () {
+                removeNewRecords()
+            })
+            */
         }
-        else
+        else {
             $('.CareerPahth').parent().hide()
+            $('.EmployeeCareerPath').parent().hide()
+        }
+
 
         var OtPayEntitlement = document.getElementById(`${this.idPrefix}OtPayEntitlement`)
         $(OtPayEntitlement).on('change', async function () {
@@ -353,9 +502,6 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         var UserNameElement = this.form.UserName.element;
         $(PassWordElement).attr('autocomplete', 'off');
         $(UserNameElement).attr('autocomplete', 'off');
-        EditorUtils.setReadonly(this.form.PassedProbation.element, true);
-
-        // Create a tooltip element
         const tooltip = document.createElement('div');
         tooltip.style.position = 'absolute';
         tooltip.style.backgroundColor = '#000';
@@ -393,7 +539,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             // If the birth month and day is after the current date, adjust the retirement date to the next year
             if (retireDate < new Date())
                 retireDate.setFullYear(retireYear + 1);
-
+            console.log(retireDate)
             self.form.RetireDate.valueAsDate = retireDate
         });
 
@@ -567,7 +713,8 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         else { //not new
             this.OriginalEmployeeId = this.form.EmployeeID.value
             this.Username = this.form.UserName.value
-            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation) {
+            console.log(this.form.PassedProbation.value)
+            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation || parseInt(this.form.PassedProbation.value) == ProbationClass.NoProbation) {
                 var confirmButtons = document.querySelectorAll('.text-bg-success')
                 confirmButtons.forEach(function (element) {
                     $(element).hide()
@@ -597,20 +744,15 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 }
             });
         }
-        UserService.List({
-        }, response => {
-            for (var index in response.Entities) {
-                if (response.Entities[index].Username == this.form.EmployeeID.value)
-                    this.UserRowID = response.Entities[index].UserId
-                this.ListOfUserName.push(response.Entities[index].Username)
-            }
-        });
-        // EditorUtils.setReadonly(this.form.ProbationPeriodEnd.element, true);
+        
+       
+        EditorUtils.setReadonly(this.form.PassedProbation.element, true);
+        EditorUtils.setReadonly(this.form.ProbationPeriodFrom.element, true);
+        EditorUtils.setReadonly(this.form.ProbationPeriodUntil.element, true);
         var ProbationPeriodElement = document.getElementById(this.idPrefix + 'ProbationPeriod')
-        var ProbationPeriodEndElement = document.getElementById(this.idPrefix + 'ProbationPeriodEnd')
-        var ProbationPeriodStartElement = document.getElementById(this.idPrefix + 'ProbationPeriodStart')
-
-        var RecruitmentDateElement = document.getElementById(this.idPrefix + 'RecruitmentDate')
+        var ProbationPeriodEndElement = document.getElementById(this.idPrefix + 'ProbationPeriodUntil')
+        
+        var JoinDateElement = document.getElementById(this.idPrefix + 'JoinDate')
         var EmployeeTypeElement = document.getElementById(this.idPrefix + 'EmployeeType')
         var PayByDayElement = document.getElementById(this.idPrefix + 'PayByDay')
         var PayByMonthElement = document.getElementById(this.idPrefix + 'PayByMonth')
@@ -665,90 +807,120 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 $('.' + 'WorkingPermitValidFrom').show();
                 $('.' + 'WorkingPermitValidUntil').show();
                 $('.' + 'ArrivalDate').show();
-                console.log(self.form.EpfClass.items[0].disabled = true)
             }
         });
 
-
-        $(ProbationPeriodEndElement).prop('readonly', true);
-        $(ProbationPeriodElement).on('change', function (e) {
-            var recruitment_date = $(RecruitmentDateElement).val()
-
-            if (isEmptyOrNull(recruitment_date))
-                return
-
-            var recruitment_date_Parts = recruitment_date.split('/');
-            const recruitment_date_datetime = new Date(
-                parseInt(recruitment_date_Parts[2]), // Year
-                parseInt(recruitment_date_Parts[0]) - 1, // Month (subtract 1 as January is 0)
-                parseInt(recruitment_date_Parts[1]) // Day
-            );
-            recruitment_date_datetime.setMonth(recruitment_date_datetime.getMonth() + 3);
-            const year = recruitment_date_datetime.getFullYear();
-            const month = recruitment_date_datetime.getMonth() + 1; // Note: January is 0, so we add 1
-            const day = recruitment_date_datetime.getDate();
-
-            var probation_end_string = `${month}/${day}/${year}`
-            $(ProbationPeriodEndElement).val(probation_end_string)
+        $(document).ready(function () {
+            $('<span>months</span>').insertAfter(`#${self.idPrefix}ProbationPeriod`);
+       
         });
-
-        $(RecruitmentDateElement).on('change', function (e) {
-            var recruitment_date = $(RecruitmentDateElement).val()
-            console.log('haha')
-
-            if (!self.isNew())
+        
+        function calculateProbation() {
+            var joinDate = $(JoinDateElement).val();
+            var probationPeriod = self.form.ProbationPeriod.value;
+            if (probationPeriod == 0) {
+                self.form.ProbationPeriodFrom.value = self.form.ProbationPeriodUntil.value = '00/00/0000'
+                self.form.PassedProbation.value = ProbationClass.NoProbation.valueOf().toString();
                 return
-            console.log('haha')
+            }
+            else if (self.form.PassedProbation.value == ProbationClass.PassedProbation.valueOf().toString()) {
 
-            var recruitment_date_Parts = recruitment_date.split('/');
-            const recruitment_date_datetime = new Date(
-                parseInt(recruitment_date_Parts[2]), // Year
-                parseInt(recruitment_date_Parts[0]) - 1, // Month (subtract 1 as January is 0)
-                parseInt(recruitment_date_Parts[1]) // Day
-            );
-
-            recruitment_date_datetime.setMonth(recruitment_date_datetime.getMonth() + 3);
+               // return
+            }
+            if (isEmptyOrNull(self.form.JoinDate.value) || isEmptyOrNull(self.form.ProbationPeriod.value))
+                return;
 
 
-            const year = recruitment_date_datetime.getFullYear();
-            const month = recruitment_date_datetime.getMonth() + 1; // Note: January is 0, so we add 1
-            const day = recruitment_date_datetime.getDate();
+            if (probationPeriod > 0) {
+                var recruitment_date_Parts = joinDate.split('/');
+                const recruitment_date_datetime = new Date(
+                    parseInt(recruitment_date_Parts[2]), // Year
+                    parseInt(recruitment_date_Parts[0]) - 1, // Month (subtract 1 as January is 0)
+                    parseInt(recruitment_date_Parts[1]) // Day
+                );
 
-            var probation_end_string = `${month}/${day}/${year}`
+                // Extract whole months and fractional days
+                const wholeMonths = Math.floor(probationPeriod);
+                const fractionalMonths = probationPeriod - wholeMonths;
 
-            self.form.ProbationPeriodFrom.value = self.form.RecruitmentDate.value
-            self.form.ProbationPeriodUntil.value = probation_end_string
+                // Add whole months
+                recruitment_date_datetime.setMonth(recruitment_date_datetime.getMonth() + wholeMonths);
 
-        });
+                // Handle fractional months by adding days
+                if (fractionalMonths > 0) {
+                    const daysInNextMonth = new Date(
+                        recruitment_date_datetime.getFullYear(),
+                        recruitment_date_datetime.getMonth() + 1,
+                        0
+                    ).getDate(); // Get total days in the next month
+
+                    const extraDays = Math.round(daysInNextMonth * fractionalMonths);
+                    recruitment_date_datetime.setDate(recruitment_date_datetime.getDate() + extraDays);
+                }
+
+                // Format the date
+                const year = recruitment_date_datetime.getFullYear();
+                const month = recruitment_date_datetime.getMonth() + 1; // January is 0, so add 1
+                const day = recruitment_date_datetime.getDate();
+
+                var probation_end_string = `${month}/${day}/${year}`;
+                self.form.ProbationPeriodFrom.value = joinDate;
+                self.form.ProbationPeriodUntil.value = probation_end_string;
+                $(ProbationPeriodEndElement).val(probation_end_string);
+              
+                var ProbationPeriodUntil = new Date(self.form.ProbationPeriodUntil.value)
+                if (self.form.CalculationDate.valueAsDate > ProbationPeriodUntil)
+                    self.form.PassedProbation.value = ProbationClass.PassedProbation.valueOf().toString();
+                else
+                    self.form.PassedProbation.value = ProbationClass.UnderProbation.valueOf().toString();
+                console.log(self.form.PassedProbation.value)
+            }
+            
+        }
+        console.log(self.form.PassedProbation.value)
+        console.log(ProbationClass.PassedProbation.valueOf().toString())
+
+        
+
         if (!this.isNew()) //this is old record
         {
+
+            calculateProbation()
+            window['employeeRowId'] = this.entityId;  // Store the ID globally (using window)
+            /*
+            $(document).ready(function () {
+                $('<button>Revert</button>')
+                    .insertAfter(`#${self.idPrefix}DepartmentID`)  // Insert the button after the specified element
+                    .on('click', function () {
+                        self.form.DivisionID.value = originalDivision
+                        self.form.DepartmentID.value = originalDepartment
+                        self.form.JobGradeID
+                            .value = originalJobGrade
+                        self.form.OccupationID.value = originalOccupation
+                        self.form.BasicSalary.value = originalSalary
+                        self.form.SectionID.value = originalSection
+
+                    });
+
+            });
+            */
+            
             if (this.form.CreateUser.value == true) {
                 EditorUtils.setReadonly(this.form.CreateUser.element, true);
-                EditorUtils.setReadonly(this.form.UserPassword.element, true);
-                EditorUtils.setReadonly(this.form.UserName.element, true);
-
+             //   EditorUtils.setReadonly(this.form.UserPassword.element, true);
+             //   EditorUtils.setReadonly(this.form.UserName.element, true);
             }
             else {
-                $('.' + 'UserName').hide();
-                $('.' + 'UserPassword').hide();
-                $('.' + 'GrantHRPrivilege').hide();
-
-                $('.' + 'CreateUser').on('change', (evt: Event) => {
-                    if (this.form.CreateUser.value == true) {
-                        $('.' + 'UserName').show();
-                        $('.' + 'UserPassword').show();
-                        $('.' + 'GrantHRPrivilege').show();
-
-
-                    }
-                    else {
-                        $('.' + 'GrantHRPrivilege').hide();
-
-                        $('.' + 'UserName').hide();
-                        $('.' + 'UserPassword').hide();
-                    }
+                $('.UserName, .UserPassword, .GrantHRPrivilege' + 'UserName').hide();
+                
+                $('.CreateUser').on('change', (evt: Event) => {
+                    if (this.form.CreateUser.value == true)
+                        $('.UserName, .UserPassword, .GrantHRPrivilege' + 'UserName').show();
+                    else 
+                        $('.UserName, .UserPassword, .GrantHRPrivilege' + 'UserName').hide();
                 });
             }
+            
 
             if (isEmptyOrNull(this.form.RetireDate.value)) {
                 var birthDate = self.form.Birthday.valueAsDate
@@ -765,7 +937,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 self.form.RetireDate.valueAsDate = retireDate
             }
 
-            $(RecruitmentDateElement).prop('readonly', false);
+            $(JoinDateElement).prop('readonly', false);
             this.Record(this.OriginalValue)
 
             for (var index in this.list_of_employee_id) {
@@ -773,38 +945,23 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     this.EmployeeRowID = this.list_of_employee_row_id[index]
             }
 
-            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation) {
+            if (parseInt(this.form.PassedProbation.value) == ProbationClass.PassedProbation || parseInt(this.form.PassedProbation.value) == ProbationClass.NoProbation) {
                 EditorUtils.setReadonly(this.form.ProbationPeriodFrom.element, true);
                 EditorUtils.setReadonly(this.form.ProbationPeriodUntil.element, true);
+                EditorUtils.setReadonly(this.form.ProbationPeriod.element, true);
             }
 
-            if (isEmptyOrNull(self.form.PassedProbation.value)) {
-                self.form.PassedProbation.value = ProbationClass.UnderProbation.toString()
-                EmployeeProfileService.Update({
-                    EntityId: this.entityId,
-                    Entity:
-                    {
-                        "PassedProbation": ProbationClass.UnderProbation
-                    }
-                });
-
-            }
 
 
 
         }
         else {
-            $('.' + 'EpfContribution').hide();
-            $('.' + 'UserName').hide();
-            $('.' + 'UserPassword').hide();
-            $('.' + 'GrantHRPrivilege').hide();
 
-            $('.' + 'CreateUser').on('change', (evt: Event) => {
+            $('.EpfContribution, .UserName, .UserPassword, .GrantHRPrivilege').hide();
+            $('.CreateUser').on('change', (evt: Event) => {
                 if (self.form.CreateUser.value == true) {
-                    $('.' + 'GrantHRPrivilege').show();
-
-                    $('.' + 'UserName').show();
-
+                    $('.GrantHRPrivilege').show();
+                    $('.UserName').show();
                     if (isEmptyOrNull($(UserNameElement).val())) {
                         // var UserNameDialog = 'Cannot Start With Number '
                         $(UserNameElement).val(UserNameDialog)
@@ -812,8 +969,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                             "color": "grey" // Set text color to grey
                         });
                     }
-                    $('.' + 'UserPassword').show();
-                    console.log(isEmptyOrNull($(UserPasswordElement).val()))
+                    $('.UserPassword').show();
                     if (isEmptyOrNull($(UserPasswordElement).val())) {
 
                         //var UserPasswordDialog = 'Password length must be greater or equal to 6'
@@ -824,19 +980,21 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     }
                 }
                 else {
-                    $('.' + 'GrantHRPrivilege').val('');
-                    $('.' + 'UserName').val('');
-                    $('.' + 'UserPassword').val('');
-                    $('.' + 'GrantHRPrivilege').hide();
-                    $('.' + 'UserName').hide();
-                    $('.' + 'UserPassword').hide();
+                    $('.GrantHRPrivilege, .UserName, .UserPassword').val('');
+                    $('.GrantHRPrivilege, .UserName, .UserPassword').hide();
                 }
             });
         }
+        if (self.form.PassedProbation.value != ProbationClass.PassedProbation.valueOf().toString()) {
+            $(ProbationPeriodElement).on('change', function (e) {
+                calculateProbation()
+            });
+            $(JoinDateElement).on('change', function (e) {
+                calculateProbation()
+            });
+        }
+
     }
-
-
-
     public Record(RecordElement: Record<string, string>) {
         var ItemsBuffer = this.propertyGrid.get_items()
         // var stringList: string[];
@@ -867,6 +1025,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         return opt
     }
     protected save_submitHandler(response): void {
+        console.log(this.form.ProbationPeriod.value)
         var list_of_errors: string[] = [];
         function startsWithNumber(input: string): boolean {
             // Regular expression to match any digit character at the start of the string
@@ -895,13 +1054,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 list_of_errors.push('The length of SSFW should be 12')
 
         }
-
-        if (this.isNew() || (this.Username.toLowerCase() != this.form.UserName.value.toLowerCase()) && !isEmptyOrNull(this.Username)) {
-            for (var index in this.ListOfUserName)
-                if (this.form.UserName.value.toLowerCase() == this.ListOfUserName[index].toLowerCase())
-                    list_of_errors.push('Please use another username, there is another user with same username')
-        }
-
+        
         if (this.form.CreateUser.value == true && this.form.UserPassword.value == '')
             list_of_errors.push('Please fill in UserPassword')
 
@@ -916,7 +1069,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             list_of_errors.push('User Name cannot contain anything else than number and characters')
 
         var EmployeeTypeElement = document.getElementById(this.idPrefix + 'EmployeeType')
-        if ($(EmployeeTypeElement).val() == 1) // if is local
+        if ($(EmployeeTypeElement).val() == EmployeeType.Local) // if is local
         {
             if (this.form.Nric.value == '')
                 list_of_errors.push('Please fill in the Identity Card Number')
@@ -937,26 +1090,99 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             const concatenatedString: string = list_of_errors.map(item => `- ${item}`).join('\n');
             alertDialog(concatenatedString)
         }
-        else {
-            //var res = response
-            //r self = this
-            super.save_submitHandler(response)
-            /*
-            if (!this.isNew())
-                EmployeeProfileService.Retrieve({
-                    EntityId: this.entityId
+        else if (list_of_errors.length == 0) {
+
+            var waitForConfirm = 0
+            var res = response
+            if (self.form.CreateUser.value == true) {
+                UserService.List({
                 }, response => {
-                    console.log('haha')
-                    // if (response.Entity.CreateUser == false && self.form.CreateUser.value == true) {
-                    //self.createUser()
+                    self.ListOfUser.length = 0
+                    for (var index in response.Entities) {
+                        if (response.Entities[index].Username == this.form.EmployeeID.value)
+                            this.UserRowID = response.Entities[index].UserId
+                        this.ListOfUser.push({ EmployeeRowId: response.Entities[index].EmployeeRowID, UserName: response.Entities[index].Username, UserId: response.Entities[index].UserId })
+                    }
+                    var create = 1
+                    if (isEmptyOrNull(self.form.UserRowID.value)) {
+                        for (var index in this.ListOfUser) {
+                            console.log(this.ListOfUser[index].EmployeeRowId == self.entityId && !isEmptyOrNull(self.entityId))
+
+                            if (this.form.UserName.value == this.ListOfUser[index].UserName) {
+                                create = 0
+                                if (isEmptyOrNull(this.ListOfUser[index].EmployeeRowId)
+                                    || (this.ListOfUser[index].EmployeeRowId == self.entityId && !isEmptyOrNull(self.entityId))) {//found user with the id inputted but no employee row id binded
+                                    waitForConfirm = 1
+                                    confirmDialog(
+                                        "There is already a user with the same username, do you want to link this employee to that account?",
+                                        () => {
+                                            self.form.UserRowID.value = self.ListOfUser[index].UserId
+                                            UserService.Update({
+                                                EntityId: self.ListOfUser[index].UserId,
+                                                Entity:
+                                                {
+                                                    "EmployeeRowID": self.entityId,
+                                                    "Password": self.form.UserPassword.value,
+                                                    "PasswordConfirm": self.form.UserPassword.value
+                                                },
+                                            });
+                                            if (self.form.ProbationPeriod.value == 0)
+                                                self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+
+                                            super.save_submitHandler(res)
+
+                                        }, {
+                                        onNo: () => {
+                                            notifyInfo("Please select another unique username")
+                                            return
+                                        }
+                                    });
+                                    break;
+                                }
+                                else if (!isEmptyOrNull(this.ListOfUser[index].EmployeeRowId)) { //found user with the id inputted but with employee row id binded
+                                    if (this.entityId != this.ListOfUser[index].EmployeeRowId) {
+                                        alertDialog('Please use another username, there is another user with same username')
+                                        return
+                                    }
+                                    else {
+                                        if (self.form.ProbationPeriod.value == 0)
+                                            self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+                                    }
+                                    break
+                                }
+
+                                break
+                            }
+
+                        }
+
+                    }
+                    else {
+                        UserService.Update({
+                            EntityId: self.form.UserRowID.value,
+                            Entity:
+                            {
+                                "Username": self.form.UserName.value,
+                                "Password": self.form.UserPassword.value,
+                                "PasswordConfirm": self.form.UserPassword.value
+                            },
+                        });
+
+                    }
+                    if (self.form.ProbationPeriod.value == 0)
+                        self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+                    if (waitForConfirm == 0)
                     super.save_submitHandler(res)
-                    //  }
 
                 });
-            else
-                super.save_submitHandler(res)
-            */
 
+
+            }
+            else {
+                if (self.form.ProbationPeriod.value == 0)
+                    self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+                super.save_submitHandler(res)
+            }
         }
     }
     protected getToolbarButtons() {
@@ -980,10 +1206,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 cssClass: 'text-bg-primary p-2 hidden retireButton',
                 // icon: 'fa-plus text-green',
                 onClick: () => {
-
-
                     var today = new Date()
-
                     if (self.form.RetireDate.valueAsDate > today) {
                         confirm("This employee has not reached the retire date, are you sure?", () => {
                             confirm("Are you sure this employee has retired?", () => {
@@ -1034,34 +1257,42 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 // icon: 'fa-plus text-green',
                 onClick: () => {
                     var today = new Date()
-                    if (!isEmptyOrNull(self.form.ProbationPeriodUntil.valueAsDate)) {
-                        if (self.form.ProbationPeriodUntil.valueAsDate > today) {
+                    if (!isEmptyOrNull(self.form.ProbationPeriodUntil.value)) {
+                        console.log(self.form.ProbationPeriodUntil.value)
+                        var ProbationPeriodUntil = new Date(self.form.ProbationPeriodUntil.value)
+
+                        if (ProbationPeriodUntil > today) {
                             confirm("This employee has not passed probation period, are you sure?", () => {
                                 confirm("Do you want to pass probation of this employee?", () => {
                                     EmployeeProfileService.Update({
                                         EntityId: self.entityId,
                                         Entity:
                                         {
-                                            "PassedProbation": ProbationClass.PassedProbation
+                                            "PassedProbation": ProbationClass.PassedProbation,
+                                            
                                         }
                                     });
+                                    self.form.PassedProbation.value = ProbationClass.PassedProbation.valueOf().toString()
                                     $('.confirmEmployee').addClass('hidden');
                                 });
                             });
 
                         }
-                    }
-                    else {
-                        confirm("Do you want to pass probation of this employee?", () => {
-                            EmployeeProfileService.Update({
-                                EntityId: self.entityId,
-                                Entity:
-                                {
-                                    "PassedProbation": ProbationClass.PassedProbation
-                                }
+                        else {
+                            confirm("Do you want to pass probation of this employee?", () => {
+                                EmployeeProfileService.Update({
+                                    EntityId: self.entityId,
+                                    Entity:
+                                    {
+                                        "PassedProbation": ProbationClass.PassedProbation
+                                    }
+                                });
+                                EditorUtils.setReadonly(self.form.ProbationPeriod.element, true);
+                                self.form.PassedProbation.value = ProbationClass.PassedProbation.valueOf().toString()
+                                $('.confirmEmployee').addClass('hidden');
                             });
-                            $('.confirmEmployee').addClass('hidden');
-                        });
+
+                        }
 
                     }
                 },
@@ -1125,40 +1356,19 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                             }
                         })
 
-                        /*
-                        EmployeeProfileService.Retrieve({
-                            EntityId: self.entityId
-                        }, response => {
-                            if (isEmptyOrNull(response.Entity['TerminateLeaveDate'])
-                                && isEmptyOrNull(response.Entity['ResignLeaveDate'])) {
-                                $('.terminateButton').removeClass('hidden');
-                                $('.resignButton').removeClass('hidden');
-                                $('.retireButton').removeClass('hidden');
-                            }
-                            else {
-                                if (isEmptyOrNull(response.Entity['TerminateLeaveDate']))  // show terminate
-                                {
-                                    $('.terminateButton').addClass('hidden');
-                                    $('.retireButton').addClass('hidden');
-                                }
-                                else
-                                    $('.terminateButton').removeClass('hidden');
-                                if (isEmptyOrNull(response.Entity['ResignLeaveDate']))  // show resign
-                                {
-                                    $('.resignButton').addClass('hidden');
-                                    $('.retireButton').addClass('hidden');
-                                }
-                                else
-                                    $('.resignButton').removeClass('hidden');
-                            }
-
-                        });
-                        */
                     })
                 },
             }
         );
 
         return buttons;
+    }
+}
+
+
+
+class ConcreteEmployeeCareerPathRow extends EmployeeCareerPathRow {
+    constructor() {
+        super();
     }
 }

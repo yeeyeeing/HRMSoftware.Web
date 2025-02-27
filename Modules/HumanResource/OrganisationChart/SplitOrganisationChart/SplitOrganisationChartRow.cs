@@ -5,11 +5,11 @@ using System.ComponentModel;
 
 namespace HRMSoftware.OrganisationChart;
 
-[ConnectionKey("Default"), Module("OrganisationChart"), TableName("HumanResourcesSplitOrganisationChart")]
-[DisplayName("Split Organisation Chart"), InstanceName("Split Organisation Chart")]
+[ConnectionKey("Default"), Module("OrganisationChart"), TableName("HumanResourcesSplitOrganisationStructure")]
+[DisplayName("Split Organisation Structure"), InstanceName("Split Organisation Structure")]
 [ReadPermission("Administration:HumanResources")]
 [ModifyPermission("Administration:HumanResources")]
-public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChartRow.RowFields>, IIdRow, INameRow
+public sealed class SplitOrganisationStructureRow : LoggingRow<SplitOrganisationStructureRow.RowFields>, IIdRow, INameRow
 {
     [DisplayName("Id"), Identity, IdProperty]
     public int? Id
@@ -60,13 +60,24 @@ public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChar
         set => fields.HierarchyLevel[this] = value;
     }
 
+    [DisplayName("Hierarchy Level"), Column("hierarchyId")]
+    public int? hierarchyId
+    {
+        get => fields.hierarchyId[this];
+        set => fields.hierarchyId[this] = value;
+    }
+
     [DisplayName("Employee Row Id")]
     public int? EmployeeRowId
     {
         get => fields.EmployeeRowId[this];
         set => fields.EmployeeRowId[this] = value;
     }
-
+    public int? childrenIndex
+    {
+        get => fields.childrenIndex[this];
+        set => fields.childrenIndex[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
@@ -77,6 +88,8 @@ public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChar
         public StringField ClassName;
         public Int32Field HierarchyLevel;
         public Int32Field EmployeeRowId;
+        public Int32Field hierarchyId;
+        public Int32Field childrenIndex;
 
     }
 }

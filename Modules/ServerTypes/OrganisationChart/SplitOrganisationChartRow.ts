@@ -9,6 +9,7 @@ export interface SplitOrganisationChartRow {
     ClassName?: string;
     HierarchyLevel?: number;
     EmployeeRowId?: number;
+    childrenIndex?: number;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

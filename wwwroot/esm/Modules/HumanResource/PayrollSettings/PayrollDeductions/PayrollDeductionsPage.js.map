@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../../../Modules/HumanResource/PayrollSettings/PayrollDeductions/PayrollDeductionsPage.ts"],
   "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\nimport { PayrollDeductionsEditor } from './PayrollDeductionsEditor';\n\nexport default function pageInit() {\n    initFullHeightGridPage(new PayrollDeductionsEditor($('#GridDiv')).element);\n}"],
-  "mappings": "wtBAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAwB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC7E,CAFwBC,EAAAF,EAAA",
+  "mappings": "swBAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAwB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC7E,CAFwBC,EAAAF,EAAA",
   "names": ["import_q", "pageInit", "PayrollDeductionsEditor", "__name"]
 }

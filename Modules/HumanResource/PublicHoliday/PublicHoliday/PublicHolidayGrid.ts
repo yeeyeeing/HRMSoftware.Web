@@ -108,4 +108,23 @@ export class PublicHolidayGrid extends EntityGrid<PublicHolidayRow, any> {
         return response;
 
     }
+
+
+    protected onClick(e: JQueryEventObject, row: number, cell: number) {
+        super.onClick(e, row, cell);
+        if (e.isDefaultPrevented())
+            return;
+        // get reference to current item
+        var item = this.itemAt(row);
+        // get reference to clicked element
+        var target = $(e.target);
+        var value = target[0].checked == true ? 1 : -1
+        PublicHolidayService.Update({
+            EntityId: item.Id,
+            Entity:
+            {
+                "IsActive": value
+            },
+        });
+    }
 }

@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../../../Modules/HumanResource/EmployeeProfile/FixedDeduction/FixedDeductionPage.ts"],
   "sourcesContent": ["import { initFullHeightGridPage } from '@serenity-is/corelib/q';\r\nimport { FixedDeductionEditor } from './FixedDeductionEditor';\r\n\r\nexport default function pageInit() {\n    initFullHeightGridPage(new FixedDeductionEditor($('#GridDiv')).element);\n}"],
-  "mappings": "sZAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAqB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC1E,CAFwBC,EAAAF,EAAA",
+  "mappings": "ocAAA,IAAAA,EAAuC,SAGxB,SAARC,GAA4B,IAC/B,0BAAuB,IAAIC,EAAqB,EAAE,UAAU,CAAC,EAAE,OAAO,CAC1E,CAFwBC,EAAAF,EAAA",
   "names": ["import_q", "pageInit", "FixedDeductionEditor", "__name"]
 }

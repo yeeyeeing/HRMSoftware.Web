@@ -687,7 +687,10 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     }
     public onDialogOpen() {
         super.onDialogOpen()
+      
+
         var self = this
+    
         PcbSubjectionService.List({
         }, response => {
         
@@ -1522,6 +1525,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                     "SocsoAmount": subjectSocso,
                     "PcbAmount": subjectPcb,
                     "HrdfAmount": subjectHrdf,
+                    "PcbOffset": 0,
 
                     "Bonus": self.form.Bonus.value,
 
@@ -1566,6 +1570,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                     "SocsoAmount": IncentiveSocso,
                     "PcbAmount": IncentivePcb,
                     "HrdfAmount": IncentiveHrdf,
+                    "PcbOffset": 0,
 
 
                     "WorkingSpouse": WorkSpouse,
@@ -1605,6 +1610,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
                     "SocsoAmount": subjectSocso,
                     "PcbAmount": subjectPcb,
                     "HrdfAmount": subjectHrdf,
+                    "PcbOffset": 0,
 
 
                     "WorkingSpouse": WorkSpouse,

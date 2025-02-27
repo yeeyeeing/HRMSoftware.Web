@@ -74,21 +74,10 @@ public class EmployeeProfileForm
     public string Nric { get; set; }
 
     [HalfWidth]
-    public string SsfwNumber { get; set; }
-    [HalfWidth]
     public string OldNRIC    { get; set; }
 
 
 
-    //[HalfWidth]
-    //public int ProbationPeriod { get; set; }
-
-    //[HalfWidth]
-    //public DateTime ProbationPeriodEnd { get; set; }
-
-
-    //[HideOnInsert]
-    //public int NoticePeriod { get; set; }
 
 
     [HalfWidth]
@@ -101,22 +90,23 @@ public class EmployeeProfileForm
 
     [HalfWidth]
     public int CityID { get; set; }
+    public DateTime JoinDate { get; set; }
 
 
     [Category("Probation")]
 
 
     [OneThirdWidth]
+    public double ProbationPeriod { get; set; }
+
+    [OneThirdWidth]
+    public string ProbationPeriodFrom { get; set; }
+
+    [OneThirdWidth]
+    public string ProbationPeriodUntil { get; set; }
+
     public int PassedProbation { get; set; }
 
-
-    [OneThirdWidth]
-    public DateTime ProbationPeriodFrom { get; set; }
-
-    [OneThirdWidth]
-    public DateTime ProbationPeriodUntil { get; set; }
-
-    
     [Category("Passport Details")]
     [HalfWidth]
     public string WorkingPermit { get; set; }
@@ -193,7 +183,8 @@ public class EmployeeProfileForm
     [HalfWidth]
     public string UserPassword { get; set; }
 
-
+    [HideOnInsert,HideOnUpdate]
+    public int UserRowID { get; set; }
 
 
     [Tab("Payments Information")]
@@ -294,15 +285,18 @@ public class EmployeeProfileForm
     [Category("Socso")]
 
 
-    [OneThirdWidth]
+    [HalfWidth]
     public int SocsoClass { get; set; }
 
-    
-    [OneThirdWidth]
+
+    [HalfWidth]
     public string SocsoAccountNumber { get; set; }
-    [OneThirdWidth]
+    [HalfWidth]
     public DateTime SsfwEffectiveDate { get; set; }
 
+
+    [HalfWidth]
+    public string SsfwNumber { get; set; }
 
 
     [Category("HRDF")]

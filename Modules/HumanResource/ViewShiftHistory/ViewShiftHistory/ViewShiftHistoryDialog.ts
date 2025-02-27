@@ -511,14 +511,13 @@ export class ViewShiftHistoryDialog extends EntityDialog<ViewShiftHistoryRow, an
 
 
 
-                                            if ((FormID == -1 && isPublicHoliday == 0) || no_records == true)//if no shift on the pressed day and that day is the public holiday
+                                            if ((FormID == -1 && isPublicHoliday == 0))//if no shift on the pressed day and that day is the public holiday
                                             {
 
                                                 DateStringList = sortDatesAscending(DateStringList);
                                                 var closestDate = findClosestGreaterDate(formattedDate, DateStringList)
                                                 var dlg3 = new SetEmployeeShiftDialog(EmployeeRowID, formattedDate, 0, closestDate);
                                                 dlg3.dialogOpen();
-                                                console.log('hereee')
                                                 dlg3.element.on("dialogclose", function () {
                                                     serviceCall<ListResponse<any>>({
                                                         service: ViewShiftHistoryService.baseUrl + '/RetriveShiftHistory',
@@ -659,6 +658,7 @@ export class ViewShiftHistoryDialog extends EntityDialog<ViewShiftHistoryRow, an
             onSuccess: (response) => {
                 done_retrieve_public_holiday = true
                 for (var index in response.Entities) {
+                    if (response.Entities[index].IsActive == 1)
                     ListOfPublicHolidayData.push({
                         PublicHolidayDate: response.Entities[index].Date,
                         PublicHolidayName: response.Entities[index].Name,

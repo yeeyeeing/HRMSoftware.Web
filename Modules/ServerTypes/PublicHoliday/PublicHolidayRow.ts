@@ -2,21 +2,14 @@
 
 export interface PublicHolidayRow {
     Id?: number;
+    IsActive?: number;
     Name?: string;
     Date?: string;
     CountryCode?: string;
-    InsertUserId?: number;
-    InsertDate?: string;
-    UpdateUserId?: number;
-    UpdateDate?: string;
-    DeleteUserId?: number;
-    DeleteDate?: string;
-    IsActive?: number;
 }
 
 export abstract class PublicHolidayRow {
     static readonly idProperty = 'Id';
-    static readonly isActiveProperty = 'IsActive';
     static readonly nameProperty = 'Name';
     static readonly localTextPrefix = 'PublicHoliday.PublicHoliday';
     static readonly lookupKey = 'PublicHoliday.PublicHoliday';

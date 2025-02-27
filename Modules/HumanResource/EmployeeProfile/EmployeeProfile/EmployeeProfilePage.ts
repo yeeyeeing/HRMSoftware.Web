@@ -232,22 +232,16 @@ export default function pageInit()
         async: false,
         onSuccess: (response) => {
             done_retrieve_public_holiday = true
-
-
             for (var index in response.Entities) {
-              
+                if (response.Entities[index].IsActive == 1) {
                     ListOfPublicHolidayData.push({
                         PublicHolidayDate: response.Entities[index].Date,
                         PublicHolidayName: response.Entities[index].Name,
                         PublicHolidayId: response.Entities[index].Id,
 
                     })
-
-                
+                }
             }
-
-
-
         },
         onError: (error) => {
             console.log(error)
@@ -1381,15 +1375,15 @@ export default function pageInit()
                 ShiftTableButton.innerText = 'Shift'
                 ShiftTableButton.setAttribute("id", "defaultOpen");
 
-                var Tab2Button = document.createElement('button');
-                Tab2Button.addEventListener('click', function () { open(event, 'tab2'); }, false);
-                Tab2Button.setAttribute("class", "tablinks");
-                Tab2Button.innerText = 'tab2'
+                //var Tab2Button = document.createElement('button');
+               // Tab2Button.addEventListener('click', function () { open(event, 'tab2'); }, false);
+               // Tab2Button.setAttribute("class", "tablinks");
+               // Tab2Button.innerText = 'tab2'
 
 
 
                 TabRowNode.appendChild(ShiftTableButton)
-                TabRowNode.appendChild(Tab2Button)
+               // TabRowNode.appendChild(Tab2Button)
 
 
                 var ShiftTabNode = document.createElement('DIV');

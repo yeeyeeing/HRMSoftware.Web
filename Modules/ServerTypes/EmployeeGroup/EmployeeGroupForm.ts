@@ -4,9 +4,15 @@ import { initFormType } from "@serenity-is/corelib/q";
 
 export interface EmployeeGroupForm {
     Name: StringEditor;
-    Description: TextAreaEditor;
     ShiftColor: StringEditor;
+    Description: TextAreaEditor;
+    OccupationList: LookupEditor;
+    DepartmentList: LookupEditor;
+    DivisionList: LookupEditor;
+    JobGradeList: LookupEditor;
+    SectionList: LookupEditor;
     EmployeeList: LookupEditor;
+    NewAddedEmployee: LookupEditor;
     Shifts: EmployeeGroupShiftEditor;
     ActualShifts: EmployeeGroupShiftEditor;
 }
@@ -28,9 +34,15 @@ export class EmployeeGroupForm extends PrefixedContext {
 
             initFormType(EmployeeGroupForm, [
                 'Name', w0,
-                'Description', w1,
                 'ShiftColor', w0,
+                'Description', w1,
+                'OccupationList', w2,
+                'DepartmentList', w2,
+                'DivisionList', w2,
+                'JobGradeList', w2,
+                'SectionList', w2,
                 'EmployeeList', w2,
+                'NewAddedEmployee', w2,
                 'Shifts', w3,
                 'ActualShifts', w3
             ]);

@@ -13,5 +13,7 @@ public enum Category
     [Description("OCCUPATION")]
     OCCUPATION = 3,
     [Description("JOB GRADE")]
-    JOBGRADE = 4
+    JOBGRADE = 4,
+    [Description("COST CENTRE")]
+    COSTCENTRE = 5
 }
