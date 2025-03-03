@@ -781,6 +781,150 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
         buttons.push(
             {
                 title: "Approve Application",	// *** Get button text from translation
+                cssClass: 'text-bg-success p-2 hidden approveApplication',
+                icon: 'fa-check text-green',
+                onClick: () => {
+                    confirm("Do you want to approve this application?", () => {
+                        let updateData: LeaveApplicationRow = {};
+
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                            if (self.SuperiorPermission) {
+                                if (self.EmployeeApproval === LeaveStatus.NotNeeded || self.HrApproval === LeaveStatus.NotNeeded) {
+                                    if (self.EmployeeApproval === LeaveStatus.NotNeeded) {
+                                        updateData = {
+                                            HrStatus: LeaveStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.HrApproval === LeaveStatus.NotNeeded) {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                } else {
+                                    if (self.HrApproval === LeaveStatus.Approved) {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.EmployeeApproval === LeaveStatus.Approved) {
+                                        updateData = {
+                                            HrStatus: LeaveStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Approved,
+                                            HrStatus: LeaveStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                        };
+                                    }
+                                }
+                            } else {
+                                updateData = {
+                                    HrStatus: LeaveStatus.Approved,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
+                            }
+                        }
+                        else {
+                            updateData = {
+                                EmployeeStatus: LeaveStatus.Approved,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
+                        }
+                        LeaveApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
+                    });
+
+                },
+            }
+        );
+
+        buttons.push(
+            {
+                title: "Rejected Application",	// *** Get button text from translation
+                cssClass: 'text-bg-danger p-2 hidden rejectApplication',
+                icon: 'fa-times text-red',
+                onClick: () => {
+                    confirm("Do you want to reject this application?", () => {
+                        let updateData: LeaveApplicationRow = {};
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                            if (self.SuperiorPermission == true) {
+                                if (self.EmployeeApproval == LeaveStatus.NotNeeded || self.HrApproval == LeaveStatus.NotNeeded) {
+                                    if (self.EmployeeApproval == LeaveStatus.NotNeeded) {
+                                        updateData = {
+                                            HrStatus: LeaveStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                    else if (self.HrApproval == LeaveStatus.NotNeeded) {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                }
+                                else {
+                                    if (self.HrApproval == LeaveStatus.Pending) {
+                                        updateData = {
+                                            HrStatus: LeaveStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                    else if (self.EmployeeApproval == LeaveStatus.Pending) {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                    else {
+                                        updateData = {
+                                            EmployeeStatus: LeaveStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrStatus: LeaveStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                }
+                            }
+                            else {
+                                updateData = {
+                                    HrStatus: LeaveStatus.Rejected,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
+                            }
+
+                        }
+                        else {
+                            updateData = {
+                                EmployeeStatus: LeaveStatus.Rejected,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
+                        }
+                        LeaveApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
+
+                    });
+                },
+            }
+        );
+
+        /*
+        buttons.push(
+            {
+                title: "Approve Application",	// *** Get button text from translation
                 cssClass: 'text-bg-success p-2 hidden ',
                 icon: 'fa-check text-green',
                 onClick: () => {
@@ -872,59 +1016,61 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                             });
                         }
 
-                        if (self.HrApproval == LeaveStatus.Approved && self.EmployeeApproval == LeaveStatus.Approved && parseInt(self.form.LeaveReasonId.value)==1)
-                            {
-                                serviceCall<ListResponse<number>>({
-                                    service: NoPaidLeaveService.baseUrl + '/CalculateNoPaidLeaveRate',
-                                    method: "GET",
-                                    data: {
-                                        'EmployeeRowID': self.form.EmployeeRowId.value
-                                    },
-                                    async: false,
-                                    onSuccess: (response) => {
-                                        var deductions = response
-                                        if (parseInt(this.form.HalfDay.value))
-                                            deductions = deductions / 2.0
-                                        function binaryToBoolean(value: number): boolean {
-                                            return value === 1;
-                                        }
-                                        console.log(self.WeekdaysList)
-                                        serviceCall<ListResponse<any>>({
-                                            service: LeaveApplicationService.baseUrl + '/CalculateHolidayToTake',
-                                            method: "GET",
-                                            data: {
-                                                'startDate': self.form.StartDate.value,
-                                                'endDate': self.form.EndDate.value,
-                                            },
-                                            async: false,
-                                            onSuccess: (response) => {
-                                                self.WeekdaysList = response.Entities[0].WeekdaysList
-
-                                                var datesArray = self.WeekdaysList.split(', ');
-                                                datesArray.forEach(date => {
-                                                    NoPaidLeaveService.Create({
-                                                        Entity:
-                                                        {
-                                                            "EmployeeRowId": parseInt(self.form.EmployeeRowId.value),
-                                                            "Deducted": 0,
-                                                            "LeaveDate": date,
-                                                            "HalfDay": binaryToBoolean(parseInt(this.form.HalfDay.value)),
-                                                            "Deductions": deductions,
-                                                            "MorningSession": (this.form.MorningSession.value),
-                                                            "AfternoonSession": (this.form.AfternoonSession.value)
-                                                        }
-                                                    });
-                                                });
-                                                 location.reload()
-                                            },
-                                            onError: (error) => {
-                                            }
-                                        });
+                        if (self.HrApproval == LeaveStatus.Approved && self.EmployeeApproval == LeaveStatus.Approved && parseInt(self.form.LeaveReasonId.value) == 1) {
+                            serviceCall<ListResponse<number>>({
+                                service: NoPaidLeaveService.baseUrl + '/CalculateNoPaidLeaveRate',
+                                method: "GET",
+                                data: {
+                                    'EmployeeRowID': self.form.EmployeeRowId.value
+                                },
+                                async: false,
+                                onSuccess: (response) => {
+                                    var deductions = response
+                                    if (parseInt(this.form.HalfDay.value))
+                                        deductions = deductions / 2.0
+                                    function binaryToBoolean(value: number): boolean {
+                                        return value === 1;
                                     }
-                                })
+                                    console.log(self.WeekdaysList)
+                                    serviceCall<ListResponse<any>>({
+                                        service: LeaveApplicationService.baseUrl + '/CalculateHolidayToTake',
+                                        method: "GET",
+                                        data: {
+                                            'startDate': self.form.StartDate.value,
+                                            'endDate': self.form.EndDate.value,
+                                        },
+                                        async: false,
+                                        onSuccess: (response) => {
+                                            self.WeekdaysList = response.Entities[0].WeekdaysList
+
+                                            var datesArray = self.WeekdaysList.split(', ');
+                                            datesArray.forEach(date => {
+                                                NoPaidLeaveService.Create({
+                                                    Entity:
+                                                    {
+                                                        "EmployeeRowId": parseInt(self.form.EmployeeRowId.value),
+                                                        "Deducted": 0,
+                                                        "LeaveDate": date,
+                                                        "HalfDay": binaryToBoolean(parseInt(this.form.HalfDay.value)),
+                                                        "Deductions": deductions,
+                                                        "MorningSession": (this.form.MorningSession.value),
+                                                        "AfternoonSession": (this.form.AfternoonSession.value)
+                                                    }
+                                                });
+                                            });
+                                            self.loadById(self.entityId); // Refresh form
+                                            //location.reload()
+                                        },
+                                        onError: (error) => {
+                                        }
+                                    });
+                                }
+                            })
                         }
-                        else
-                        location.reload()
+                        else {
+                            self.loadById(self.entityId); // Refresh form
+                            //   location.reload()
+                        }
                       });
                 },
             }
@@ -1019,13 +1165,15 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                             });
 
                         }
-                        location.reload()
+                        self.loadById(self.entityId); // Refresh form
+
+                        //location.reload()
 
                     });
                 },
             }
         );
-        
+        */
         return buttons;
     }
 }

@@ -1,12 +1,12 @@
-﻿import { LookupEditor, DecimalEditor, TextAreaEditor, IntegerEditor, PrefixedContext } from "@serenity-is/corelib";
+﻿import { LookupEditor, IntegerEditor, DecimalEditor, TextAreaEditor, PrefixedContext } from "@serenity-is/corelib";
 import { initFormType } from "@serenity-is/corelib/q";
 
 export interface EmployeeBonusForm {
     EmployeeRowId: LookupEditor;
-    BonusAmount: DecimalEditor;
-    BonusDescription: TextAreaEditor;
     PayMonth: IntegerEditor;
     PayYear: IntegerEditor;
+    BonusAmount: DecimalEditor;
+    BonusDescription: TextAreaEditor;
 }
 
 export class EmployeeBonusForm extends PrefixedContext {
@@ -20,16 +20,16 @@ export class EmployeeBonusForm extends PrefixedContext {
             EmployeeBonusForm.init = true;
 
             var w0 = LookupEditor;
-            var w1 = DecimalEditor;
-            var w2 = TextAreaEditor;
-            var w3 = IntegerEditor;
+            var w1 = IntegerEditor;
+            var w2 = DecimalEditor;
+            var w3 = TextAreaEditor;
 
             initFormType(EmployeeBonusForm, [
                 'EmployeeRowId', w0,
-                'BonusAmount', w1,
-                'BonusDescription', w2,
-                'PayMonth', w3,
-                'PayYear', w3
+                'PayMonth', w1,
+                'PayYear', w1,
+                'BonusAmount', w2,
+                'BonusDescription', w3
             ]);
         }
     }

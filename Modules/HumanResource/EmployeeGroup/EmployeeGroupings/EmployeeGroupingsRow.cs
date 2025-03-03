@@ -26,7 +26,7 @@ public sealed class EmployeeGroupingsRow : LoggingRow<EmployeeGroupingsRow.RowFi
         set => fields.EmployeeRowId[this] = value;
     }
 
-    [DisplayName("Employee Group Id"), Column("EmployeeGroupID")]
+    [DisplayName("Employee Group Id"), Column("EmployeeGroupID"), ForeignKey("HumanResourcesEmployeeGroup", "ID"), LeftJoin("eg")]
     public int? EmployeeGroupId
     {
         get => fields.EmployeeGroupId[this];

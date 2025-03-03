@@ -32,6 +32,7 @@ export interface EmployeeProfileRow {
     AllowanceLists?: EmployeeAllowanceRow[];
     FixedDeductionList?: FixedDeductionRow[];
     CountryID?: number;
+    PostcodeId?: number;
     PostalCode?: string;
     CountryName?: string;
     FixedOtRateOption?: boolean;

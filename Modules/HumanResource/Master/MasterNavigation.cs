@@ -1,6 +1,7 @@
 using Serenity.Navigation;
 using MyPages = HRMSoftware.Master.Pages;
 using MyPages2 = HRMSoftware.OrganisationHierarchy.Pages;
+using MyPages3 = HRMSoftware.EmployeeProfile.Pages;
 
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Master Bank", typeof(MyPages.MasterBankPage), icon: "fa-university")]
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Master Cost Centre", typeof(MyPages.MasterCostCentrePage), icon: "fa-book")]
@@ -14,3 +15,11 @@ using MyPages2 = HRMSoftware.OrganisationHierarchy.Pages;
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Division", typeof(MyPages2.DivisionPage), icon: "fa-archway")]
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Occupation", typeof(MyPages2.OccupationPage), icon: "fa-wrench")]
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Section", typeof(MyPages2.SectionPage), icon: "fa-folder-open")]
+
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Postcode", typeof(MyPages.MasterPostcodePage), icon: "fas fa-envelope")]
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Nationality", typeof(MyPages.NationalityPage), icon: "fas fa-globe")]
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Master Career Path Code", typeof(MyPages3.MasterCareerPathPage), icon: "fas fa-road")]
+
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Master Allowance Code", typeof(MyPages3.MasterAllowancePage), icon: "fas fa-money-bill-wave")]
+
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Master Data/Master Deduction Code", typeof(MyPages3.MasterDeductionPage), icon: "fas fa-minus-circle")]

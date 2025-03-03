@@ -3,7 +3,7 @@ import { Authorization, isEmptyOrNull, alertDialog } from '@serenity-is/corelib/
 import { EmployeeCp38Row, EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { SetEmployeeShiftForm, SetEmployeeShiftRow, SetEmployeeShiftService } from '../../../ServerTypes/SetEmployeeShift';
 import { ShiftRow, ShiftService } from '../../../ServerTypes/Shift';
-import { ViewShiftHistoryService } from '../../../ServerTypes/ViewShiftHistory';
+import { ViewShiftHistoryRow, ViewShiftHistoryService } from '../../../ServerTypes/ViewShiftHistory';
 import { ShiftDialog } from '../../Shift/Shift/ShiftDialog';
 
 @Decorators.registerClass('HRMSoftware.SetEmployeeShift.SetEmployeeShiftDialog')
@@ -39,6 +39,27 @@ export class SetEmployeeShiftDialog extends EntityDialog<SetEmployeeShiftRow, an
 
     public dialogOpen(asPanel?: boolean): void
     {
+        function getClashingShifts(startDate: string, endDate: string, shifts: SetEmployeeShiftRow[]): { ShiftStartDate: string, ShiftEndDate: string, ShiftId: number }[] {
+            let start = new Date(startDate);
+            let end = new Date(endDate);
+
+            return shifts.filter(shift => {
+                let shiftStart = new Date(shift.ShiftStartDate);
+                let shiftEnd = new Date(shift.ShiftEndDate);
+
+                return (
+                    (start >= shiftStart && start <= shiftEnd) ||  // Case 1: startDate within shift
+                    (end >= shiftStart && end <= shiftEnd) ||      // Case 2: endDate within shift
+                    (shiftStart >= start && shiftStart <= end) ||  // Case 3: shift starts within range
+                    (shiftEnd >= start && shiftEnd <= end)         // Case 4: shift ends within range
+                );
+            }).map(shift => ({
+                ShiftStartDate: shift.ShiftStartDate,
+                ShiftEndDate: shift.ShiftEndDate,
+                ShiftId: shift.ShiftId
+            }));
+        }
+
         if (this.isNew()) {
             this.deleteButton.remove()
             $('.EmployeeGroupId').hide()
@@ -53,8 +74,14 @@ export class SetEmployeeShiftDialog extends EntityDialog<SetEmployeeShiftRow, an
         super.dialogOpen(asPanel);
         console.log('haha')
         var self = this
-        ShiftService.List({
+        var criteria: any;
+
+        ViewShiftHistoryService.List({
+            Criteria: Criteria.and(criteria,
+                [[ViewShiftHistoryRow.Fields.EmployeeRowID], '=', self.EmployeeRowID]
+            )
         }, response => {
+            console.log(response.Entities)
             self.ShiftRowObject = response.Entities
         })
         EmployeeProfileService.List({
@@ -82,12 +109,50 @@ export class SetEmployeeShiftDialog extends EntityDialog<SetEmployeeShiftRow, an
             if (CurrentDialogId == TabId[index].id )
                 tab = TabId[index].id.toString()
         }
-        var LeaveReasonElement = "#" + tab.replace('PropertyGrid', 'ShiftId');
-        $(LeaveReasonElement).on('change', function (e)
+        var ShiftIdElement = "#" + tab.replace('PropertyGrid', 'ShiftId');
+        $(ShiftIdElement).on('change', function (e)
         {    
             var dlg = new ShiftDialog()          
-            dlg.loadByIdAndOpenDialog($(LeaveReasonElement).val())
+            dlg.loadByIdAndOpenDialog($(ShiftIdElement).val())
             dlg.readOnly = true
+        });
+        var ShiftEndDateElement = "#" + tab.replace('PropertyGrid', 'ShiftEndDate');
+        $(ShiftEndDateElement).on('change', function (e) { 
+            console.log('haha')
+            console.log(self.form.ShiftEndDate.value)
+            if (self.form.ShiftStartDate.valueAsDate > self.form.ShiftEndDate.valueAsDate) {
+                alertDialog('Shift End Date cannot be earlier than shift end date')
+                $(ShiftEndDateElement).val(null)
+                return
+            }
+            console.log(self.ShiftRowObject)
+            console.log(self.form.ShiftStartDate.value)
+            console.log(self.form.ShiftEndDate.value)
+            var ClashObject = getClashingShifts(self.form.ShiftStartDate.value, self.form.ShiftEndDate.value, self.ShiftRowObject)
+            console.log(ClashObject)
+            if (ClashObject.length > 0) {
+                alertDialog(`There is already a shift from ${ClashObject.map(s => `${s.ShiftStartDate.substring(0, 10)} to ${s.ShiftEndDate.substring(0, 10)}`).join("\n")}`);
+                $(ShiftEndDateElement).val(null)
+            }
+        });
+
+
+
+        var ShiftStartDateElement = "#" + tab.replace('PropertyGrid', 'ShiftStartDate');
+        $(ShiftStartDateElement).on('change', function (e) {
+            console.log('haha')
+            console.log(self.form.ShiftEndDate.value)
+            if (self.form.ShiftStartDate.valueAsDate > self.form.ShiftEndDate.valueAsDate) {
+                alertDialog('Shift End Date cannot be earlier than shift end date')
+                $(ShiftEndDateElement).val(null)
+                return
+            }
+            var ClashObject = getClashingShifts(self.form.ShiftStartDate.value, self.form.ShiftEndDate.value, self.ShiftRowObject)
+            console.log(ClashObject)
+            if (ClashObject.length > 0) {
+                alertDialog(`There is already a shift from ${ClashObject.map(s => `${s.ShiftStartDate.substring(0, 10)} to ${s.ShiftEndDate.substring(0, 10)}`).join("\n")}`);
+                $(ShiftEndDateElement).val(null)
+            }
         });
     }
 
@@ -97,43 +162,8 @@ export class SetEmployeeShiftDialog extends EntityDialog<SetEmployeeShiftRow, an
         var self = this
         var res = response
         console.log('haha')
-        ViewShiftHistoryService.List({
-            Criteria: Criteria.and(criteria,
-                [[EmployeeCp38Row.Fields.EmployeeRowId], '=', self.form.EmployeeRowId.value]
-            )
-        }, response => {
-            function getClashingShifts(startDate: string, endDate: string, shifts: any[]): { ShiftStartDate: string, ShiftEndDate: string, ShiftId: number }[] {
-                let start = new Date(startDate);
-                let end = new Date(endDate);
 
-                return shifts.filter(shift => {
-                    let shiftStart = new Date(shift.ShiftStartDate);
-                    let shiftEnd = new Date(shift.ShiftEndDate);
-
-                    return (
-                        (start >= shiftStart && start <= shiftEnd) ||  // Case 1: startDate within shift
-                        (end >= shiftStart && end <= shiftEnd) ||      // Case 2: endDate within shift
-                        (shiftStart >= start && shiftStart <= end) ||  // Case 3: shift starts within range
-                        (shiftEnd >= start && shiftEnd <= end)         // Case 4: shift ends within range
-                    );
-                }).map(shift => ({
-                    ShiftStartDate: shift.ShiftStartDate,
-                    ShiftEndDate: shift.ShiftEndDate,
-                    ShiftId: shift.ShiftId
-                }));
-            }
-            var ClashObject = getClashingShifts(self.form.ShiftStartDate.value, self.form.ShiftEndDate.value, response.Entities)
-            if (ClashObject.length == 0)
-                super.save_submitHandler(res);
-            else 
-                alertDialog(`There is already a shift from ${ClashObject.map(s => `${s.ShiftStartDate.substring(0, 10)} to ${s.ShiftEndDate.substring(0, 10)}`).join("\n")}`);
-            
-
-           // console.log(isClashing(self.form.ShiftStartDate.value, self.form.ShiftEndDate.value, response.Entities))
-            console.log(response.Entities)
-        })
-
-       // super.save_submitHandler(response);
+        super.save_submitHandler(response);
     }
 
 }

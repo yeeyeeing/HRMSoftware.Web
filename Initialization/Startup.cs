@@ -26,7 +26,12 @@ using System;
 using System.Data.Common;
 using System.IO;
 using HRMSoftware.TrainingManagement.Endpoints;
-
+using HRMSoftware.Web.Initialization;
+public class UserCreationSettings
+{
+    public string UserName;
+    public string PassWord;
+}
 namespace HRMSoftware
 {
     public partial class Startup
@@ -37,6 +42,7 @@ namespace HRMSoftware
             HostEnvironment = hostEnvironment;
             SqlSettings.AutoQuotedIdentifiers = true;
             RegisterDataProviders();
+            AppConfigHelper.Initialize(configuration);
         }
 
         public IConfiguration Configuration { get; }
@@ -66,6 +72,7 @@ namespace HRMSoftware
             //typeof(Serenity.Pro.Meeting.MeetingPage).Assembly,
             //typeof(Serenity.Pro.WorkLog.WorkLogPage).Assembly,
         }));
+            services.Configure<UserCreationSettings>(Configuration.GetSection("User"));
 
             services.ConfigureSection<ConnectionStringOptions>(Configuration);
             services.ConfigureSection<CssBundlingOptions>(Configuration);

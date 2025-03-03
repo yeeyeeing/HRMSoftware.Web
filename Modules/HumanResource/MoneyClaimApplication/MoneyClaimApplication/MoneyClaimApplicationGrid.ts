@@ -151,7 +151,6 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                     confirm(
                         "Do you want to approve all selected applications?",
                         () => {
-
                             let approvePromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
                                 return MoneyClaimApplicationService.Retrieve({ EntityId: dataId })
                                     .then(response => {
@@ -160,7 +159,6 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                                         let entityId = response.Entity.Id;
                                         let EmployeeRowId = response.Entity.EmployeeRowId;
                                         let updateData: MoneyClaimApplicationRow = {};
-
                                         // Wrap `serviceCall` in a Promise
                                         return new Promise((resolve, reject) => {
                                             serviceCall<RetrieveResponse<any>>({
@@ -172,7 +170,7 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                                                 method: "GET",
                                                 onSuccess: (SuperiorPermission) => {
                                                     if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
-                                                        if (SuperiorPermission) {
+                                                        if (SuperiorPermission == true) {
                                                             if (EmployeeApproval === MoneyClaimingStatus.NotNeeded || HrApproval === MoneyClaimingStatus.NotNeeded) {
                                                                 if (EmployeeApproval === MoneyClaimingStatus.NotNeeded) {
                                                                     updateData = {
@@ -205,19 +203,21 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                                                                     };
                                                                 }
                                                             }
-                                                        } else {
+                                                        }
+                                                        else {
                                                             updateData = {
                                                                 HrStatus: MoneyClaimingStatus.Approved,
                                                                 HrUpdated: Authorization.userDefinition.EmployeeRowID
                                                             };
                                                         }
-                                                    } else {
+                                                    }
+                                                    else {
                                                         updateData = {
                                                             EmployeeStatus: MoneyClaimingStatus.Approved,
                                                             EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
                                                         };
                                                     }
-
+                                                    console.log(updateData)
                                                     // Call `Update` and resolve the promise
                                                     MoneyClaimApplicationService.Update({
                                                         EntityId: entityId,
@@ -376,6 +376,7 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                     async: false,
                     onSuccess: (response) => {
                         getResponse = 1
+                        console.log(response)
                         superior = response
                     }
                 })
@@ -445,6 +446,17 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
         });
 
         return super.onViewSubmit();
+    }
+    protected createEntityDialog(itemType: string, callback: (dlg: MoneyClaimApplicationDialog) => void): MoneyClaimApplicationDialog {
+        let dialog = super.createEntityDialog(itemType, callback) as MoneyClaimApplicationDialog;
+        var self = this
+        // Attach 'dialogclose' event listener to refresh the grid when the dialog closes
+        dialog.element.on('dialogclose', () => {
+            self.internalRefresh();  // Refresh grid after closing the dialog
+            console.log('hahaa')
+        });
+
+        return dialog;  // Ensure correct return type
     }
 
     protected onViewProcessData(response: ListResponse<MoneyClaimApplicationRow>) {

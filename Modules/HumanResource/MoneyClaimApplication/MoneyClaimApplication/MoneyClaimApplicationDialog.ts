@@ -412,188 +412,145 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
             }
             `
         document.head.appendChild(Linkx)
+
         buttons.push(
             {
                 title: "Approve Application",	// *** Get button text from translation
-                cssClass: 'text-bg-success p-2 hidden',
+                cssClass: 'text-bg-success p-2 hidden approveApplication',
                 icon: 'fa-check text-green',
                 onClick: () => {
-                    confirm("Do you want to approve this leave application?", () => {
-                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
-                        {
-                            if (self.SuperiorPermission == true) {
-                                if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded || self.HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                    if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                HrStatus: MoneyClaimingStatus.Approved,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                    confirm("Do you want to approve this application?", () => {
+                        let updateData: MoneyClaimApplicationRow = {};
+
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                            if (self.SuperiorPermission) {
+                                if (self.EmployeeApproval === MoneyClaimingStatus.NotNeeded || self.HrApproval === MoneyClaimingStatus.NotNeeded) {
+                                    if (self.EmployeeApproval === MoneyClaimingStatus.NotNeeded) {
+                                        updateData = {
+                                            HrStatus: MoneyClaimingStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.HrApproval === MoneyClaimingStatus.NotNeeded) {
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
-                                    else if (self.HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Approved,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
-                                    }
-                                }
-                                else {
-                                    if (self.HrApproval == MoneyClaimingStatus.Approved) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Approved,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
-                                    }
-                                    else if (self.EmployeeApproval == MoneyClaimingStatus.Approved) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                HrStatus: MoneyClaimingStatus.Approved,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
-                                    }
-                                    else {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Approved,
-                                                HrStatus: MoneyClaimingStatus.Approved,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                            }
-                                        });
+                                } else {
+                                    if (self.HrApproval === MoneyClaimingStatus.Approved) {
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.EmployeeApproval === MoneyClaimingStatus.Approved) {
+                                        updateData = {
+                                            HrStatus: MoneyClaimingStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else {
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Approved,
+                                            HrStatus: MoneyClaimingStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                        };
                                     }
                                 }
-                            }
-                            else {
-                                MoneyClaimApplicationService.Update({
-                                    EntityId: this.entityId,
-                                    Entity:
-                                    {
-                                        HrStatus: MoneyClaimingStatus.Approved,
-                                        HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                    }
-                                });
+                            } else {
+                                updateData = {
+                                    HrStatus: MoneyClaimingStatus.Approved,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
                             }
                         }
                         else {
-                            MoneyClaimApplicationService.Update({
-                                EntityId: this.entityId,
-                                Entity:
-                                {
-                                    EmployeeStatus: MoneyClaimingStatus.Approved,
-                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                                }
-                            });
+                            updateData = {
+                                EmployeeStatus: MoneyClaimingStatus.Approved,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
                         }
-                        location.reload()
+                        MoneyClaimApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
                     });
+
                 },
             }
         );
+
         buttons.push(
             {
-                title: "Reject Application",	// *** Get button text from translation
-                cssClass: 'text-bg-danger p-2 hidden',
+                title: "Rejected Application",	// *** Get button text from translation
+                cssClass: 'text-bg-danger p-2 hidden rejectApplication',
                 icon: 'fa-times text-red',
                 onClick: () => {
-                    confirm("Do you want to reject this Money Claiming application?", () => {
-                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
-                        {
+                    confirm("Do you want to reject this application?", () => {
+                        let updateData: MoneyClaimApplicationRow = {};
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
                             if (self.SuperiorPermission == true) {
                                 if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded || self.HrApproval == MoneyClaimingStatus.NotNeeded) {
                                     if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                HrStatus: MoneyClaimingStatus.Rejected,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                                        updateData = {
+                                            HrStatus: MoneyClaimingStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                     else if (self.HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                 }
                                 else {
-                                    if (self.HrApproval == MoneyClaimingStatus.Pending ) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                HrStatus: MoneyClaimingStatus.Rejected,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                                    if (self.HrApproval == MoneyClaimingStatus.Pending) {
+                                        updateData = {
+                                            HrStatus: MoneyClaimingStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                     else if (self.EmployeeApproval == MoneyClaimingStatus.Pending) {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
-                                    else  {
-                                        MoneyClaimApplicationService.Update({
-                                            EntityId: this.entityId,
-                                            Entity:
-                                            {
-                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                HrStatus: MoneyClaimingStatus.Rejected,
-                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            }
-                                        });
+                                    else {
+                                        updateData = {
+                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrStatus: MoneyClaimingStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                 }
                             }
                             else {
-                                MoneyClaimApplicationService.Update({
-                                    EntityId: this.entityId,
-                                    Entity:
-                                    {
-                                        HrStatus: MoneyClaimingStatus.Rejected,
-                                        HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                    }
-                                });
+                                updateData = {
+                                    HrStatus: MoneyClaimingStatus.Rejected,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
                             }
+
                         }
                         else {
-                            MoneyClaimApplicationService.Update({
-                                EntityId: this.entityId,
-                                Entity:
-                                {
-                                    EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                                }
-                            });
+                            updateData = {
+                                EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
                         }
-                        location.reload()
+                        MoneyClaimApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
+
                     });
                 },
             }

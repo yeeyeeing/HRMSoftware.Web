@@ -65,7 +65,7 @@ public sealed class EmployeeGroupRow : LoggingRow<EmployeeGroupRow.RowFields>, I
 
 
 
-    [DisplayName("New Employees"), LookupEditor(typeof(EmployeeProfileRow), Multiple = true, FilterField = "IsActive", FilterValue = 1), NotMapped, NotNull]
+    [DisplayName("New Employees"), LookupEditor(typeof(EmployeeProfileRow), Multiple = true, FilterField = "IsActive", FilterValue = 1), NotMapped]
     public List<int> NewAddedEmployee { get => fields.NewAddedEmployee[this]; set => fields.NewAddedEmployee[this] = value; }
 
 

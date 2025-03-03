@@ -144,7 +144,8 @@ export class UserDialog extends EntityDialog<UserRow, any> {
                     "UserRowID": null,
                     "UserName": null,
                     "CreateUser": false,
-                    "UserPassword": null
+                    "UserPassword": null,
+                    "GrantHRPrivilege": false
                 },
             });
         }

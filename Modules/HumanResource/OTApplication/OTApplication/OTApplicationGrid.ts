@@ -17,6 +17,20 @@ export class OTApplicationGrid extends EntityGrid<OTApplicationRow, any> {
     protected getDialogType() { return OTApplicationDialog; }
     protected getRowDefinition() { return OTApplicationRow; }
     protected getService() { return OTApplicationService.baseUrl; }
+
+    protected createEntityDialog(itemType: string, callback: (dlg: OTApplicationDialog) => void): OTApplicationDialog {
+        let dialog = super.createEntityDialog(itemType, callback) as OTApplicationDialog;
+        var self = this
+        // Attach 'dialogclose' event listener to refresh the grid when the dialog closes
+        dialog.element.on('dialogclose', () => {
+            self.internalRefresh();  // Refresh grid after closing the dialog
+            console.log('hahaa')
+        });
+
+        return dialog;  // Ensure correct return type
+    }
+
+    
     protected getQuickFilters(): QuickFilter<Widget<any>, any>[] {
         //Gets the Filters defined in the Columns or in parent grids.
         let filters = super.getQuickFilters();
@@ -401,6 +415,7 @@ export class OTApplicationGrid extends EntityGrid<OTApplicationRow, any> {
 
         return super.onViewSubmit();
     }
+
     protected createToolbarExtensions() {
         super.createToolbarExtensions();
         var self = this

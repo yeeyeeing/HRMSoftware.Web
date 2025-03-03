@@ -15,13 +15,15 @@ import { PermissionKeys } from '../../../ServerTypes/Administration';
 import { EmployeeProfileDialog } from '../../EmployeeProfile/EmployeeProfile/EmployeeProfileDialog';
 import { EmployeePersonalProfileDialog } from '../../EmployeeProfile/EmployeePersonalProfile/EmployeePersonalProfileDialog';
 import { EmployeeBasicDataDialog } from '../../EmployeeBasicData/EmployeeBasicData/EmployeeBasicDataDialog';
+import html2canvas from "html2canvas";
 
 export default function pageInit() {
     enum CardType {
         DIRECTOR = 0,
         DIVISION = 1,
         DEPARTMENT = 2,
-        SECTION = 3
+        SECTION = 3,
+        EMPLOYEE = 4
     }
     enum ChartType {
         OrgChart = 0,
@@ -243,6 +245,9 @@ export default function pageInit() {
     var SectionPanel = document.createElement('div')
     SectionPanel.id = "SectionPanel"
     SectionPanel.className = "tabcontent"
+    var EmployeePanel = document.createElement('div')
+    EmployeePanel.id = "EmployeePanel"
+    EmployeePanel.className = "tabcontent"
     interface Node {
         id: string;
         name: string;   // The name of the person
@@ -317,10 +322,7 @@ export default function pageInit() {
     let FinalDatascource2
     var OccupationTable = getLookup("Occupation.Occupation")
     var JobGradeTable = getLookup("JobGrade.JobGrade")
-    var criteria: any;
-    let SectionList: number[] = [];
-    let DepartmentList: number[] = [];
-    let DivisionList: number[] = [];
+
     var spareOrgStructJson = null;
     var spareOrgChartJson = null;
 
@@ -328,8 +330,16 @@ export default function pageInit() {
     let SplitOrgStructList: NodeRow[] = []
 
     FullProfileService.List({
-
     }, response => {
+        var EmployeeContent = document.createElement('div')
+        EmployeeContent.className = 'side-div'
+        var EmployeeTable = document.createElement('div')
+        EmployeeTable.id = "EmployeeTable"
+        EmployeeTable.className = "wrapper"
+        var EmployeeWrapper = document.createElement('div')
+        EmployeeWrapper.className = 'wrapper'
+        EmployeeContent.appendChild(EmployeeTable)
+        var EmployeeRow = document.createElement('tr')
         for (var index in response.Entities) {
             if (response.Entities[index].Resigned == 1 ||
                 response.Entities[index].Terminated == 1 ||
@@ -339,6 +349,13 @@ export default function pageInit() {
                 EmployeeFilter.push(response.Entities[index].Id)
                 continue
             }    
+           // var EmployeeCard = CreateEmployeeCard(ElementId, response.Entities[index].EmployeeName,
+           //     response.Entities[index].OccupationID, response.Entities[index].EmployeeImg)
+
+            //var EmployeeCard = GenerateCard(ElementId, CardText, CardType.DIVISION)
+            var Card = GenerateCard(response.Entities[index].Id, response.Entities[index].EmployeeName, EmployeeEnum)
+            Card.className='item'
+            EmployeeWrapper.appendChild(Card)
             ListOfEmployeeData.push({
                 'id': response.Entities[index].Id, 'ImgPath': response.Entities[index].EmployeeImg, 'OccupationId': response.Entities[index].OccupationId,
                 'EmployeeName': response.Entities[index].EmployeeName, 'EmployeeId': response.Entities[index].EmployeeId,
@@ -348,14 +365,15 @@ export default function pageInit() {
                 'SalaryDetails': response.Entities[index].BasicSalary
             })
         }
+        EmployeeWrapper.appendChild(EmployeeRow)
 
-
+        EmployeeTable.appendChild(EmployeeWrapper)
+        EmployeePanel.appendChild(EmployeeContent)
         OrganisationChartService.List({
         }, response => {
             if (response.Entities.length > 0)
                 spareOrgStructJson = response.Entities[0].OrgChart
             GenerateOrgStructure()
-
         })
 
         FinalOrganisationChartService.List({
@@ -364,6 +382,16 @@ export default function pageInit() {
                 spareOrgChartJson = response.Entities[0].FinalOrgChart
             GenerateOrgChart()
         })
+        const script = document.createElement('script');
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        script.onload = function () {
+            console.log("html2canvas loaded successfully");
+        };
+        document.head.appendChild(script);
+
+        html2canvas(document.body).then((canvas) => {
+            document.body.appendChild(canvas);
+        });
 
 
         if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
@@ -546,11 +574,17 @@ export default function pageInit() {
         var ContentRow = document.createElement("div")
         ContentRow.setAttribute("class", "row div2")
         ContentRow.setAttribute("id", "ElementsTab")
+        var EmployeeRow = document.createElement("div")
+        EmployeeRow.setAttribute("class", "row div2")
+        EmployeeRow.setAttribute("id", "EmployeeTab")
 
 
 
         var TabRowNode = document.createElement('div');
         TabRowNode.setAttribute("class", "tab");
+
+        var EmployeeTabRowNode = document.createElement('div');
+        EmployeeTabRowNode.setAttribute("class", "tab");
         var naviBar = document.createElement('nav')
         var naviBarContent = document.createElement('div')
         naviBarContent.innerHTML = `<div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
@@ -633,6 +667,13 @@ export default function pageInit() {
             ContentRow.appendChild(SectionPanel)
             ContentRow.appendChild(DepartmentPanel)
             document.querySelector('.content').appendChild(ContentRow);
+
+            EmployeeRow.appendChild(EmployeeTabRowNode)
+            EmployeeRow.appendChild(EmployeePanel)
+
+            console.log('haha')
+            //document.querySelector('.content').appendChild(EmployeeRow);
+
         }
         var ButtonHolder = document.createElement('div')
         var DepartmentTableButton = document.createElement('button');
@@ -1168,18 +1209,30 @@ export default function pageInit() {
                             }, response => {
                                 for (let i = 0; i < ListOfRights.length; i++) {
                                     if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
-                                        EmployeeRightsService.Create({
-                                            Entity: {
-                                                "EmployeeRowId": ListOfRights[i].EmployeeRowId,
-                                                "NodeId": ListOfRights[i].id,
-                                                "Appraisal": ListOfRights[i].Rights.Appraisal,
-                                                "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
-                                                "OtApproval": ListOfRights[i].Rights.OtApproval,
-                                                "Training": ListOfRights[i].Rights.Training,
-                                                "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
-                                            }
-                                        })
-                                    }
+                                        if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR)
+                                            EmployeeRightsService.Create({
+                                                Entity: {
+                                                    "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                                    "NodeId": ListOfRights[i].id,
+                                                    "Appraisal": ListOfRights[i].Rights.Appraisal,
+                                                    "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
+                                                    "OtApproval": ListOfRights[i].Rights.OtApproval,
+                                                    "Training": ListOfRights[i].Rights.Training,
+                                                    "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
+                                                }
+                                            })
+                                        else
+                                            EmployeeRightsService.Create({
+                                                Entity: {
+                                                    "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                                    "NodeId": ListOfRights[i].id,
+                                                    "Appraisal": true,
+                                                    "LeaveApproval": true,
+                                                    "OtApproval": true,
+                                                    "Training": true,
+                                                    "MoneyClaiming": true,
+                                                }
+                                            })                                    }
 
                                 }
 
@@ -1218,7 +1271,7 @@ export default function pageInit() {
                         })
                     }
 
-
+                    
                     $('.clickable-icon').on('click', function (e) {
                         e.stopImmediatePropagation();
                         var target = $(e.target)
@@ -1237,6 +1290,59 @@ export default function pageInit() {
                         datascource2 = FinalOrgChartBuffer
                         GenerateSaveOrgStructure()
                     })
+                    function clickExportButton(divId) {
+                        let chartContainer = document.querySelector(divId)
+                        let mask = chartContainer.querySelector(':scope > .mask')
+                        let sourceChart = chartContainer.querySelector('.orgchart')
+                      
+
+                        let flag = sourceChart.classList.contains('l2r') || sourceChart.classList.contains('r2l');
+
+                        if (!mask) {
+                            mask = document.createElement('div');
+                            mask.setAttribute('class', 'mask');
+                            mask.innerHTML = `<i class="fa fa-circle-o-notch fa-spin spinner"></i>`;
+                            chartContainer.appendChild(mask);
+                        } else {
+                            mask.classList.remove('hidden');
+                        }
+                        
+                        chartContainer.classList.add('canvasContainer');
+                        html2canvas(sourceChart, {
+                            'width': flag ? sourceChart.clientHeight : sourceChart.clientWidth,
+                            'height': flag ? sourceChart.clientWidth : sourceChart.clientHeight,
+                            'onclone': function (cloneDoc) {
+                                let canvasContainer = cloneDoc.querySelector('.canvasContainer');
+
+                                canvasContainer.style.overflow = 'visible';
+                                canvasContainer.querySelector('.orgchart').transform = '';
+                            }
+                        })
+                            .then((canvas) => {
+                                let downloadBtn = chartContainer.querySelector('.oc-download-btn');
+
+                                chartContainer.querySelector('.mask').classList.add('hidden');
+                                downloadBtn.setAttribute('href', canvas.toDataURL());
+                                downloadBtn.click();
+                            })
+                            .catch((err) => {
+                                console.error('Failed to export the curent orgchart!', err);
+                            })
+                            .finally(() => {
+                                chartContainer.classList.remove('canvasContainer');
+                            });
+                    }
+
+                    $('#downloadOrgStructButton').on('click', function (e) {
+                        clickExportButton('#chart-container')
+                        e.stopImmediatePropagation();
+                    })
+
+                    $('#downloadOrgChartButton').on('click', function (e) {
+                        clickExportButton('#orgChartContainer')
+                        e.stopImmediatePropagation();
+                    })
+
                     $('#generateOrgChartButton').on('click', function (e) {
                         e.stopImmediatePropagation();
 
@@ -1287,7 +1393,6 @@ export default function pageInit() {
                             myDiv.style.display = 'none'
                             this.textContent = 'Display Tab'
                         }
-                         console.log('haha')
                         e.stopImmediatePropagation();
 
                     })
@@ -1475,8 +1580,6 @@ export default function pageInit() {
             }
             return result;
         }
-
-
         function fillInRights(node) {
             if (node.hierarchy == CardType.DIRECTOR) {
                 var Right = {
@@ -1503,7 +1606,6 @@ export default function pageInit() {
                     fillInRights(child);
             }
         }
-
         if (!isEmptyOrNull(FinalDatascource2))
             var ListOfRights: any[] = extractRightsAndEmployeeRowId(FinalDatascource2)
         let EmployeeInOrgChart: any[] = extractEmployeeInOrgChart(datascource2)
@@ -1755,6 +1857,8 @@ export default function pageInit() {
         }
         return parents;
     }
+    var structureState = 1
+    var structureStatePrev = structureState
     function GenerateOrgStructure() {
         SplitOrganisationStructureService.List({
         }, response => {
@@ -1789,6 +1893,7 @@ export default function pageInit() {
             var Json, filterFlag = 0;
             if (checkedIds.length > 0) {
                 filterFlag = 1;
+                structureState = 2
                 let OrgStructFinalResult = [];
                 checkedIds.forEach(item => {
                     OrgStructFinalResult.push(item);
@@ -1799,9 +1904,10 @@ export default function pageInit() {
                     .map(id => SplitOrgStructList.find(obj => obj.id === id));
                 Json = GenerateJson(OrgStructFinalResult)
             }
-            else
+            else {
+                structureState = 1
                 Json = GenerateJson(SplitOrgStructList)
-
+            }
             if (isEmptyOrNull(Json)) {
                 if (isEmptyOrNull(spareOrgStructJson))
                     Json = GenerateDefaultOrgStruct()
@@ -1822,10 +1928,8 @@ export default function pageInit() {
                 $('#left-panel').append(BulletList)
             }
 
-            GenerateStructure(Json, 'chart-container', filterFlag);
-
+            let orgchart = GenerateStructure(Json, 'chart-container', filterFlag);
             if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) {
-                console.log('haha')
                 var generateOrgChartButton = orgChartElement.querySelector("#chart-container .buttonGroup");
                 if (isEmptyOrNull(generateOrgChartButton)) {
                     console.log('haha')
@@ -1835,6 +1939,8 @@ export default function pageInit() {
                     generateOrgChartButton.innerHTML =
                         `
             <button id="generateOrgChartButton" class="btn btn-light btn-rounded" style="top: 50px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Generate Organisation Chart</button>
+           <button id="downloadOrgStructButton" class="oc-export-btn btn btn-light btn-rounded" style="top: 90px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Structure</button>
+           <a class = 'oc-download-btn' download = 'MyOrgStruct.png'></a>
             <button id="togglePanel" class="btn btn-light btn-rounded" style="bottom: 10px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Tab</button>
             <button id="toggleSidePanel" class="btn btn-light btn-rounded" style="bottom: 10px; left: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Filter Tab</button>
             `
@@ -1842,7 +1948,11 @@ export default function pageInit() {
                 }
             }
             setCallbacks()
-
+            if (structureStatePrev == structureState) {
+                orgchart.chart.style = Style
+                console.log('haha')
+            }
+            structureStatePrev = structureState
         })
 
 
@@ -1853,6 +1963,11 @@ export default function pageInit() {
             datascource = JSON.parse(JSON.stringify(datascource2))
             let StructArray: NodeRow[] = splitIntoNodes(datascource2)
             for (let i = 0; i < StructArray.length; i++) {
+                function extractNumber(text: string): number | null {
+                    const match = text.match(/\d+/); // Find the first number in the string
+                    return match ? parseInt(match[0], 10) : null;
+                }
+                var extracted = extractNumber(StructArray[i].className)
                 SplitOrganisationStructureService.Create({
                     Entity:
                     {
@@ -1864,7 +1979,8 @@ export default function pageInit() {
                         "HierarchyLevel": StructArray[i].hierarchyLevel,
                         "EmployeeRowId": StructArray[i].EmployeeRowId,
                         "hierarchyId": StructArray[i].hierarchyId,
-                        "childrenIndex": StructArray[i].childrenIndex
+                        "childrenIndex": StructArray[i].childrenIndex,
+                        "ElementRowId": extracted
                     },
                 });
             }
@@ -1907,6 +2023,7 @@ export default function pageInit() {
         };
         return bufferNode
     }
+    
     function GenerateStructure(InputJson, containerId, filter) {
         var orgChartElement = document.getElementById(containerId)
         if (orgChartElement) {
@@ -1917,7 +2034,6 @@ export default function pageInit() {
                 orgDiv.remove()
             }
         }
-
         let orgchart = new OrgChart({
             'chartContainer': `#${containerId}`,
             'data': InputJson,
@@ -1981,8 +2097,8 @@ export default function pageInit() {
                 content.remove()
             }
         });
-        if (filter == 0)
-            orgchart.chart.style = Style
+       // if (filter == 0)
+      //      orgchart.chart.style = Style
         return orgchart
     }
     function GenerateUl(node, type) {
@@ -2162,6 +2278,8 @@ export default function pageInit() {
         return buildHierarchy(ListOfStruct);
     }
 
+    var OrgChartState = 1 // 1 for normal, 2 for filter
+    var OrgChartPrevState = OrgChartState
     function GenerateOrgChart() {
         function findParentByEmployeeRowId(children, employeeRowIdToRemove) {
             for (let child of children) {
@@ -2276,6 +2394,7 @@ export default function pageInit() {
                 const checkedIds = checkedBoxes.map(box => box.getAttribute('wantedId'));
                 var Json
                 if (checkedIds.length > 0) {
+                    OrgChartState = 2
                     let OrgChartFinalResult = [];
                     checkedIds.forEach(item => {
                         OrgChartFinalResult.push(item);
@@ -2287,8 +2406,10 @@ export default function pageInit() {
                         .map(id => SplitOrgChartList.find(obj => obj.id === id));
                     Json = GenerateJson(OrgChartFinalResult)
                 }
-                else
+                else {
                     Json = GenerateJson(SplitOrgChartList)
+                    OrgChartState = 1
+                }
                 if (isEmptyOrNull(Json)) {
                     if (isEmptyOrNull(spareOrgStructJson))
                         return
@@ -2302,7 +2423,6 @@ export default function pageInit() {
                 FinalDatascource2 = JSON.parse(JSON.stringify(Json))
                 var GenerateSave = false
                 for (let i = 0; i < EmployeeFilter.length; i++) {
-                  //  console.log(EmployeeFilter[i])
                     var result = removeNodeByEmployeeRowId(FinalDatascource2, EmployeeFilter[i])
                     if (result == true && GenerateSave == false)
                         GenerateSave = result
@@ -2346,8 +2466,9 @@ export default function pageInit() {
                         let $jqueryObject = $(node);
                         if (!isEmptyOrNull(data.EmployeeRowId)) {
                             var employeeRow = ListOfEmployeeData.find(employee => employee.id === data.EmployeeRowId);
-                            var JobGradeName = '-';
-                           // console.log(employeeRow)
+                            //   console.log(JobGradeTable.itemById)
+                            //  console.log(employeeRow.JobGradeId)
+                            var JobGradeName = '-'
                             if (!isEmptyOrNull(employeeRow.JobGradeId)) {
                                 if (!isEmptyOrNull(JobGradeTable.itemById[employeeRow.JobGradeId].Name))
                                     JobGradeName = JobGradeTable.itemById[employeeRow.JobGradeId].Name;
@@ -2355,70 +2476,45 @@ export default function pageInit() {
                             var basicPay = Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] == true ? employeeRow.SalaryDetails : 'N/A'
                             var imgPath = employeeRow.ImgPath;
                             image = ` 
-                    <div  style=" display: flex; align-items: center; height: 100%; flex-direction: column;" class=" rowData">
+                    <div  style="display: flex; align-items: center; height: 100%; flex-direction: column;" class=" rowData">
                         </div>
-                    <div style=" text-align: left;height: 100%;padding-right:0;align-items: center;justify-content: center;display: flex;padding-top: 5px;padding-bottom: 5px">
+                <div style="text-align: left;height: 100%;padding-right:0;align-items: center;justify-content: center;display: flex;padding-top: 5px;padding-bottom: 5px">
                     <div style="text-align: left;height: 100%;width:100%;padding-right:0">
                             <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> Salary Details : ${basicPay} </span>  </div>
-                            </div>
-                    `;
-                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
-                            {
-                                if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
-                                    var button
-                                    if (!isEmptyOrNull(data.Rights)) {
-                                        button = `
-                                <div>
-                                    <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
-                                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
-                                    <i class="far fa-clock" title="Manage Training Requests"></i>
-                                </div>
-                                <div>
-                            `;
-                                        var desiredOrder: (keyof EmployeeAdminRights)[] = [
-                                            'LeaveApproval',
-                                            'OtApproval',
-                                            'MoneyClaiming',
-                                            'Appraisal',
-                                            'Training'
-                                        ];
-                                        // Loop through the rights object to create the checkbox elements
-                                        for (const key of desiredOrder) {
-                                            var value = data.Rights[key]
-                                            // Determine the checked attribute based on the value
-                                            const checkedAttribute = value ? 'checked' : '';
-                                            button += `
+                            </div>`
+                            if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
+                                var button = `
+                <div>
+                     <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
+                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
+                    <i class="far fa-clock" title="Manage Training Requests"></i>
+                </div>
+                <div>`
+                                var desiredOrder: (keyof EmployeeAdminRights)[] = [
+                                    'LeaveApproval',
+                                    'OtApproval',
+                                    'MoneyClaiming',
+                                    'Appraisal',
+                                    'Training'
+                                ];
+
+                                for (const key of desiredOrder) {
+                                    var value = data.Rights[key]
+                                    // Determine the checked attribute based on the value
+                                    const checkedAttribute = value ? 'checked' : '';
+                                    //  console.log(value)
+                                    //  console.log(key)
+                                    button += `
                     <input class="CheckBox" id="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
                 `;
-                                        }
-                                        button += '</div>';
-                                    }
-                                    else {
-                                        button = `
-                    <div>
-                    <i class="fas fa-band-aid" title="Approve Leave Requests" ></i>
-                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                    <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                    <i class="fa fa-check"  title="Evaluate Employee Requests"></i>
-                    <i class="far fa-clock" title="Manage Training Requests"></i>
-                    </div>
-                    <div>
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
-
-                    </div>    
-`
-                                    }
-                                    image = button + image
                                 }
-
+                                button += '</div>';
+                                image = button + image
                             }
                             $jqueryObject.append(image)
+
                             var img = document.createElement('img');
                             img.src = `/upload/${imgPath}`;
                             img.className = 'avatar';
@@ -2427,16 +2523,20 @@ export default function pageInit() {
                             img.width = 63;
                             img.height = 112.5;
                             img.style.marginRight = '20px'
+
                             img.onerror = function () {
                                 // Handle the error, e.g., set a placeholder image
                                 img.src = ''; // Replace with your placeholder path
                             };
+
                             let row = $jqueryObject.find(".rowData")
                             row.append(img)
                             var ViewButton = document.createElement('span');
                             ViewButton.className = 'dot';
                             if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
                                 row.append(ViewButton)
+
+
                         }
                         let content = $jqueryObject.find(".content")
                         content.remove()
@@ -2450,13 +2550,17 @@ export default function pageInit() {
                         generateOrgChartButton.className = 'buttonGroup'
                         generateOrgChartButton.innerHTML =
                             `
+           <button id="downloadOrgChartButton" class="oc-export-btn btn btn-light btn-rounded" style="top: 60px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Chart</button>
+           <a class = 'oc-download-btn' download = 'MyOrgChart.png'></a>
             <button id="toggleOrgChartSidePanel" class="btn btn-light btn-rounded" style="bottom: 10px; left: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Filter Tab</button>
             `
                         orgChartElement.appendChild(generateOrgChartButton)
                     }
                 }
 
-
+                if (OrgChartPrevState == OrgChartState )
+                    orgchart.chart.style = Style
+                OrgChartPrevState = OrgChartState
             })
         })
 
@@ -2466,6 +2570,12 @@ export default function pageInit() {
         }, response => {
             SplitOrgChartList = splitIntoNodes(FinalDatascource2)
             for (let i = 0; i < SplitOrgChartList.length; i++) {
+                console.log(SplitOrgChartList[i].className)
+                function extractNumber(text: string): number | null {
+                    const match = text.match(/\d+/); // Find the first number in the string
+                    return match ? parseInt(match[0], 10) : null;
+                }
+                var extracted = extractNumber(SplitOrgChartList[i].className)
                 SplitOrganisationChartService.Create({
                     Entity:
                     {
@@ -2476,7 +2586,8 @@ export default function pageInit() {
                         "ClassName": SplitOrgChartList[i].className,
                         "HierarchyLevel": SplitOrgChartList[i].hierarchyLevel,
                         "EmployeeRowId": SplitOrgChartList[i].EmployeeRowId,
-                        "childrenIndex": SplitOrgChartList[i].childrenIndex
+                        "childrenIndex": SplitOrgChartList[i].childrenIndex,
+                        "ElementRowId": extracted
                     },
                 });
             }
@@ -2485,7 +2596,8 @@ export default function pageInit() {
             EmployeeRightsService.ClearOldAdminRightRecord({
             }, response => {
                 for (let i = 0; i < ListOfRights.length; i++) {
-                    if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId))
+                    if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
+                        if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR)
                         EmployeeRightsService.Create({
                             Entity: {
                                 "EmployeeRowId": ListOfRights[i].EmployeeRowId,
@@ -2497,6 +2609,20 @@ export default function pageInit() {
                                 "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
                             }
                         })
+                        else
+                            EmployeeRightsService.Create({
+                                Entity: {
+                                    "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                    "NodeId": ListOfRights[i].id,
+                                    "Appraisal": true,
+                                    "LeaveApproval": true,
+                                    "OtApproval": true,
+                                    "Training": true,
+                                    "MoneyClaiming": true,
+                                }
+                            })
+
+                    }
                 }
             })
 
@@ -2548,17 +2674,18 @@ export default function pageInit() {
                             <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> Salary Details : ${basicPay} </span>  </div>
                             </div>`
                         if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
-                            var button
-                            if (!isEmptyOrNull(data.Rights)) {
-                                button = `
-                <div>
-                     <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
-                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
-                    <i class="far fa-clock" title="Manage Training Requests"></i>
-                </div>
-                <div>`;
+                            var button = `
+                        <div>
+                             <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
+                            <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                           <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                            <i class="fa fa-check" title="Evaluate Employee Requests"></i>
+                            <i class="far fa-clock" title="Manage Training Requests"></i>
+                        </div>
+                        <div>`
+
+                          //  if (!isEmptyOrNull(data.Rights)) {
+                       
                                 var desiredOrder: (keyof EmployeeAdminRights)[] = [
                                     'LeaveApproval',
                                     'OtApproval',
@@ -2584,17 +2711,10 @@ export default function pageInit() {
 
                                 // Close the div tag
                                 button += '</div>';
-                            }
+                           // }
+                            /*
                             else {
-                                button = `
-                    <div>
-                 <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
-                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
-                    <i class="far fa-clock" title="Manage Training Requests"></i>
-                    </div>
-                    <div>
+                                button += `
                     <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
                     <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
                     <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
@@ -2605,6 +2725,7 @@ export default function pageInit() {
 `
 
                             }
+                            */
                             image = button + image
                         }
                         $jqueryObject.append(image)

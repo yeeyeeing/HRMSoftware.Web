@@ -367,13 +367,13 @@ export class TextDownloadingWizardDialog extends EntityDialog<PayrollGeneratingW
         $(TextTypeElement).on('change', async function () {
             $(`.Email, .PhoneNumber, .ContactPerson, .CreditingDate, .OrganisationName, .OrganisationCode, .MasterStateId`).hide()
             $(`.TextFormatEisSocsoId, .TextFormatEpfId, .TextFormatAutopayId, .TextFormatLhdnId, .TestingMode`).hide();
+            console.log('hahaha')
             if (parseInt(self.form.TextType.value) == TextClass.LHDN.valueOf()) {
                 self.form.Email.value = self.Email
                 self.form.PhoneNumber.value = self.PhoneNumber
-                self.form.ContactPerson.value = self.ContactPerson
-                $(`.Email, .PhoneNumber, .ContactPerson`).show()
-                $(`.TextFormatLhdnId`).show();
-
+                self.form.ContactPerson.value = self.ContactPerson 
+                $(`.Email, .PhoneNumber, .ContactPerson, .TextFormatLhdnId, .CreditingDate`).show()
+                console.log('hahaha')
             }
             else if (parseInt(self.form.TextType.value) == TextClass.AUTOPAY.valueOf()) {
                 $(`.TextFormatAutopayId`).show();

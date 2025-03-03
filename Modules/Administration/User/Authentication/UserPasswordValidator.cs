@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Serenity;
 using Serenity.Abstractions;
@@ -192,7 +192,7 @@ namespace HRMSoftware.Administration
                         PasswordHash = hash,
                         PasswordSalt = salt,
                         IsActive = 1,
-                        InsertDate = DateTime.Now,
+                       InsertDate = DateTime.Now,
                         InsertUserId = 1,
                         LastDirectoryUpdate = DateTime.Now
                     });

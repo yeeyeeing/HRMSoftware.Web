@@ -11,6 +11,7 @@ export interface SplitOrganisationStructureRow {
     EmployeeRowId?: number;
     hierarchyId?: number;
     childrenIndex?: number;
+    ElementRowId?: number;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;
@@ -25,10 +26,10 @@ export abstract class SplitOrganisationStructureRow {
     static readonly isActiveProperty = 'IsActive';
     static readonly nameProperty = 'ParentId';
     static readonly localTextPrefix = 'OrganisationChart.SplitOrganisationStructure';
-    static readonly deletePermission = 'Administration:HumanResources';
-    static readonly insertPermission = 'Administration:HumanResources';
-    static readonly readPermission = 'Administration:HumanResources';
-    static readonly updatePermission = 'Administration:HumanResources';
+    static readonly deletePermission = 'Administration:Employee';
+    static readonly insertPermission = 'Administration:Employee';
+    static readonly readPermission = 'Administration:Employee';
+    static readonly updatePermission = 'Administration:Employee';
 
     static readonly Fields = fieldsProxy<SplitOrganisationStructureRow>();
 }

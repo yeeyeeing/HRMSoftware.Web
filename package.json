@@ -19,6 +19,7 @@
     "file-saver": "^2.0.5",
     "grudus-timepicker": "^1.0.2",
     "highcharts": "^11.0.1",
+    "html2canvas": "^1.4.1",
     "jquery-clock-timepicker": "^2.6.5",
     "js-datepicker": "^5.18.2",
     "jsvectormap": "1.5.1",

@@ -14,8 +14,7 @@ namespace HRMSoftware.Administration
     [ReadPermission("*")]
     [ModifyPermission("*")]
     [LookupScript("User.User", Permission = "*")]
-    public sealed class UserRow : LoggingRow<UserRow.RowFields>, IIdRow, INameRow
-
+    public sealed class UserRow : Serenity.Extensions.Entities.LoggingRow<UserRow.RowFields>, IIdRow, INameRow, IIsActiveRow
     {
         [DisplayName("User Id"), Identity, IdProperty]
         public int? UserId
@@ -23,21 +22,14 @@ namespace HRMSoftware.Administration
             get => fields.UserId[this];
             set => fields.UserId[this] = value;
         }
-
-
-
-
-
-        [DisplayName("Employee ID")]
+        [DisplayName("Employee Row ID")]
         public int? EmployeeRowID
         {
             get => fields.EmployeeRowID[this];
             set => fields.EmployeeRowID[this] = value;
         }
-        
 
-      
-        
+
 
         [DisplayName("Username"), Size(100), NotNull, QuickSearch, LookupInclude, NameProperty]
         public string Username
@@ -59,7 +51,6 @@ namespace HRMSoftware.Administration
             get => fields.PasswordHash[this];
             set => fields.PasswordHash[this] = value;
         }
-
         [DisplayName("Password Salt"), Size(10), NotNull, Insertable(false), Updatable(false), MinSelectLevel(SelectLevel.Never)]
         public string PasswordSalt
         {
@@ -160,14 +151,14 @@ namespace HRMSoftware.Administration
             get => fields.EmployeeName[this];
             set => fields.EmployeeName[this] = value;
         }
-        /*
+
         Int16Field IIsActiveRow.IsActiveField
         {
             get => fields.IsActive;
         }
-        
 
-        
+
+
         public UserRow()
         {
         }
@@ -176,9 +167,8 @@ namespace HRMSoftware.Administration
             : base(fields)
         {
         }
-        */
 
-        public class RowFields : LoggingRowFields
+        public class RowFields : Serenity.Extensions.Entities.LoggingRowFields
         {
             public Int32Field UserId;
             public StringField EmployeeName;
@@ -194,12 +184,15 @@ namespace HRMSoftware.Administration
             public Int32Field TwoFactorAuth;
             public StringField UserImage;
             public DateTimeField LastDirectoryUpdate;
+            public Int16Field IsActive;
             public Int32Field EmployeeRowID;
 
-            public StringField Password;
             public StringField PasswordConfirm;
 
             public StringField ImpersonationToken;
+            public StringField Password;
+
+            
             public ListField<int> Roles;
 
         }

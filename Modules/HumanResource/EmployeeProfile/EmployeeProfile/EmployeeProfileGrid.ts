@@ -662,7 +662,7 @@ export class EmployeeProfileGrid extends EntityGrid<EmployeeProfileRow, any>
     }
     protected getButtons() {
         var buttons = super.getButtons();
-
+        var self = this;
         if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
             buttons.push({
                 title: 'Batch User Creation',
@@ -673,9 +673,8 @@ export class EmployeeProfileGrid extends EntityGrid<EmployeeProfileRow, any>
                         () => {
                             var CreateUserDialog = new UserCreationDialog()
                             CreateUserDialog.dialogOpen()
-
                             CreateUserDialog.element.on("dialogclose", function () {
-                                location.reload()
+                                self.internalRefresh();
                             })
 
 

@@ -35,8 +35,6 @@ export interface EmployeeProfileForm {
     OldNRIC: StringEditor;
     RaceID: LookupEditor;
     NationalityID: LookupEditor;
-    StateID: LookupEditor;
-    CityID: LookupEditor;
     JoinDate: DateEditor;
     ProbationPeriod: DecimalEditor;
     ProbationPeriodFrom: StringEditor;
@@ -53,8 +51,10 @@ export interface EmployeeProfileForm {
     PassportValidPeriod: IntegerEditor;
     PassportExpiryDate: DateEditor;
     Address: StringEditor;
-    PostalCode: StringEditor;
+    PostcodeId: LookupEditor;
     CountryID: LookupEditor;
+    StateID: LookupEditor;
+    CityID: LookupEditor;
     Cp8dID: LookupEditor;
     DepartmentID: LookupEditor;
     DivisionID: LookupEditor;
@@ -152,8 +152,6 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'OldNRIC', w2,
                 'RaceID', w5,
                 'NationalityID', w5,
-                'StateID', w5,
-                'CityID', w5,
                 'JoinDate', w0,
                 'ProbationPeriod', w6,
                 'ProbationPeriodFrom', w2,
@@ -170,8 +168,10 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'PassportValidPeriod', w4,
                 'PassportExpiryDate', w0,
                 'Address', w2,
-                'PostalCode', w2,
+                'PostcodeId', w5,
                 'CountryID', w5,
+                'StateID', w5,
+                'CityID', w5,
                 'Cp8dID', w5,
                 'DepartmentID', w5,
                 'DivisionID', w5,

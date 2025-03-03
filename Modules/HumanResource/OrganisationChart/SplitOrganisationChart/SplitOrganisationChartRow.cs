@@ -1,3 +1,4 @@
+using HRMSoftware.Administration;
 using Serenity.ComponentModel;
 using Serenity.Data;
 using Serenity.Data.Mapping;
@@ -7,8 +8,8 @@ namespace HRMSoftware.OrganisationChart;
 
 [ConnectionKey("Default"), Module("OrganisationChart"), TableName("HumanResourcesSplitOrganisationStructure")]
 [DisplayName("Split Organisation Structure"), InstanceName("Split Organisation Structure")]
-[ReadPermission("Administration:HumanResources")]
-[ModifyPermission("Administration:HumanResources")]
+[ReadPermission(PermissionKeys.Employee)]
+[ModifyPermission(PermissionKeys.Employee)]
 public sealed class SplitOrganisationStructureRow : LoggingRow<SplitOrganisationStructureRow.RowFields>, IIdRow, INameRow
 {
     [DisplayName("Id"), Identity, IdProperty]
@@ -78,6 +79,11 @@ public sealed class SplitOrganisationStructureRow : LoggingRow<SplitOrganisation
         get => fields.childrenIndex[this];
         set => fields.childrenIndex[this] = value;
     }
+    public int? ElementRowId
+    {
+        get => fields.ElementRowId[this];
+        set => fields.ElementRowId[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
@@ -90,6 +96,7 @@ public sealed class SplitOrganisationStructureRow : LoggingRow<SplitOrganisation
         public Int32Field EmployeeRowId;
         public Int32Field hierarchyId;
         public Int32Field childrenIndex;
+        public Int32Field ElementRowId;
 
     }
 }

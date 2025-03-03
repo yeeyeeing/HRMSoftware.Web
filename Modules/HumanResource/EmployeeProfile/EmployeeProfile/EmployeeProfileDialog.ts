@@ -1,4 +1,4 @@
-import { DataGrid, Decorators, EditorUtils, EntityDialog, Select2Editor } from '@serenity-is/corelib';
+import { DataGrid, Decorators, EditorUtils, EntityDialog, SaveResponse, Select2Editor } from '@serenity-is/corelib';
 import { EmployeeCareerPathRow, EmployeeCareerPathService, EmployeeProfileForm, EmployeeProfileRow, EmployeeProfileService, EmployeeType, ProbationClass, SOCSOClass } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 import { ShiftService } from '../../../ServerTypes/Shift';
@@ -72,53 +72,30 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
         super.onDeleteSuccess(response)
         var self = this
-        UserService.Update({
-            EntityId: self.form.UserRowID.value,
-            Entity:
-            {
-                "EmployeeRowID": null,
-                "Email": null,
-
-            },
-        });
-
-
-    }
-    public createUser(res) {
-        var self = this
-        UserService.Create({
-            Entity: {
-                "Username": this.form.UserName.value,
-                "DisplayName": this.form.EmployeeName.value,
-                "Password": this.form.UserPassword.value,
-                "PasswordConfirm": this.form.UserPassword.value,
-                "Email": this.form.EmployeeEmail.value,
-                "MobilePhoneNumber": this.form.TelNumber1.value
-            }
+        UserService.List({
         }, response => {
-            var newUserId = response.EntityId; // Get the new user ID
-            EmployeeProfileService.Update({
-                EntityId: self.entityId,
-                Entity:
-                {
-                    "UserRowID": newUserId
-                },
-            });
-            UserService.Update({
-                EntityId: newUserId,
-                Entity:
-                {
-                    "EmployeeRowID": self.entityId
-                },
-            });
-            super.onSaveSuccess(res)
-        });
+            for (var res in response.Entities) {
+                if (response.Entities[res].UserId == self.form.UserRowID.value) {
+                    UserService.Update({
+                        EntityId: self.form.UserRowID.value,
+                        Entity:
+                        {
+                            "EmployeeRowID": null,
+                            "Email": null,
+
+                        },
+                    });
+
+                }
+            }
+        })
+
 
     }
-    protected onSaveSuccess(response): void {
-        var entity_id = this.entityId
+    protected onSaveSuccess(response: SaveResponse): void {
+        var entity_id = response.EntityId
         var self = this
-        var res = response
+        var originalRes = response
 
         if (this.isNew()) {
             var UserName = Authorization.userDefinition.Username
@@ -173,7 +150,6 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         }
 
         if (self.form.CreateUser.value == true && isEmptyOrNull(self.form.UserRowID.value)) {
-            console.log('heree')
             UserService.Create({
                 Entity: {
                     "Username": this.form.UserName.value,
@@ -186,7 +162,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             }, response => {
                 var newUserId = response.EntityId; // Get the new user ID
                 EmployeeProfileService.Update({
-                    EntityId: self.entityId,
+                    EntityId: entity_id,
                     Entity:
                     {
                         "UserRowID": newUserId
@@ -196,10 +172,10 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     EntityId: newUserId,
                     Entity:
                     {
-                        "EmployeeRowID": self.entityId
+                        "EmployeeRowID": entity_id
                     },
                 });
-                super.onSaveSuccess(res)
+                super.onSaveSuccess(originalRes)
             });
 
         }
@@ -214,13 +190,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         super.dialogOpen()
         var self = this
         $(document).on('click', '.tool-button.add-button', function () {
-            console.log('Add button clicked');
             var prevLength = self.form.EmployeeCareerPath.value.length
             $('.s-HRMSoftware-EmployeeProfile-EmployeeCareerPathEditDialog').on("dialogclose", function () {
                 if (prevLength != self.form.EmployeeCareerPath.value.length) {
                     self.loadById(self.entityId);
                     for (let i = 0; i < self.form.EmployeeCareerPath.value.length; i++) {
-                        console.log(self.form.EmployeeCareerPath.value[i])
                         if (isEmptyOrNull(self.form.EmployeeCareerPath.value[i].IsActive)) {
                             self.form.EmployeeCareerPath.value[i].IsActive = 1
                             EmployeeCareerPathService.Create({
@@ -1061,6 +1035,8 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
         if (this.form.CreateUser.value == true && this.form.UserPassword.value.length < 6)
             list_of_errors.push('Length of UserPassword cannot be less than 6')
+        if (this.form.CreateUser.value == true && this.form.UserName.value.length < 5)
+            list_of_errors.push('Length of UserName cannot be less than 5')
 
         if (this.form.CreateUser.value == true && startsWithNumber(this.form.UserName.value) == true)
             list_of_errors.push('User Name cannot start with number')

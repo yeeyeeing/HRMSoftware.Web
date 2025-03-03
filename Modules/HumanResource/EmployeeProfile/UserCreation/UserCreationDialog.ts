@@ -1,4 +1,4 @@
-import { Decorators, EntityDialog, EditorUtils, Criteria } from '@serenity-is/corelib';
+import { Decorators, EntityDialog, EditorUtils, Criteria, RetrieveResponse } from '@serenity-is/corelib';
 import { EmployeeProfileRow, UserCreationForm, UserCreationRow, UserCreationService } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, isEmptyOrNull } from '@serenity-is/corelib/q';
 import { confirm, serviceCall, notifySuccess, notifyError } from '@serenity-is/corelib/q';
@@ -17,7 +17,9 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
     protected getService() { return UserCreationService.baseUrl; }
 
     protected form = new UserCreationForm(this.idPrefix);
-    public multipleSelectHr:any;
+    public multipleSelectHr: any;
+    public UserNamePrefix: string;
+    public PasswordPrefix: string;
 
     public SearchCallback(): void {
         var self = this
@@ -29,7 +31,7 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
             self.form.EmployeeRowList.value = ''
         }
 
-        
+
 
         var OccupationListElement = document.getElementById(this.idPrefix + 'OccupationList');
         var DepartmentListElement = document.getElementById(this.idPrefix + 'DepartmentList');
@@ -79,10 +81,10 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
                 , [[EmployeeProfileRow.Fields.Resigned], '=', 0]
                 , [[EmployeeProfileRow.Fields.Retired], '=', 0])
         }, response => {
-            let EmployeeBuffer : any [] = []
+            let EmployeeBuffer: any[] = []
             for (var index in response.Entities) {
                 if (response.Entities[index].CreateUser == true)
-                continue
+                    continue
                 var found = 0
                 for (var JobGradeIndex in JobGradeList) {
                     if (response.Entities[index].JobGradeID == JobGradeList[JobGradeIndex]) {
@@ -146,7 +148,7 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
                         else
                             self.form.EmployeeRowList.value = self.form.EmployeeRowList.value + ' , ' + response.Entities[index].Id.toString()
                     }
-                    else 
+                    else
                         self.form.EmployeeRowList.value = response.Entities[index].Id.toString()
                 }
             }
@@ -209,41 +211,119 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
                                 numbers.forEach(number => {
                                     EmployeeRowIdList.push(parseInt(number)); // Convert string to integer and push to numberList
                                 })
-                            for (var index in EmployeeRowIdList) {
-                                EmployeeProfileService.Retrieve({
-                                    EntityId: EmployeeRowIdList[index]
-                                }, response => {
-                                    var Username = 'T' + response.Entity.EmployeeID
-                                    var PassWord= 'TSH' + response.Entity.EmployeeID
+                            var listOfUsedUsername: string[] = [];
 
-                                    UserService.Create({
-                                        Entity:
-                                        {
-                                            "Username": Username,
-                                            "DisplayName": response.Entity.EmployeeName,
-                                            "Password": PassWord,
-                                            "PasswordConfirm": PassWord,
-                                            "Email": response.Entity.EmployeeEmail,
-                                            "MobilePhoneNumber": response.Entity.TelNumber1,
-                                            "EmployeeRowID": response.Entity.Id
-                                        },
-                                    });
-                                    EmployeeProfileService.Update({
-                                        EntityId: response.Entity.Id,
-                                        Entity:
-                                        {
-                                            "UserPassword": PassWord,
-                                            "UserName": Username
+                            UserService.List({}, response => {
+                                console.log(response);
+                                for (var res in response.Entities)
+                                    listOfUsedUsername.push(response.Entities[res].Username);
 
-                                        },
-                                    });
+                                async function processEmployees(EmployeeRowIdList: number[]) {
+                                    let listOfUsername: string[] = [];
+                                    let listOfPassword: string[] = [];
+                                    let employeeList: EmployeeProfileRow[] = [];
+                                    let fail = 0;
+
+                                    // Collect all retrieval promises
+                                    let retrievePromises = EmployeeRowIdList.map(id =>
+                                        new Promise<void>((resolve, reject) => {
+                                            EmployeeProfileService.Retrieve({ EntityId: id }, response => {
+                                                if (!isEmptyOrNull(response.Entity.EmployeeID)) {
+                                                    let Username = self.UserNamePrefix + response.Entity.EmployeeID;
+                                                    let PassWord = self.PasswordPrefix + response.Entity.EmployeeID;
+
+                                                    if (Username.length < 5 || PassWord.length < 6) {
+                                                        alertDialog(`Username must be at least 5 characters, Password must be at least 6 characters. Error in creating ${response.Entity.EmployeeID} ${response.Entity.EmployeeName}`);
+                                                        fail = 1;
+                                                        reject(); // Reject promise on failure
+                                                        return;
+                                                    }
+
+                                                    if (listOfUsedUsername.indexOf(Username) !== -1) {
+                                                        alertDialog(`Username ${Username} for Employee ${response.Entity.EmployeeID} ${response.Entity.EmployeeName} already exists, create failed`);
+                                                        fail = 1;
+                                                        reject();
+                                                        return;
+                                                    }
+
+                                                    listOfPassword.push(PassWord);
+                                                    listOfUsername.push(Username);
+                                                    employeeList.push(response.Entity);
+                                                }
+                                                resolve();
+                                            });
+                                        })
+                                    );
+
+                                    try {
+                                        await Promise.all(retrievePromises);
+                                    } catch {
+                                        console.error("One or more retrievals failed.");
+                                        return; // Stop execution if any retrieval failed
+                                    }
+
+                                    // If fail is set, stop execution
+                                    if (fail === 1) {
+                                        return;
+                                    }
+
+                                    // Process user creation
+                                    let createUserPromises = listOfUsername.map((Username, i) =>
+                                        new Promise<void>((resolve, reject) => {
+                                            let PassWord = listOfPassword[i];
+
+                                            UserService.Create({
+                                                Entity: {
+                                                    "Username": Username,
+                                                    "DisplayName": employeeList[i].EmployeeName,
+                                                    "Password": PassWord,
+                                                    "PasswordConfirm": PassWord,
+                                                    "Email": employeeList[i].EmployeeEmail,
+                                                    "MobilePhoneNumber": employeeList[i].TelNumber1,
+                                                    "EmployeeRowID": employeeList[i].Id
+                                                }
+                                            }, response => {
+                                                var userRowId = response.EntityId
+                                                let updateData: EmployeeProfileRow = {};
+
+                                                if (self.form.EmployeeRowHrPriveledge.values.indexOf(employeeList[i].Id.toString()) !== -1)
+                                                    updateData.GrantHRPrivilege = true
+                                                updateData.UserPassword = PassWord
+                                                updateData.UserName = Username
+                                                updateData.CreateUser = true
+                                                updateData.UserRowID = userRowId
+
+                                                EmployeeProfileService.Update({
+                                                    EntityId: employeeList[i].Id,
+                                                    Entity: updateData
+                                                }, () => resolve(), () => reject());
+                                            }, () => reject());
+                                        })
+                                    );
+
+                                    try {
+                                        await Promise.all(createUserPromises);
+
+                                        console.log("All users created and updated successfully.");
+
+                                        // ✅ Moved inside to only trigger on success
+                                        notifySuccess(
+                                            `Account creation success, username will be in format ${self.UserNamePrefix}{EmployeeID},
+                                            default password will be in format ${self.PasswordPrefix}{EmployeeID}`
+                                        );
+                                        self.loadEntity({});
 
 
-                                })
-                            }
+                                    } catch {
+                                        console.error("Some user creations failed.");
+                                    }
+                                }
 
-                            self.form.EmployeeRowList.value = ''
-                            notifySuccess("Account creation success, the username will be same as password in format T{ID}")
+                                // Run the function
+                                processEmployees(EmployeeRowIdList);
+
+                            });
+
                         })
                 },
             }
@@ -253,41 +333,35 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
 
     public dialogOpen(asPanel?: boolean): void {
         super.dialogOpen();
-        function removeObjectById(data, idToRemove) {
-            return data.filter(item => item.id !== idToRemove.toString());
-        }
+        var self = this
+        
+        $.ajax({
+            type: "POST",
+            url: '/GetUserNamePasswordPrefix',
+            success: function (response) {
+                console.log(response);
+                const result = response.split(',');
+                self.UserNamePrefix = result[0]
+                self.PasswordPrefix = result[1]
+            },
+            error: function (xhr, status, error) {
+                console.error('Error saving image:', error);
+            }
+        })
+ 
         this.saveAndCloseButton.hide()
-        //this.saveAndCloseButton.text("Generate Payslip")
         this.editButton.hide()
         this.applyChangesButton.hide()
         this.deleteButton.hide()
         this.localizationButton.hide()
         this.cloneButton.hide()
         this.undeleteButton.hide()
-        
-        var criteria: any;
+
         this.originalItems = Array.from(this.form.EmployeeRowHrPriveledge.items)
         this.form.EmployeeRowHrPriveledge.clearItems()
-        EmployeeProfileService.List({
-            Criteria: Criteria.and(criteria, [[EmployeeProfileRow.Fields.Terminated], '=', 0]
-                , [[EmployeeProfileRow.Fields.Resigned], '=', 0]
-                , [[EmployeeProfileRow.Fields.Retired], '=', 0])
-
-
-        }, response => {
-            var EmployeeList = this.form.EmployeeRowList.items
-            console.log(response.Entities)
-            for (var index in response.Entities) {
-                if (response.Entities[index].CreateUser == true) {
-                    console.log(response.Entities[index])
-                    EmployeeList = removeObjectById(EmployeeList, response.Entities[index].Id);
-                }
-            }
-            console.log(EmployeeList)
-            this.form.EmployeeRowList.items = EmployeeList
-        })
+ 
         var self = this;
-      
+
 
         var SectionListElement = document.getElementById(this.idPrefix + 'SectionList');
         var OccupationListElement = document.getElementById(this.idPrefix + 'OccupationList');
@@ -322,17 +396,24 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
                 self.form.JobGradeList.value = ''
                 self.form.OccupationList.value = ''
                 self.form.EmployeeRowList.value = ''
+                var criteria: any;
+
                 EmployeeProfileService.List({
+                    Criteria: Criteria.and(criteria, [[EmployeeProfileRow.Fields.Terminated], '=', 0]
+                        , [[EmployeeProfileRow.Fields.Resigned], '=', 0]
+                        , [[EmployeeProfileRow.Fields.Retired], '=', 0]
+                        , [[EmployeeProfileRow.Fields.CreateUser], '=', 0]
+                    )
                 }, response => {
                     let EmployeeRowList = []
 
                     for (var index in response.Entities) {
-                        var number = response.Entities[index].Id                      
+                        var number = response.Entities[index].Id
                         EmployeeRowList.push(number); // Convert string to integer and push to numberList
 
                     }
                     self.form.EmployeeRowList.value = EmployeeRowList.join(',')
-                    
+
 
                 })
 
@@ -341,7 +422,7 @@ export class UserCreationDialog extends EntityDialog<UserCreationRow, any> {
                 self.form.EmployeeRowList.value = ''
         })
 
-        
+
 
     }
 

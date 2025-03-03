@@ -2,13 +2,14 @@ using Serenity.ComponentModel;
 using Serenity.Data;
 using Serenity.Data.Mapping;
 using System.ComponentModel;
+using HRMSoftware.Administration;
 
 namespace HRMSoftware.OrganisationChart;
 
 [ConnectionKey("Default"), Module("OrganisationChart"), TableName("HumanResourcesEmployeeAdminRights")]
 [DisplayName("Employee Rights"), InstanceName("Employee Rights")]
-[ReadPermission("Administration:HumanResources")]
-[ModifyPermission("Administration:HumanResources")]
+[ReadPermission(PermissionKeys.Employee)]
+[ModifyPermission(PermissionKeys.Employee)]
 public sealed class EmployeeRightsRow : Row<EmployeeRightsRow.RowFields>, IIdRow
 {
     [DisplayName("Id"), Column("ID"), Identity, IdProperty]

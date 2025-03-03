@@ -10,7 +10,6 @@ namespace HRMSoftware.EmployeeGroup.Forms;
 [BasedOnRow(typeof(EmployeeGroupRow), CheckNames = true)]
 public class EmployeeGroupForm
 {
-    [TwoThirdWidth]
     public string Name { get; set; }
     [OneThirdWidth]
     public string ShiftColor { get; set; }
@@ -34,8 +33,8 @@ public class EmployeeGroupForm
     [HalfWidth]
     public List<int> SectionList { get; set; }
     [HideOnInsert]
-    public List<int> EmployeeList { get; set; }
     public List<int> NewAddedEmployee { get; set; }
+    public List<int> EmployeeList { get; set; }
 
     
     [IgnoreName, LabelWidth("0"),EmployeeGroupShiftEditor]

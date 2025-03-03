@@ -198,9 +198,8 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
     }
 
 
-    protected save_submitHandler(response): void
-    {
-      
+    protected save_submitHandler(response): void {
+
         var StartingElement = document.getElementById('ot-start-clocklet') as HTMLInputElement
         var EndingElement = document.getElementById('ot-end-clocklet') as HTMLInputElement
         var startTimeStr = StartingElement.value
@@ -217,7 +216,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
         const endMinutes: number = parseInt(endTimeParts[1], 10);
         var timediff = 60 * (endHours - startHours) + (endMinutes - startMinutes)
         // Check if start time is greater than end time
-        
+
         if (this.minimum_ot_time > timediff) {
             alertDialog('This OT cannot be applied as the duration is less than minimum time')
             return
@@ -277,7 +276,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                 }, response => {
                     self.form.EmployeeName.value = response.Entity.EmployeeName
 
-                    if (self.fixedOtRateOption == true && response.Entity.BasicSalary < self.thresholdSalary) 
+                    if (self.fixedOtRateOption == true && response.Entity.BasicSalary < self.thresholdSalary)
                         self.form.OtRate.value = self.fixedOtRate
                     else
                         $(self.form.OtRate.element).val('')
@@ -391,78 +390,73 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             */
 
         }
-        else if (!this.isNew())
-        {
+        else if (!this.isNew()) {
             if (!Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]
                 && self.form.EmployeeRowId.value != Authorization.userDefinition.EmployeeRowID)//if no hr privilege
                 this.readOnly = true
-            if (self.form.EmployeeRowId.value == Authorization.userDefinition.EmployeeRowID)
-            {
+            if (self.form.EmployeeRowId.value == Authorization.userDefinition.EmployeeRowID) {
                 EditorUtils.setReadonly(this.form.EmployeeRowId.element, true);
                 EditorUtils.setReadonly(this.form.EmployeeName.element, true);
                 return
             }
-                OTApplicationService.Retrieve({
-                    EntityId: this.entityId
-                }, response => {
-                    var applicant = response.Entity.EmployeeRowId
-                    var HrStatus = response.Entity.HrStatus 
-                    var EmployeeStatus = response.Entity.EmployeeStatus
-                    self.EmployeeApproval = response.Entity.EmployeeStatus
-                    self.HrApproval = response.Entity.HrStatus
-                    var applicationStatus = response.Entity.Status
-                    if (applicationStatus == OTApplicationStatus.Pending) {
-                        serviceCall<RetrieveResponse<any>>({
-                            service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                            data: {
-                                'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                                'ApplicantEmployeeRowID': applicant
-                            },
-                            method: "GET",
-                            async: false,
-                            onSuccess: (response) => {
-                                var PermissionToAck = response
-                                self.SuperiorPermission = response
-                                if (self.form.EmployeeRowId.value != Authorization.userDefinition.EmployeeRowID)
-                                    this.set_readOnly(true)
-                                $('.delete-button').removeClass('disabled');
-
-                                if (HrStatus == 0 || EmployeeStatus == 0)//if one of the condition still pending
-                                {
-                                    if (PermissionToAck == true && !EmployeeStatus)
-                                        $('.tool-button').removeClass('hidden');
-                                    if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] && !HrStatus)
-                                        $('.tool-button').removeClass('hidden');
-                                }
-                                else if ((HrStatus == OTApplicationStatus.Rejected || EmployeeStatus == OTApplicationStatus.Rejected)
-                                    || (HrStatus == OTApplicationStatus.Approved && EmployeeStatus == OTApplicationStatus.Approved)) {
-                                    $(RejectedBy).hide()
-                                    $(ApprovedBy).hide()
-                                    if (self.form.EmployeeRowId.value == Authorization.userDefinition.EmployeeRowID) {
-                                        var ApproveButtons = document.querySelectorAll('.text-bg-success')
-                                        ApproveButtons.forEach(function (element) {
-                                            $(element).hide()
-                                        });
-                                        var RejectButtons = document.querySelectorAll('.text-bg-danger')
-                                        RejectButtons.forEach(function (element) {
-                                            $(element).hide()
-                                        });
-                                    }
-                                }
-                            },
-                            onError: (error) => {
-                                console.log(error.Error);
+            OTApplicationService.Retrieve({
+                EntityId: this.entityId
+            }, response => {
+                var applicant = response.Entity.EmployeeRowId
+                var HrStatus = self.HrApproval = response.Entity.HrStatus
+                var EmployeeStatus = self.EmployeeApproval = response.Entity.EmployeeStatus
+                var applicationStatus = response.Entity.Status
+                if (applicationStatus == OTApplicationStatus.Pending) {
+                    serviceCall<RetrieveResponse<any>>({
+                        service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                        data: {
+                            'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                            'ApplicantEmployeeRowID': applicant
+                        },
+                        method: "GET",
+                        async: false,
+                        onSuccess: (response) => {
+                            var PermissionToAck = self.SuperiorPermission = response
+                            if (self.form.EmployeeRowId.value != Authorization.userDefinition.EmployeeRowID)
+                                this.set_readOnly(true)
+                            $('.delete-button').removeClass('disabled');
+                            if (HrStatus == 0 || EmployeeStatus == 0)//if one of the condition still pending
+                            {
+                                if (PermissionToAck == true && !EmployeeStatus)
+                                    $('.tool-button').removeClass('hidden');
+                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] && !HrStatus)
+                                    $('.tool-button').removeClass('hidden');
                             }
-                        });
-                    }
-                    else {
-                        this.set_readOnly(true)
-                        $('.delete-button').removeClass('disabled');
-                    }
-                });
-            
+                            else if ((HrStatus == OTApplicationStatus.Rejected || EmployeeStatus == OTApplicationStatus.Rejected)
+                                || (HrStatus == OTApplicationStatus.Approved && EmployeeStatus == OTApplicationStatus.Approved)) {
+                                $(RejectedBy).hide()
+                                $(ApprovedBy).hide()
+                                if (self.form.EmployeeRowId.value == Authorization.userDefinition.EmployeeRowID) {
+                                    var ApproveButtons = document.querySelectorAll('.text-bg-success')
+                                    ApproveButtons.forEach(function (element) {
+                                        $(element).hide()
+                                    });
+                                    var RejectButtons = document.querySelectorAll('.text-bg-danger')
+                                    RejectButtons.forEach(function (element) {
+                                        $(element).hide()
+                                    });
+                                }
+                            }
+                        },
+                        onError: (error) => {
+                            console.log(error.Error);
+                        }
+                    });
+                }
+                else {
+                    this.set_readOnly(true)
+                    $('.delete-button').removeClass('disabled');
+                }
+            });
         }
     }
+
+ 
     protected getToolbarButtons() {
         var self = this
         var buttons = super.getToolbarButtons();
@@ -476,206 +470,150 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
         document.head.appendChild(Linkx)
 
 
-            buttons.push(
-                {
-                    title: "Approve Application",	// *** Get button text from translation
-                    cssClass: 'text-bg-success p-2 hidden',
-                    icon: 'fa-check text-green',
-                    onClick: () => {
-                        confirm("Do you want to approve this leave application?", () => {
-                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] )//is HR
-                            {
+        buttons.push(
+            {
+                title: "Approve Application",	// *** Get button text from translation
+                cssClass: 'text-bg-success p-2 hidden approveApplication',
+                icon: 'fa-check text-green',
+                onClick: () => {
+                    confirm("Do you want to approve this application?", () => {
+                        let updateData: OTApplicationRow = {};
 
-                                if (self.SuperiorPermission == true) {
-                                    if (self.EmployeeApproval == OTApplicationStatus.NotNeeded || self.HrApproval == OTApplicationStatus.NotNeeded) {
-                                        if (self.EmployeeApproval == OTApplicationStatus.NotNeeded) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    HrStatus: OTApplicationStatus.Approved,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else if (self.HrApproval == OTApplicationStatus.NotNeeded) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Approved,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                            if (self.SuperiorPermission) {
+                                if (self.EmployeeApproval === OTApplicationStatus.NotNeeded || self.HrApproval === OTApplicationStatus.NotNeeded) {
+                                    if (self.EmployeeApproval === OTApplicationStatus.NotNeeded) {
+                                        updateData = {
+                                            HrStatus: OTApplicationStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.HrApproval === OTApplicationStatus.NotNeeded) {
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
-                                    else {
-                                        if (self.HrApproval == OTApplicationStatus.Approved) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Approved,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else if (self.EmployeeApproval == OTApplicationStatus.Approved) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    HrStatus: OTApplicationStatus.Approved,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Approved,
-                                                    HrStatus: OTApplicationStatus.Approved,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                                }
-                                            });
-                                        }
+                                } else {
+                                    if (self.HrApproval === OTApplicationStatus.Approved) {
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else if (self.EmployeeApproval === OTApplicationStatus.Approved) {
+                                        updateData = {
+                                            HrStatus: OTApplicationStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    } else {
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Approved,
+                                            HrStatus: OTApplicationStatus.Approved,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                        };
+                                    }
+                                }
+                            } else {
+                                updateData = {
+                                    HrStatus: OTApplicationStatus.Approved,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
+                            }
+                        }
+                        else {
+                            updateData = {
+                                EmployeeStatus: OTApplicationStatus.Approved,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
+                        }
+                        OTApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
+                    });
+
+                },
+            }
+        );
+                
+        buttons.push(
+            {
+                title: "Rejected Application",	// *** Get button text from translation
+                cssClass: 'text-bg-danger p-2 hidden rejectApplication',
+                icon: 'fa-times text-red',
+                onClick: () => {
+                    confirm("Do you want to reject this application?", () => {
+                        let updateData: OTApplicationRow = {};
+                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                            if (self.SuperiorPermission == true) {
+                                if (self.EmployeeApproval == OTApplicationStatus.NotNeeded || self.HrApproval == OTApplicationStatus.NotNeeded) {
+                                    if (self.EmployeeApproval == OTApplicationStatus.NotNeeded) {
+                                        updateData = {
+                                            HrStatus: OTApplicationStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
+                                    }
+                                    else if (self.HrApproval == OTApplicationStatus.NotNeeded) {
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                 }
                                 else {
-                                    OTApplicationService.Update({
-                                        EntityId: this.entityId,
-                                        Entity:
-                                        {
-                                            HrStatus: OTApplicationStatus.Approved,
-                                            "HrUpdated": Authorization.userDefinition.EmployeeRowID
-                                        }
-                                    });
-                                }
-
-
-
-
-                            }
-                            else {
-                                OTApplicationService.Update({
-                                    EntityId: this.entityId,
-                                    Entity:
-                                    {
-                                        EmployeeStatus: OTApplicationStatus.Approved,
-                                        "EmployeeUpdated": Authorization.userDefinition.EmployeeRowID
+                                    if (self.HrApproval == OTApplicationStatus.Pending) {
+                                        updateData = {
+                                            HrStatus: OTApplicationStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
-                                });
-                            }
-                            location.reload()
-                        });
-
-                    },
-                }
-            );
-                
-            buttons.push(
-                {
-                    title: "Rejected Application",	// *** Get button text from translation
-                    cssClass: 'text-bg-danger p-2 hidden',
-                    icon: 'fa-times text-red',
-                    onClick: () => {
-
-
-                        confirm("Do you want to reject this leave application?", () => {
-                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
-                            {
-
-                                if (self.SuperiorPermission == true) {
-                                    if (self.EmployeeApproval == OTApplicationStatus.NotNeeded || self.HrApproval == OTApplicationStatus.NotNeeded) {
-                                        if (self.EmployeeApproval == OTApplicationStatus.NotNeeded) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    HrStatus: OTApplicationStatus.Rejected,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else if (self.HrApproval == OTApplicationStatus.NotNeeded) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Rejected,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
+                                    else if (self.EmployeeApproval == OTApplicationStatus.Pending) {
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                     else {
-                                        if (self.HrApproval == OTApplicationStatus.Pending) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    HrStatus: OTApplicationStatus.Rejected,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else if (self.EmployeeApproval == OTApplicationStatus.Pending) {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Rejected,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
-                                        else {
-                                            OTApplicationService.Update({
-                                                EntityId: this.entityId,
-                                                Entity:
-                                                {
-                                                    EmployeeStatus: OTApplicationStatus.Rejected,
-                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                    HrStatus: OTApplicationStatus.Rejected,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                }
-                                            });
-                                        }
+                                        updateData = {
+                                            EmployeeStatus: OTApplicationStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrStatus: OTApplicationStatus.Rejected,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        };
                                     }
                                 }
-                                else
-                                    OTApplicationService.Update({
-                                        EntityId: this.entityId,
-                                        Entity:
-                                        {
-                                            HrStatus: OTApplicationStatus.Rejected,
-                                            "HrUpdated": Authorization.userDefinition.EmployeeRowID
-                                        }
-                                    });
                             }
                             else {
-
-                                OTApplicationService.Update({
-                                    EntityId: this.entityId,
-                                    Entity:
-                                    {
-                                        EmployeeStatus: OTApplicationStatus.Rejected,
-                                        "EmployeeUpdated": Authorization.userDefinition.EmployeeRowID
-                                    }
-                                });
-
+                                updateData = {
+                                    HrStatus: OTApplicationStatus.Rejected,
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                };
                             }
-                            location.reload()
-                        });
-                    },
-                }
-            );
+
+                        }
+                        else {
+                            updateData = {
+                                EmployeeStatus: OTApplicationStatus.Rejected,
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                            };
+                        }
+                        OTApplicationService.Update({
+                            EntityId: self.entityId,
+                            Entity: updateData
+                        }, response => {
+                            self.loadById(response.EntityId)
+                            $('.rejectApplication, .approveApplication').hide()
+                        })
+
+                    });
+                },
+            }
+        );
             
         return buttons;
     }
- 
-
+    
 }

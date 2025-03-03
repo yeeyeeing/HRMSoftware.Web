@@ -26,14 +26,14 @@ public sealed class EmployeeGroupShiftRow : LoggingRow<EmployeeGroupShiftRow.Row
         set => fields.EmployeeGroupId[this] = value;
     }
 
-    [DisplayName("Shift Start Date")]
+    [DisplayName("Shift Start Date"),NotNull]
     public DateTime? ShiftStartDate
     {
         get => fields.ShiftStartDate[this];
         set => fields.ShiftStartDate[this] = value;
     }
 
-    [DisplayName("Shift End Date")]
+    [DisplayName("Shift End Date"), NotNull]
     public DateTime? ShiftEndDate
     {
         get => fields.ShiftEndDate[this];

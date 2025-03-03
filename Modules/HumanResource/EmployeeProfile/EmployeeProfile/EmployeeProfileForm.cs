@@ -85,11 +85,6 @@ public class EmployeeProfileForm
  
     [HalfWidth]
     public int NationalityID { get; set; }
-    [HalfWidth]
-    public int StateID { get; set; }
-
-    [HalfWidth]
-    public int CityID { get; set; }
     public DateTime JoinDate { get; set; }
 
 
@@ -140,10 +135,15 @@ public class EmployeeProfileForm
     [Category("Address")]
     public string Address { get; set; }
     [HalfWidth]
-    public string PostalCode { get; set; }
+    public int PostcodeId { get; set; }
     [HalfWidth]
     public int CountryID { get; set; }
 
+    [HalfWidth]
+    public int StateID { get; set; }
+
+    [HalfWidth]
+    public int CityID { get; set; }
 
     [Category("")]
 

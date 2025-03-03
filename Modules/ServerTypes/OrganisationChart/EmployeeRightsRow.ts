@@ -14,10 +14,10 @@ export interface EmployeeRightsRow {
 export abstract class EmployeeRightsRow {
     static readonly idProperty = 'Id';
     static readonly localTextPrefix = 'OrganisationChart.EmployeeRights';
-    static readonly deletePermission = 'Administration:HumanResources';
-    static readonly insertPermission = 'Administration:HumanResources';
-    static readonly readPermission = 'Administration:HumanResources';
-    static readonly updatePermission = 'Administration:HumanResources';
+    static readonly deletePermission = 'Administration:Employee';
+    static readonly insertPermission = 'Administration:Employee';
+    static readonly readPermission = 'Administration:Employee';
+    static readonly updatePermission = 'Administration:Employee';
 
     static readonly Fields = fieldsProxy<EmployeeRightsRow>();
 }

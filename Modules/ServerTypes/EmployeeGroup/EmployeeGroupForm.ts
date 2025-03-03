@@ -11,8 +11,8 @@ export interface EmployeeGroupForm {
     DivisionList: LookupEditor;
     JobGradeList: LookupEditor;
     SectionList: LookupEditor;
-    EmployeeList: LookupEditor;
     NewAddedEmployee: LookupEditor;
+    EmployeeList: LookupEditor;
     Shifts: EmployeeGroupShiftEditor;
     ActualShifts: EmployeeGroupShiftEditor;
 }
@@ -41,8 +41,8 @@ export class EmployeeGroupForm extends PrefixedContext {
                 'DivisionList', w2,
                 'JobGradeList', w2,
                 'SectionList', w2,
-                'EmployeeList', w2,
                 'NewAddedEmployee', w2,
+                'EmployeeList', w2,
                 'Shifts', w3,
                 'ActualShifts', w3
             ]);

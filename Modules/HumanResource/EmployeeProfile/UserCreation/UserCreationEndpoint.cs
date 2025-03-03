@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using HRMSoftware.Web.Initialization;
+using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
 using Serenity.Services;
@@ -14,6 +15,15 @@ namespace HRMSoftware.EmployeeProfile.Endpoints;
 [ConnectionKey(typeof(MyRow)), ServiceAuthorize(typeof(MyRow))]
 public class UserCreationEndpoint : ServiceEndpoint
 {
+    [HttpPost, Route("/GetUserNamePasswordPrefix")]
+    public IActionResult GetUserNamePasswordPrefix()
+    {
+        string UserNamePrefix = AppConfigHelper.GetConfigValue("User:UserName");
+        string PassWordPrefix = AppConfigHelper.GetConfigValue("User:PassWord");
+        string output = UserNamePrefix + ',' + PassWordPrefix;
+        return StatusCode(200, output);
+    }
+
     [HttpPost, AuthorizeCreate(typeof(MyRow))]
     public SaveResponse Create(IUnitOfWork uow, SaveRequest<MyRow> request,
         [FromServices] IUserCreationSaveHandler handler)

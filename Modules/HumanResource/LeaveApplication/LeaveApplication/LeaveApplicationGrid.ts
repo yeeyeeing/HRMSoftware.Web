@@ -29,7 +29,6 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
                 confirm(
                     "Do you want to approve all selected applications?",
                     () => {
-
                         let approvePromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
                             return LeaveApplicationService.Retrieve({ EntityId: dataId })
                                 .then(response => {
@@ -38,7 +37,6 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
                                     let entityId = response.Entity.Id;
                                     let EmployeeRowId = response.Entity.EmployeeRowId;
                                     let updateData: LeaveApplicationRow = {};
-
                                     // Wrap `serviceCall` in a Promise
                                     return new Promise((resolve, reject) => {
                                         serviceCall<RetrieveResponse<any>>({
@@ -472,5 +470,16 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
 
     }
 
+    protected createEntityDialog(itemType: string, callback: (dlg: LeaveApplicationDialog) => void): LeaveApplicationDialog {
+        let dialog = super.createEntityDialog(itemType, callback) as LeaveApplicationDialog;
+        var self = this
+        // Attach 'dialogclose' event listener to refresh the grid when the dialog closes
+        dialog.element.on('dialogclose', () => {
+            self.internalRefresh();  // Refresh grid after closing the dialog
+            console.log('hahaa')
+        });
+
+        return dialog;  // Ensure correct return type
+    }
 
 }

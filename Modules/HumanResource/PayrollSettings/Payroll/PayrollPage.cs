@@ -980,7 +980,11 @@ namespace HRMSoftware.PayrollSettings.Pages
                 .AlignCenter()
                 .Background(Colors.Grey.Lighten3);
         }
-            [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
+        static string RemoveNonDigits(string input)
+        {
+            return new string(input.Where(char.IsDigit).ToArray());
+        }
+        [PageAuthorize, HttpGet, Route("/PayrollSettings/Payroll/TxtGenerate")]
         public IActionResult TxtGenerate([FromServices] ISqlConnections sqlConnections, int PayMonth,int PayYear,int Type,string EmployeeArrayString, int StateCodeId,int TextFormat
             , string CompanyCode,string CompanyName, string CreditingDate
        , string Email, string PhoneNumber, string ContactPerson,int testMode)
@@ -1032,10 +1036,18 @@ namespace HRMSoftware.PayrollSettings.Pages
                         var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
                         var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20,' ')}";
                         var identity = "";
-                        if(item.EmployeeType == (int)EmployeeType.Local)
-                            identity = item.NRIC;
-                       else if (item.EmployeeType == (int)EmployeeType.Foreigner)
-                            identity = item.EmployeeSsfw;
+                        if (item.EmployeeType == (int)EmployeeType.Local)
+                        {
+                            if (item.NRIC.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.NRIC);
+                        }
+                        else if (item.EmployeeType == (int)EmployeeType.Foreigner)
+                        {
+                            if (item.EmployeeSsfw.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.EmployeeSsfw); 
+                        }
                         identity = identity.PadRight(12, '0');
                         if (identity.IsEmptyOrNull() == true)
                             continue;
@@ -1068,9 +1080,17 @@ namespace HRMSoftware.PayrollSettings.Pages
                         var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20, ' ')}";
                         var identity = "";
                         if (item.EmployeeType == (int)EmployeeType.Local)
-                            identity = item.NRIC;
+                        {
+                            if (item.NRIC.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.NRIC);
+                        }
                         else if (item.EmployeeType == (int)EmployeeType.Foreigner)
-                            identity = item.EmployeeSsfw;
+                        {
+                            if (item.EmployeeSsfw.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.EmployeeSsfw);
+                        }
                         identity = identity.PadRight(12, '0');
                         var Name = item.EmployeeName.PadRight(150, ' ');
                         string EmployeeSocsoString = ((int)(EmployeeSocso * 100)).ToString().PadLeft(6, ' ');
@@ -1105,7 +1125,11 @@ namespace HRMSoftware.PayrollSettings.Pages
                         var companySocso = item.CompanySocsoAccountNumber;
                         var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
                         var FirstPart = $"{companySocso}{CompanyRegistrationNumber}";
-                        var NRIC = item.NRIC;
+
+                        if (item.NRIC.IsEmptyOrNull() == true)
+                            continue;
+                       var NRIC = RemoveNonDigits(item.NRIC);
+                        
                         var Name = item.EmployeeName;
                         var CapitalisedName = Name.ToUpper();
                         string amountString = ((int)(TotalSocso * 100)).ToString();
@@ -1137,9 +1161,17 @@ namespace HRMSoftware.PayrollSettings.Pages
                         var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20, ' ')}";
                         var identity = "";
                         if (item.EmployeeType == (int)EmployeeType.Local)
-                            identity = item.NRIC;
+                        {
+                            if (item.NRIC.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.NRIC);
+                        }
                         else if (item.EmployeeType == (int)EmployeeType.Foreigner)
-                            identity = item.EmployeeSsfw;
+                        {
+                            if (item.EmployeeSsfw.IsEmptyOrNull() == true)
+                                continue;
+                            identity = RemoveNonDigits(item.EmployeeSsfw);
+                        }
                         identity = identity.PadRight(12, '0');
                         var Name = item.EmployeeName.PadRight(150, ' ');
                         string EmployeeSocsoString = ((int)(EmployeeSocso * 100)).ToString().PadLeft(6, ' ');
@@ -1178,7 +1210,7 @@ namespace HRMSoftware.PayrollSettings.Pages
                 {
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                         continue;
-                    if (item.EPFAccountNumber is null || item.EPFAccountNumber == "")
+                    if (item.EPFAccountNumber is null || item.EPFAccountNumber.Length == 0)
                         continue;
 
                     var EpfInteger = int.Parse(item.EPFAccountNumber);
@@ -1193,11 +1225,15 @@ namespace HRMSoftware.PayrollSettings.Pages
                     if (TotalEPF <= 0)
                         continue;
 
+
+                    if (item.NRIC.IsEmptyOrNull() == true)
+                        continue;
+                    var NRIC = RemoveNonDigits(item.NRIC);
                     var EmployerString = (EmployerEPF * 100).ToString().PadLeft(15, '0');
                     var EmployeeString = (EmployeeEPF * 100).ToString().PadLeft(15, '0');
                     var EpfStatutoryString = (EpfStatutory * 100).ToString().PadLeft(15, '0');
                     string amountPart = $"{EmployerString}{EmployeeString}{EpfStatutoryString}{Environment.NewLine}";
-                    string firstPart = $"02{item.EPFAccountNumber.PadLeft(19, '0')}{item.NRIC}   {item.EmployeeName.PadRight(40,' ')}";
+                    string firstPart = $"02{item.EPFAccountNumber.PadLeft(19, '0')}{NRIC}   {item.EmployeeName.PadRight(40,' ')}";
                     string secondPart = $"{item.EmployeeId.PadLeft(20, ' ')}   {amountPart}";
                     string formattedRecord = $"{firstPart}{secondPart}";
                     myList.Add(formattedRecord);
@@ -1254,7 +1290,7 @@ namespace HRMSoftware.PayrollSettings.Pages
                 float EmployeeTotal = 0;
                 var CompanyTaxNumber = deserializedList[0].CompanyIncomeTaxAccountNumber;
                 var CompanyTaxNumberRemovedChar = Regex.Replace(CompanyTaxNumber, "[a-zA-Z]", "").PadLeft(10,'0');
-
+                
                 int NumberOfEmployee = 0;
                 int PcbSum = 0;
                 int Cp38Sum = 0;
@@ -1263,6 +1299,12 @@ namespace HRMSoftware.PayrollSettings.Pages
                 foreach (var item in deserializedList)
                 {
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
+                        continue;
+
+                    if (item.NRIC.IsEmptyOrNull() == true)
+                        continue;
+
+                    if (item.PCBnumber.IsEmptyOrNull() == true)
                         continue;
                     NumberOfEmployee += 1;
                     double EmployeePcb = item.EmployeePCB.Value;
@@ -1282,9 +1324,16 @@ namespace HRMSoftware.PayrollSettings.Pages
                         WifeNumber = "1";
                     string PcbString = (EmployeePcb * 100).ToString().PadLeft(8, '0');
                     string Cp38String = (EmployeeCp38 * 100).ToString().PadLeft(8, '0');
+
+                    string NRIC = RemoveNonDigits(item.NRIC);
+                    
+                    string oldNRIC = "";
+                    if (item.OldNRIC.IsEmptyOrNull() == false)
+                        oldNRIC = RemoveNonDigits(item.OldNRIC);
+
                     string formattedRecord = $"D{item.PCBnumber.PadLeft(10, '0')}{WifeNumber}" +
-                        $"{item.EmployeeName.PadRight(60, ' ')}{item.OldNRIC.PadRight(9, ' ')}" +
-                        $"{"".PadLeft(3,' ')}{item.NRIC.PadRight(12, ' ')}{item.PassportNumber.PadRight(12, ' ')}" +
+                        $"{item.EmployeeName.PadRight(60, ' ')}{oldNRIC.PadRight(9, ' ')}" +
+                        $"{"".PadLeft(3,' ')}{NRIC.PadRight(12, ' ')}{item.PassportNumber.PadRight(12, ' ')}" +
                         $"{item.CountryCode.PadRight(2, ' ')}{PcbString}{Cp38String}{item.EmployeeId.PadLeft(10, ' ')}";
                     myList.Add(formattedRecord);
 
@@ -1320,8 +1369,13 @@ namespace HRMSoftware.PayrollSettings.Pages
                     if (EmployeeArray.Contains(item.EmployeeRowId.Value) == false)
                         continue;
                     var identity = "";
-                    if (item.EmployeeType == (int)EmployeeType.Local)
-                        identity = item.NRIC;
+
+
+                    if (item.NRIC.IsEmptyOrNull() == true)
+                        continue;
+
+                    identity = RemoveNonDigits(item.NRIC); 
+                    
                     
                     identity = identity.PadLeft(34, ' ');
 

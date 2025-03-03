@@ -7,6 +7,7 @@ using HRMSoftware.Common;
 using HRMSoftware.Administration;
 using HRMSoftware.EmployeeProfile.Columns;
 using System.Collections.Generic;
+using HRMSoftware.Master;
 
 namespace HRMSoftware.EmployeeProfile
 {
@@ -36,6 +37,8 @@ namespace HRMSoftware.EmployeeProfile
         const string jNationality = nameof(jNationality);
         const string jCostCentre = nameof(jCostCentre);
         const string jCp8d = nameof(jCp8d);
+        const string jPostalCode = nameof(jPostalCode);
+
 
         [DisplayName("Id"), Column("ID"), Identity, IdProperty]
         public int? Id
@@ -100,7 +103,7 @@ namespace HRMSoftware.EmployeeProfile
         }
 
 
-        [DisplayName("Join Date")]
+        [DisplayName("Join Date"),NotNull]
         public DateTime? JoinDate
         {
             get => fields.JoinDate[this];
@@ -480,8 +483,8 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.UserPassword[this] = value;
         }
 
-        [DisplayName("Nationality"), Column("NationalityID"), ForeignKey("MasterCountries", "ID"), LeftJoin(jNationality), TextualField(nameof(NationalityName)), NotNull]
-        [LookupEditor(typeof(Master.MasterCountryRow))]
+        [DisplayName("Nationality"), Column("NationalityID"), ForeignKey("MasterNationality", "ID"), LeftJoin(jNationality), TextualField(nameof(NationalityName)), NotNull]
+        [LookupEditor(typeof(NationalityRow))]
         public int? NationalityID
         {
             get => fields.NationalityID[this];
@@ -641,7 +644,16 @@ namespace HRMSoftware.EmployeeProfile
             get => fields.CountryName[this];
             set => fields.CountryName[this] = value;
         }
-        [DisplayName("Postal Code"), Column("PostalCode")]
+
+        [DisplayName("Postal Code"),  ForeignKey("MasterPostCode", "ID"), LeftJoin(jPostalCode)]
+        [LookupEditor(typeof(MasterPostcodeRow))]
+        public int? PostcodeId
+        {
+            get => fields.PostcodeId[this];
+            set => fields.PostcodeId[this] = value;
+        }
+
+        [DisplayName("Postal Code"), Expression($"{jPostalCode}.[PostCode]")]
         public string PostalCode
         {
             get => fields.PostalCode[this];
@@ -920,6 +932,8 @@ namespace HRMSoftware.EmployeeProfile
 
 
             public Int32Field CountryID;
+            public Int32Field PostcodeId;
+
             public StringField PostalCode;
             public StringField CountryName;
 
