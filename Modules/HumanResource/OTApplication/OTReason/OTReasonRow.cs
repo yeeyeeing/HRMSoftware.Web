@@ -9,6 +9,7 @@ namespace HRMSoftware.OTApplication;
 
 [ConnectionKey("Default"), Module("OTApplication"), TableName("HumanResourcesOTReason")]
 [DisplayName("Ot Reason"), InstanceName("Ot Reason")]
+[NavigationPermission(PermissionKeys.HumanResources)]
 [ReadPermission(PermissionKeys.Employee)]
 [ModifyPermission(PermissionKeys.HumanResources)]
 [LookupScript("OTReason.OTReason", Permission = "*")]

@@ -1,6 +1,7 @@
 ﻿import { SaveRequest, SaveResponse, DeleteRequest, DeleteResponse, RetrieveRequest, RetrieveResponse, ListRequest, ListResponse } from "@serenity-is/corelib";
 import { LeaveApplicationRow } from "./LeaveApplicationRow";
-import { ServiceOptions, serviceRequest } from "@serenity-is/corelib/q";
+import { ServiceOptions, ServiceRequest, serviceRequest } from "@serenity-is/corelib/q";
+import { IActionResult } from "../Microsoft/AspNetCore.Mvc.IActionResult";
 
 export namespace LeaveApplicationService {
     export const baseUrl = 'LeaveApplication/LeaveApplication';
@@ -13,6 +14,7 @@ export namespace LeaveApplicationService {
     export declare function RetrieveEmployeeLeave(request: number, onSuccess?: (response: ListResponse<LeaveApplicationRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function ListTakenLeave(request: number, onSuccess?: (response: ListResponse<LeaveApplicationRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function ListTakenLeaveFromID(request: number, onSuccess?: (response: ListResponse<LeaveApplicationRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
+    export declare function UploadFile(request: ServiceRequest, onSuccess?: (response: IActionResult) => void, opt?: ServiceOptions<any>): JQueryXHR;
 
     export const Methods = {
         Create: "LeaveApplication/LeaveApplication/Create",
@@ -22,7 +24,8 @@ export namespace LeaveApplicationService {
         List: "LeaveApplication/LeaveApplication/List",
         RetrieveEmployeeLeave: "LeaveApplication/LeaveApplication/RetrieveEmployeeLeave",
         ListTakenLeave: "LeaveApplication/LeaveApplication/ListTakenLeave",
-        ListTakenLeaveFromID: "LeaveApplication/LeaveApplication/ListTakenLeaveFromID"
+        ListTakenLeaveFromID: "LeaveApplication/LeaveApplication/ListTakenLeaveFromID",
+        UploadFile: "LeaveApplication/LeaveApplication/UploadFile"
     } as const;
 
     [
@@ -33,7 +36,8 @@ export namespace LeaveApplicationService {
         'List', 
         'RetrieveEmployeeLeave', 
         'ListTakenLeave', 
-        'ListTakenLeaveFromID'
+        'ListTakenLeaveFromID', 
+        'UploadFile'
     ].forEach(x => {
         (<any>LeaveApplicationService)[x] = function (r, s, o) {
             return serviceRequest(baseUrl + '/' + x, r, s, o);

@@ -10,6 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using MyRow = HRMSoftware.LeaveApplication.LeaveApplicationRow;
 namespace HRMSoftware.LeaveApplication.Endpoints;
 
@@ -75,9 +78,18 @@ public class LeaveApplicationEndpoint : ServiceEndpoint
         request.Criteria = new Criteria("EmployeeRowID") == latest.Entities[0].EmployeeRowId.Value;
 
         var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.Entities[0].EmployeeRowId.Value, PermissionKeys.LeaveApproval);
-        foreach (int number in ListOfEmployee)
-            request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
+        if (ListOfEmployee.Count == 0)
+        {
+            request.Criteria = request.Criteria;
+        }
+        else
+        {
+            request.Criteria = ListOfEmployee
+                .Select(number => new Criteria("EmployeeRowID") == number)
+                .Aggregate((current, next) => current || next);
+        }
 
+        
 
         request.Sort = new[] { new SortBy("StartDate", true) };
         return handler.List(connection, request);
@@ -189,6 +201,40 @@ public class LeaveApplicationEndpoint : ServiceEndpoint
 
         return latest_2;
 
+    }
+    [HttpPost,Route("/uploadFile"),ServiceAuthorize("*")]
+    public async Task<IActionResult> UploadFile()
+    {
+        try
+        {
+            var filename = Request.Headers["Filename"].ToString();
+            if (string.IsNullOrEmpty(filename))
+            {
+                return BadRequest("Filename is required");
+            }
+
+            var appDataPath = Path.Combine(Directory.GetCurrentDirectory(), "App_Data/upload/temporary");
+
+            // Ensure App_Data directory exists
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory(appDataPath);
+            }
+
+            var filePath = Path.Combine(appDataPath, filename);
+
+            // Read the file from the request body
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await Request.Body.CopyToAsync(fileStream);
+            }
+
+            return Ok(new { message = "File uploaded successfully", path = filePath });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
     }
 
 }

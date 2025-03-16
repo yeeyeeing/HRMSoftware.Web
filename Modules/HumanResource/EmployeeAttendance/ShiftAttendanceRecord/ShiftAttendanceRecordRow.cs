@@ -11,13 +11,14 @@ using System.ComponentModel;
 using HRMSoftware.Master;
 using HRMSoftware.OrganisationHierarchy;
 using System.Collections.Generic;
+using HRMSoftware.Administration;
 
 namespace HRMSoftware.EmployeeAttendance;
 
 [ConnectionKey("Default"), Module("EmployeeAttendance"), TableName("HumanResourcesShiftAttendanceRecord")]
 [DisplayName("Shift Attendance Record"), InstanceName("Shift Attendance Record")]
 [ReadPermission("Administration:Employee")]
-[ModifyPermission("Administration:Employee")]
+[ModifyPermission(PermissionKeys.HumanResources)]
 public sealed class ShiftAttendanceRecordRow : Row<ShiftAttendanceRecordRow.RowFields>, IIdRow
 {
     [DisplayName("Id"), Column("ID"), Identity, IdProperty]

@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Linq;
 using MyRow = HRMSoftware.OTApplication.OTApplicationRow;
 
 namespace HRMSoftware.OTApplication.Endpoints;
@@ -119,10 +120,19 @@ public class OTApplicationEndpoint : ServiceEndpoint
       
 
         var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.Entities[0].EmployeeRowId.Value, PermissionKeys.OtApproval);
-        foreach (int number in ListOfEmployee)
-            request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
-       
-
+        // foreach (int number in ListOfEmployee)
+        //     request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
+        if (ListOfEmployee.Count == 0)
+        {
+            request.Criteria = request.Criteria;
+        }
+        else
+        {
+            request.Criteria = ListOfEmployee
+                .Select(number => new Criteria("EmployeeRowID") == number)
+                .Aggregate((current, next) => current || next);
+        }
+        
         request.Sort = new[] { new SortBy("OTDate", true) };
         return handler.List(connection, request);
     }

@@ -2145,11 +2145,11 @@ export default function pageInit() {
                     <i class="far fa-clock" title="Manage Training Requests"></i>
                     </div>
                     <div>
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
 
                     </div>    
 `
@@ -2257,11 +2257,11 @@ export default function pageInit() {
                     <i class="far fa-clock" title="Manage Training Requests"></i>
                     </div>
                     <div>
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
 
                     </div>    
 `

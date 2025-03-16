@@ -323,6 +323,7 @@ public sealed class LeaveApplicationRow : LoggingRow<LeaveApplicationRow.RowFiel
         get => fields.WeekdaysList[this];
         set => fields.WeekdaysList[this] = value;
     }
+    
     public class RowFields : LoggingRowFields
     {
         public StringField EmployeeUpdatedName;

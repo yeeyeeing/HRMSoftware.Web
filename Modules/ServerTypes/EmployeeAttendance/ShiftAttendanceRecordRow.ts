@@ -49,10 +49,10 @@ export abstract class ShiftAttendanceRecordRow {
     static readonly idProperty = 'Id';
     static readonly nameProperty = 'EmployeeRowId';
     static readonly localTextPrefix = 'EmployeeAttendance.ShiftAttendanceRecord';
-    static readonly deletePermission = 'Administration:Employee';
-    static readonly insertPermission = 'Administration:Employee';
+    static readonly deletePermission = 'Administration:HumanResources';
+    static readonly insertPermission = 'Administration:HumanResources';
     static readonly readPermission = 'Administration:Employee';
-    static readonly updatePermission = 'Administration:Employee';
+    static readonly updatePermission = 'Administration:HumanResources';
 
     static readonly Fields = fieldsProxy<ShiftAttendanceRecordRow>();
 }

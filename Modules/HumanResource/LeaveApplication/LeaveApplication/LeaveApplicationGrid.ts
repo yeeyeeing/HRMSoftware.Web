@@ -9,7 +9,10 @@ import { MasterCp8dRow, MasterCp8dService } from '../../../ServerTypes/Master';
 
 import { serviceCall, Authorization, isEmptyOrNull, getLookup, confirm } from '@serenity-is/corelib/q';
 import { OrganisationChartService } from '../../../ServerTypes/OrganisationChart';
-
+import {OTApplicationService} from "@/ServerTypes/OTApplication/OTApplicationService";
+import {OTApplicationRow} from "@/ServerTypes/OTApplication/OTApplicationRow";
+import {OTApplicationStatus} from "@/ServerTypes/OTApplication/OTApplicationStatus";
+import * as Q from "@serenity-is/corelib/q"
 @Decorators.registerClass('HRMSoftware.LeaveApplication.LeaveApplicationGrid')
 export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
     protected getColumnsKey() { return LeaveApplicationColumns.columnsKey; }
@@ -23,214 +26,145 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
         var buttons = super.getButtons();
         var self = this
         buttons.push({
-            title: 'OT Application Claim Batch Approve',
-            cssClass: 'fas fa-hat-wizard text-bg-success approveButton',
+            title: 'Leave Application Claim Batch Approve',
+            cssClass: 'fas fa-hat-wizard text-bg-success approveButton hidden',
             onClick: e => {
                 confirm(
                     "Do you want to approve all selected applications?",
-                    () => {
+                    async () => {
+                        let selectedIds = self.rowSelection.getSelectedAsInt64();
 
-                        let approvePromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
-                            return LeaveApplicationService.Retrieve({ EntityId: dataId })
-                                .then(response => {
-                                    let EmployeeApproval = response.Entity.EmployeeStatus;
-                                    let HrApproval = response.Entity.HrStatus;
-                                    let entityId = response.Entity.Id;
-                                    let EmployeeRowId = response.Entity.EmployeeRowId;
-                                    let updateData: LeaveApplicationRow = {};
-
-                                    // Wrap `serviceCall` in a Promise
-                                    return new Promise((resolve, reject) => {
-                                        serviceCall<RetrieveResponse<any>>({
-                                            service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                                            data: {
-                                                'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                                                'ApplicantEmployeeRowID': EmployeeRowId
-                                            },
-                                            method: "GET",
-                                            onSuccess: (SuperiorPermission) => {
-                                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
-                                                    if (SuperiorPermission) {
-                                                        if (EmployeeApproval === LeaveStatus.NotNeeded || HrApproval === LeaveStatus.NotNeeded) {
-                                                            if (EmployeeApproval === LeaveStatus.NotNeeded) {
-                                                                updateData = {
-                                                                    HrStatus: LeaveStatus.Approved,
-                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                                };
-                                                            } else if (HrApproval === LeaveStatus.NotNeeded) {
-                                                                updateData = {
-                                                                    EmployeeStatus: LeaveStatus.Approved,
-                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                                };
-                                                            }
-                                                        } else {
-                                                            if (HrApproval === LeaveStatus.Approved) {
-                                                                updateData = {
-                                                                    EmployeeStatus: LeaveStatus.Approved,
-                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                                };
-                                                            } else if (EmployeeApproval === LeaveStatus.Approved) {
-                                                                updateData = {
-                                                                    HrStatus: LeaveStatus.Approved,
-                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                                };
-                                                            } else {
-                                                                updateData = {
-                                                                    EmployeeStatus: LeaveStatus.Approved,
-                                                                    HrStatus: LeaveStatus.Approved,
-                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                                                };
-                                                            }
-                                                        }
-                                                    } else {
-                                                        updateData = {
-                                                            HrStatus: LeaveStatus.Approved,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                                        };
-                                                    }
-                                                } else {
-                                                    updateData = {
-                                                        EmployeeStatus: LeaveStatus.Approved,
-                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                                                    };
-                                                }
-
-                                                // Call `Update` and resolve the promise
-                                                LeaveApplicationService.Update({
-                                                    EntityId: entityId,
-                                                    Entity: updateData
-                                                }).then(resolve).catch(reject);
-                                            },
-                                            onError: reject
-                                        });
-                                    });
-                                });
-                        });
-
-                        // Wait for all operations to complete before refreshing
-                        Promise.all(approvePromises)
-                            .then(() => {
-                                self.internalRefresh();
-                            })
-                            .catch(error => {
-                                console.error('Error in update operations:', error);
-                            });
-                    }
-                )
-            },
-            separator: true
-        });
-        buttons.push({
-            title: 'OT Application Batch Reject',
-            cssClass: 'fas fa-hat-wizard text-bg-danger rejectButton',
-            onClick: e => {
-                confirm(
-                    "Do you want to reject all selected applications?",
-                    () => {
-
-                        // Create an array of promises for each delete operation
-                        let rejectPromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
-
-                            return LeaveApplicationService.Retrieve({
-                                EntityId: dataId
-                            }).then(response => {
+                        for (const dataId of selectedIds) {
+                            try {
+                                let response = await LeaveApplicationService.Retrieve({ EntityId: dataId });
                                 let EmployeeApproval = response.Entity.EmployeeStatus;
                                 let HrApproval = response.Entity.HrStatus;
                                 let entityId = response.Entity.Id;
-                                let updateData: any = {};
-                                let EmployeeRowId = response.Entity.EmployeeRowId
+                                let EmployeeRowId = response.Entity.EmployeeRowId;
+                                let updateData: LeaveApplicationRow = {};
 
-                                serviceCall<RetrieveResponse<any>>({
-                                    service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                                    data: {
-                                        'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                                        'ApplicantEmployeeRowID': EmployeeRowId
-                                    },
-                                    method: "GET",
-                                    async: false,
-                                    onSuccess: (response) => {
-                                        console.log(response)
-                                        var SuperiorPermission = response
-                                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
-                                            if (SuperiorPermission == true) {
-                                                if (EmployeeApproval == LeaveStatus.NotNeeded || HrApproval == LeaveStatus.NotNeeded) {
-                                                    if (EmployeeApproval == LeaveStatus.NotNeeded) {
-                                                        updateData = {
-                                                            HrStatus: LeaveStatus.Rejected,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                    else if (HrApproval == LeaveStatus.NotNeeded) {
-                                                        updateData = {
-                                                            EmployeeStatus: LeaveStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                }
-                                                else {
-                                                    if (HrApproval == LeaveStatus.Pending) {
-                                                        updateData = {
-                                                            HrStatus: LeaveStatus.Rejected,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                    else if (EmployeeApproval == LeaveStatus.Pending) {
-                                                        updateData = {
-                                                            EmployeeStatus: LeaveStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                    else {
-                                                        updateData = {
-                                                            EmployeeStatus: LeaveStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                            HrStatus: LeaveStatus.Rejected,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                }
-                                            }
-                                            else {
-                                                updateData = {
-                                                    HrStatus: LeaveStatus.Rejected,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                                };
-                                            }
+                                let SuperiorPermission = await new Promise((resolve, reject) => {
+                                    serviceCall<RetrieveResponse<any>>({
+                                        service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                                        data: {
+                                            'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                                            'ApplicantEmployeeRowID': EmployeeRowId
+                                        },
+                                        method: "GET",
+                                        onSuccess: resolve,
+                                        onError: reject
+                                    });
+                                });
 
+                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                                    if (SuperiorPermission) {
+                                        if (EmployeeApproval === LeaveStatus.NotNeeded || HrApproval === LeaveStatus.NotNeeded) {
+                                            updateData = (EmployeeApproval === LeaveStatus.NotNeeded)
+                                                ? { HrStatus: LeaveStatus.Approved, HrUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                : { EmployeeStatus: LeaveStatus.Approved, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID };
+                                        } else {
+                                            updateData = (HrApproval === LeaveStatus.Approved)
+                                                ? { EmployeeStatus: LeaveStatus.Approved, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                : (EmployeeApproval === LeaveStatus.Approved)
+                                                    ? { HrStatus: LeaveStatus.Approved, HrUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                    : {
+                                                        EmployeeStatus: LeaveStatus.Approved,
+                                                        HrStatus: LeaveStatus.Approved,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                                    };
                                         }
-                                        else {
-                                            updateData = {
-                                                EmployeeStatus: LeaveStatus.Rejected,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                                            };
-                                        }
-
-                                        return LeaveApplicationService.Update({
-                                            EntityId: entityId,
-                                            Entity: updateData
-                                        });
-
+                                    } else {
+                                        updateData = { HrStatus: LeaveStatus.Approved, HrUpdated: Authorization.userDefinition.EmployeeRowID };
                                     }
-                                })
+                                } else {
+                                    updateData = { EmployeeStatus: LeaveStatus.Approved, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID };
+                                }
 
-                            });
-                        }); // Convert jQuery object to array
+                                await LeaveApplicationService.Update({ EntityId: entityId, Entity: updateData });
 
-                        // Wait for all operations to complete before refreshing
-                        Promise.all(rejectPromises)
-                            .then(() => {
-                                self.internalRefresh();
-                            })
-                            .catch(error => {
-                                console.error('Error in update operations:', error);
-                            });
+                            } catch (error) {
+                                console.error(`Error updating application ${dataId}:`, error);
+                            }
 
+                        }
+
+                        Q.notifyInfo(`${selectedIds.length} records have been approved.`)
+                        self.internalRefresh(); // Refresh after all updates complete
                     }
-                )
+                );
             },
             separator: true
         });
+        
+        buttons.push({
+            title: 'Leave Application Batch Reject',
+            cssClass: 'fas fa-hat-wizard text-bg-danger rejectButton hidden',
+            onClick: e => {
+                confirm(
+                    "Do you want to reject all selected applications?",
+                    async () => {
+                        let selectedIds = self.rowSelection.getSelectedAsInt64();
+
+                        for (const dataId of selectedIds) {
+                            try {
+                                let response = await LeaveApplicationService.Retrieve({ EntityId: dataId });
+                                let EmployeeApproval = response.Entity.EmployeeStatus;
+                                let HrApproval = response.Entity.HrStatus;
+                                let entityId = response.Entity.Id;
+                                let EmployeeRowId = response.Entity.EmployeeRowId;
+                                let updateData: LeaveApplicationRow = {};
+
+                                let SuperiorPermission = await new Promise((resolve, reject) => {
+                                    serviceCall<RetrieveResponse<any>>({
+                                        service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                                        data: {
+                                            'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                                            'ApplicantEmployeeRowID': EmployeeRowId
+                                        },
+                                        method: "GET",
+                                        onSuccess: resolve,
+                                        onError: reject
+                                    });
+                                });
+
+                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                                    if (SuperiorPermission) {
+                                        if (EmployeeApproval === LeaveStatus.NotNeeded || HrApproval === LeaveStatus.NotNeeded) {
+                                            updateData = (EmployeeApproval === LeaveStatus.NotNeeded)
+                                                ? { HrStatus: LeaveStatus.Rejected, HrUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                : { EmployeeStatus: LeaveStatus.Rejected, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID };
+                                        } else {
+                                            updateData = (HrApproval === LeaveStatus.Rejected)
+                                                ? { EmployeeStatus: LeaveStatus.Rejected, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                : (EmployeeApproval === LeaveStatus.Rejected)
+                                                    ? { HrStatus: LeaveStatus.Rejected, HrUpdated: Authorization.userDefinition.EmployeeRowID }
+                                                    : {
+                                                        EmployeeStatus: LeaveStatus.Rejected,
+                                                        HrStatus: LeaveStatus.Rejected,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                                    };
+                                        }
+                                    } else {
+                                        updateData = { HrStatus: LeaveStatus.Rejected, HrUpdated: Authorization.userDefinition.EmployeeRowID };
+                                    }
+                                } else {
+                                    updateData = { EmployeeStatus: LeaveStatus.Rejected, EmployeeUpdated: Authorization.userDefinition.EmployeeRowID };
+                                }
+
+                                await LeaveApplicationService.Update({ EntityId: entityId, Entity: updateData });
+                            }
+                            catch (error) {
+                                console.error(`Error updating application ${dataId}:`, error);
+                            }
+                        }
+                        Q.notifyInfo(`${selectedIds.length} records have been rejected.`)
+                        self.internalRefresh(); // Refresh after all updates complete
+                    })
+            }
+        });
+        
 
         return buttons;
     }
@@ -395,32 +329,36 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
             selectable: (item: LeaveApplicationRow) => {
                 var getResponse = 0
                 var superior
-                serviceCall<RetrieveResponse<any>>({
-                    service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                    data: {
-                        'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                        'ApplicantEmployeeRowID': item.EmployeeRowId
-                    },
-                    method: "GET",
-                    async: false,
-                    onSuccess: (response) => {
-                        getResponse = 1
-                        superior = response
-                    }
-                })
-                while (getResponse == 0);
+                // serviceCall<RetrieveResponse<any>>({
+                //     service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                //     data: {
+                //         'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                //         'ApplicantEmployeeRowID': item.EmployeeRowId
+                //     },
+                //     method: "GET",
+                //     async: false,
+                //     onSuccess: (response) => {
+                //         getResponse = 1
+                //         superior = response
+                //     }
+                // })
+                // while (getResponse == 0);
                 const isHr = Authorization.hasPermission(PermissionKeys.HumanResources)
                 if (item.Status == LeaveStatus.Pending) {
                     if ((item.EmployeeRowId == Authorization.userDefinition.EmployeeRowID)
-                        || (isHr && item.HrStatus == LeaveStatus.NotNeeded))
+                        || (isHr && item.HrStatus == LeaveStatus.NotNeeded)){
+                        //$('.approveButton, .rejectButton').show()
                         return
-
+                    }
                     else if ((isHr && item.HrStatus == LeaveStatus.Pending)
-                        || (superior && item.EmployeeStatus == LeaveStatus.Pending)) //is superior
+                        || (item.EmployeeStatus == LeaveStatus.Pending)) //is superior
                     {
-                        $('.approveButton, .rejectButton').show()
+                        //$('.approveButton, .rejectButton').show()
                         return true;
 
+                    }
+                    else{
+                        //$('.approveButton, .rejectButton').hide()
                     }
                 }
 
@@ -467,7 +405,22 @@ export class LeaveApplicationGrid extends EntityGrid<LeaveApplicationRow, any> {
         this.toolbar.findButton("column-picker-button").toggle(false);
 
         response = super.onViewProcessData(response);
-        $('.approveButton, .rejectButton').hide()
+        let userDefinition = Q.Authorization.userDefinition
+        let userId = userDefinition.EmployeeRowID
+        const allSame = response.Entities.every(entity => entity.EmployeeRowId=== userId);
+        if(allSame){
+            const isHr = Authorization.hasPermission(PermissionKeys.HumanResources)
+            if(isHr){
+                $('.approveButton, .rejectButton').removeClass("hidden")
+            }
+            else{
+                $('.approveButton, .rejectButton').addClass("hidden")
+            }
+        }
+        else{
+            $('.approveButton, .rejectButton').removeClass("hidden")
+        }
+        //$('.approveButton, .rejectButton').hide()
         return response;
 
     }

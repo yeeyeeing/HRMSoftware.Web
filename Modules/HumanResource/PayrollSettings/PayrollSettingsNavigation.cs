@@ -7,7 +7,7 @@ using MyPages = HRMSoftware.PayrollSettings.Pages;
 
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Hrdf Subjection", typeof(MyPages.HrdfSubjectionPage), icon: "fa-list-alt")]
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Socso Subjection", typeof(MyPages.SocsoSubjectionPage), icon: "fa-list-alt")]
-[assembly: NavigationLink(5000, "HumanResource/Employee Management/Unpaid Leave", typeof(MyPages.NoPaidLeavePage), icon: "fa-calendar-minus")]
+//[assembly: NavigationLink(5000, "HumanResource/Employee Management/Unpaid Leave", typeof(MyPages.NoPaidLeavePage), icon: "fa-calendar-minus")]
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Pcb Subjection", typeof(MyPages.PcbSubjectionPage), icon: "fa-list-alt")]
 //[assembly: NavigationLink(int.MaxValue, "Payroll/No Paid Leave", typeof(MyPages.NoPaidLeavePage), icon: "fa-calendar-minus")]
 //[assembly: NavigationLink(int.MaxValue, "PayrollSettings/Payroll Wizard", typeof(MyPages.PayrollWizardPage), icon: null)]

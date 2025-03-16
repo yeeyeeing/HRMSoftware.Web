@@ -13,7 +13,10 @@ public class OTApplicationColumns
     public string EmployeeName { get; set; }
     [EditLink]
     public string EmployeeID { get; set; }
-
+    [Width(120),QuickFilter(true)]
+    public string DivisionName { get; set; }
+    [Width(120),QuickFilter(true)]
+    public string DepartmentName { get; set; }
     [DisplayName("Date"), Width(100)]
     [EditLink, QuickFilter(CssClass = "hidden-xs")]
     public DateTime OtDate { get; set; }

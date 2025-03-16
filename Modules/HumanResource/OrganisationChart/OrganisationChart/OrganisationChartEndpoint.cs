@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.Linq;
 using System.Text.Json;
 using MyRow = HRMSoftware.OrganisationChart.OrganisationChartRow;
 
@@ -17,7 +18,7 @@ namespace HRMSoftware.OrganisationChart.Endpoints;
 public class Rights
 {
  public int LeaveApproval { get; set; }
-    public int OtApprobal { get; set; }
+    public int OtApproval { get; set; }
     public int MoneyClaiming { get; set; }
     public int Appraisal { get; set; }
     public int Training { get; set; }
@@ -212,7 +213,7 @@ public class OrganisationChartEndpoint : ServiceEndpoint
         var permissionMapping = new Dictionary<string, Func<Rights, int>>
         {
             { PermissionKeys.MoneyClaiming, r => r.MoneyClaiming },
-            { PermissionKeys.OtApproval, r => r.OtApprobal },
+            { PermissionKeys.OtApproval, r => r.OtApproval },
             { PermissionKeys.LeaveApproval, r => r.LeaveApproval },
             { PermissionKeys.Appraisal, r => r.Appraisal },
             { PermissionKeys.Training, r => r.Training }
@@ -220,11 +221,13 @@ public class OrganisationChartEndpoint : ServiceEndpoint
 
         if (permissionMapping.TryGetValue(PermissionKey, out var checkPermission))
         {
-            foreach (var right in json)
-            {
-                if (checkPermission(right) == 1)
-                    numbers.Add(right.EmployeeRowId);
-            }
+            numbers.AddRange(json.Where(right => checkPermission(right) == 1)
+                .Select(right => right.EmployeeRowId));
+            // foreach (var right in json)
+            // {
+            //     if (checkPermission(right) == 1)
+            //         numbers.Add(right.EmployeeRowId);
+            // }
         }
         return numbers;
     }

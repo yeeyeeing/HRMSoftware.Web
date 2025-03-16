@@ -1126,6 +1126,7 @@ export default function pageInit() {
                                         'id': bufferId, 'name': child_list[index].name,
                                         'title': child_list[index].title, 'className': child_list[index].className
                                     };
+                                  
                                     addChildren(TargetedFinalOrgChartBuffer, targetedId, bufferNode)
                                 }
                                 datascource2 = FinalOrgChartBuffer
@@ -1160,10 +1161,9 @@ export default function pageInit() {
                             var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
                             var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
                             TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployee)
-                            TargetedFinalOrgChartBuffer.Rights[this.id] = isChecked
+                            TargetedFinalOrgChartBuffer.Rights[this.name] = isChecked
                             FinalDatascource2 = FinalOrgChartBuffer
                             var ListOfRights: NodeRights[] = extractRights(FinalOrgChartBuffer)
-
                             EmployeeRightsService.ClearOldAdminRightRecord({
                             }, response => {
                                 for (let i = 0; i < ListOfRights.length; i++) {
@@ -1214,7 +1214,6 @@ export default function pageInit() {
                         OrgChartFilterCheckBox[i].addEventListener('change', function handleCheckboxChange(this) {
                             event.stopImmediatePropagation();
                             GenerateOrgChart()
-                            console.log('haha')
                         })
                     }
 
@@ -1287,7 +1286,6 @@ export default function pageInit() {
                             myDiv.style.display = 'none'
                             this.textContent = 'Display Tab'
                         }
-                         console.log('haha')
                         e.stopImmediatePropagation();
 
                     })
@@ -1298,7 +1296,6 @@ export default function pageInit() {
                             // Check if display is 'none'
                             return style.display === 'none';
                         }
-                        console.log('haha')
                         // Usage example
                         const myDiv = document.getElementById('chart-left-panel');
 
@@ -1332,8 +1329,10 @@ export default function pageInit() {
                                         var target = $(event.target)
                                         let displayPdf = false
 
-                                        if (target.hasClass('CheckBox'))
+                                        if (target.hasClass('CheckBox')){
                                             return
+                                        }
+                                            
                                         else if (target.hasClass('dot'))//display pdf
                                             displayPdf = true
                                         var targetData = null
@@ -1385,7 +1384,7 @@ export default function pageInit() {
                 }
             }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.body, { childList: true, subtree: true,attributes: true });
     }
     function extractEmployeeInOrgChart(node) {
         let results = [];
@@ -2385,12 +2384,13 @@ export default function pageInit() {
                                             'Training'
                                         ];
                                         // Loop through the rights object to create the checkbox elements
+                                        
                                         for (const key of desiredOrder) {
                                             var value = data.Rights[key]
                                             // Determine the checked attribute based on the value
                                             const checkedAttribute = value ? 'checked' : '';
                                             button += `
-                    <input class="CheckBox" id="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
+                    <input class="CheckBox" name="${key}" type="checkbox"  title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
                 `;
                                         }
                                         button += '</div>';
@@ -2405,11 +2405,11 @@ export default function pageInit() {
                     <i class="far fa-clock" title="Manage Training Requests"></i>
                     </div>
                     <div>
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
 
                     </div>    
 `
@@ -2443,6 +2443,50 @@ export default function pageInit() {
                     }
                 });
                 setCallbacks()
+                $("#orgChartContainer").on("change",".CheckBox",function(){
+                    const isChecked = this.checked;
+                    var targetJson = JSON.parse(this.parentElement.parentElement.getAttribute('data-source'))
+                    var targetEmployeeRowId = targetJson.EmployeeRowId
+                    for (let ListCounter = 0; ListCounter < ListOfEmployeeData.length; ListCounter++) {
+                        if (ListOfEmployeeData[ListCounter].id == targetEmployeeRowId) {
+                            break
+                        }
+                    }
+                    var ElementToSetEmployee = targetJson.id
+                    var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                    var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                    TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployee)
+                    TargetedFinalOrgChartBuffer.Rights[this.name] = isChecked
+                    FinalDatascource2 = FinalOrgChartBuffer
+                    var ListOfRights: NodeRights[] = extractRights(FinalOrgChartBuffer)
+                    console.log(TargetedFinalOrgChartBuffer,this.name)
+                    console.log(ListOfRights)
+                    EmployeeRightsService.ClearOldAdminRightRecord({
+                    }, response => {
+                        for (let i = 0; i < ListOfRights.length; i++) {
+                            if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
+                                EmployeeRightsService.Create({
+                                    Entity: {
+                                        "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                        "NodeId": ListOfRights[i].id,
+                                        "Appraisal": ListOfRights[i].Rights.Appraisal,
+                                        "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
+                                        "OtApproval": ListOfRights[i].Rights.OtApproval,
+                                        "Training": ListOfRights[i].Rights.Training,
+                                        "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
+                                    }
+                                })
+                            }
+
+                        }
+
+
+
+                    })
+
+                })
+                
+                
                 if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) {
                     var generateOrgChartButton = orgChartElement.querySelector("#orgChartContainer .buttonGroup");
                     if (isEmptyOrNull(generateOrgChartButton)) {
@@ -2578,7 +2622,7 @@ export default function pageInit() {
                                     //  console.log(key)
 
                                     button += `
-                    <input class="CheckBox" id="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
+                    <input class="CheckBox" name="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
                 `;
                                 }
 
@@ -2595,11 +2639,11 @@ export default function pageInit() {
                     <i class="far fa-clock" title="Manage Training Requests"></i>
                     </div>
                     <div>
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
 
                     </div>    
 `
@@ -2622,7 +2666,7 @@ export default function pageInit() {
                             // Handle the error, e.g., set a placeholder image
                             img.src = ''; // Replace with your placeholder path
                         };
-
+                        
                         let row = $jqueryObject.find(".rowData")
                         row.append(img)
                         var ViewButton = document.createElement('span');
@@ -2637,6 +2681,8 @@ export default function pageInit() {
                 }
 
             });
+            
+
             if (!isEmptyOrNull(Style))
                 orgchart.chart.style = Style
 

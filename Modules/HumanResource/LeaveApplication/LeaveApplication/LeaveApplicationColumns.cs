@@ -16,7 +16,10 @@ public class LeaveApplicationColumns
 
     
     public string EmployeeName { get; set; }
-
+    [Width(120),QuickFilter(true)]
+    public string DivisionName { get; set; }
+    [Width(120),QuickFilter(true)]
+    public string DepartmentName { get; set; }
     // public int EmployeeRowId { get; set; }
     [DisplayName("From"), Width(100)]
     [QuickFilter(CssClass = "hidden-xs")]
@@ -46,10 +49,7 @@ public class LeaveApplicationColumns
     public string JobGradeName { get; set; }
     [DisplayName("Occupation"), Hidden]
     public string OccupationName { get; set; }
-    [DisplayName("Department"), Hidden]
-    public string DepartmentName { get; set; }
-    [DisplayName("Division"), Hidden]
-    public string DivisionName { get; set; }
+    
     [DisplayName("Cost Centre"), Hidden]
     public string CostCentreName { get; set; }
 
