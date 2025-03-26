@@ -64,7 +64,6 @@ export interface FullProfileRow {
     WorkingSpouse?: number;
     ChildrenUnderEighteen?: number;
     ChildrenInUniversity?: number;
-    PostalCode?: string;
     CountryId?: number;
     SocsoClass?: number;
     SocsoAccountNumber?: string;

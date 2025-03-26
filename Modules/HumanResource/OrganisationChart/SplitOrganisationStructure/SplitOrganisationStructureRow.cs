@@ -6,11 +6,11 @@ using System.ComponentModel;
 
 namespace HRMSoftware.OrganisationChart;
 
-[ConnectionKey("Default"), Module("OrganisationChart"), TableName("HumanResourcesSplitOrganisationChart")]
-[DisplayName("Split Organisation Chart"), InstanceName("Split Organisation Chart")]
+[ConnectionKey("Default"), Module("OrganisationStructure"), TableName("HumanResourcesSplitOrganisationStructure")]
+[DisplayName("Split Organisation Structure"), InstanceName("Split Organisation Structure")]
 [ReadPermission(PermissionKeys.Employee)]
 [ModifyPermission(PermissionKeys.Employee)]
-public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChartRow.RowFields>, IIdRow, INameRow
+public sealed class SplitOrganisationStructureRow : LoggingRow<SplitOrganisationStructureRow.RowFields>, IIdRow, INameRow
 {
     [DisplayName("Id"), Identity, IdProperty]
     public int? Id
@@ -77,6 +77,13 @@ public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChar
         get => fields.ElementRowId[this];
         set => fields.ElementRowId[this] = value;
     }
+
+    public int? hierarchyId
+    {
+        get => fields.hierarchyId[this];
+        set => fields.hierarchyId[this] = value;
+    }
+    
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
@@ -89,6 +96,7 @@ public sealed class SplitOrganisationChartRow : LoggingRow<SplitOrganisationChar
         public Int32Field EmployeeRowId;
         public Int32Field childrenIndex;
         public Int32Field ElementRowId;
+        public Int32Field hierarchyId;
 
     }
 }

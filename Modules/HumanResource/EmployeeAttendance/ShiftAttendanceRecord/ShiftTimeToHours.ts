@@ -8,7 +8,7 @@ export class ShiftTimeToHours implements Formatter {
     format(ctx: FormatterContext) {
 
         if (!isEmptyOrNull(ctx.value))
-            return ctx.value.substring(0, 16)
+            return ctx.value.substring(0, 19).replace('T',' ')
 
         return
     }

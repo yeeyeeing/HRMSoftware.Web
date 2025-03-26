@@ -8,6 +8,7 @@ namespace HRMSoftware.Administration
     [DisplayName("Administration")]
     public class PermissionKeys
     {
+        
         [Description("User, Role Management and Permissions")]
         public const string Security = "Administration:Security";
 
@@ -17,7 +18,7 @@ namespace HRMSoftware.Administration
 
         [Description("Tenant Management")]
         public const string Tenants = "Administration:Tenants";
-
+        
 
 
         [Description("HumanResources")]
@@ -27,8 +28,8 @@ namespace HRMSoftware.Administration
         [Description("Employee")]
         public const string Employee = "Administration:Employee";
 
-        [Description("ViewSalary")]
-        public const string ViewSalary = "Administration:ViewSalary";
+        [Description("ViewShiftAttendance")]
+        public const string ViewShiftAttendance = "Administration:ViewShiftAttendance";
 
 
         /*
@@ -36,16 +37,16 @@ namespace HRMSoftware.Administration
          
          
          */
-        [Description("OT Approval")]
+        [Description("OT Approval"), Hidden]
         public const string OtApproval = "Administration:OtApproval";
-        [Description("Leave Approval")]
+        [Description("Leave Approval"), Hidden]
         public const string LeaveApproval = "Administration:LeaveApproval";
-        [Description("Appraisal")]
+        [Description("Appraisal"), Hidden]
         public const string Appraisal = "Administration:Appraisal";
-        [Description("Training")]
+        [Description("Training"), Hidden]
         public const string Training = "Administration:Training";
 
-        [Description("Money Claiming")]
+        [Description("Money Claiming"),Hidden]
         public const string MoneyClaiming = "Administration:MoneyClaiming";
 
 

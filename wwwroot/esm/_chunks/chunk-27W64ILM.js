@@ -1,2 +1,0 @@
-var n;(t=>(t.Security="Administration:Security",t.Translation="Administration:Translation",t.Tenants="Administration:Tenants",t.HumanResources="Administration:HumanResources",t.Employee="Administration:Employee",t.ViewSalary="Administration:ViewSalary",t.OtApproval="Administration:OtApproval",t.LeaveApproval="Administration:LeaveApproval",t.Appraisal="Administration:Appraisal",t.Training="Administration:Training",t.MoneyClaiming="Administration:MoneyClaiming"))(n||(n={}));export{n as a};
-//# sourceMappingURL=chunk-27W64ILM.js.map

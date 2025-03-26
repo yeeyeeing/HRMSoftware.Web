@@ -11,6 +11,7 @@ import { PermissionKeys } from '../../../ServerTypes/Administration';
 import { EmployeeBasicDataDialog } from '../../EmployeeBasicData/EmployeeBasicData/EmployeeBasicDataDialog';
 import { NoPaidLeaveService, PayrollService } from '../../../ServerTypes/PayrollSettings';
 import { OrganisationChartService } from '../../../ServerTypes/OrganisationChart';
+import { LeaveApplicationRejectDialog } from './LeaveApplicationRejectDialog';
 
 @Decorators.registerClass('HRMSoftware.LeaveApplication.LeaveApplicationDialog')
 export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, any> {
@@ -92,17 +93,17 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
         super.onDialogOpen()
         $(".EmployeeUpdated").hide()
         $(".HrUpdated").hide()
-
+        var self = this
         if (isEmptyOrNull(this.form.EmployeeUpdatedName.value))
             $(".EmployeeUpdatedName").hide()
         else {
             var EmployeeUpdatedNameElement = document.getElementById(this.idPrefix + 'EmployeeUpdatedName')
             $(EmployeeUpdatedNameElement).on('click', async function () {
-                console.log(self.form.EmployeeUpdatedName.value)
-                console.log(self.form.EmployeeUpdated.value)
                 var dlg = new EmployeeBasicDataDialog(parseInt(self.form.EmployeeUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(self.form.EmployeeUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                $(".SuperiorRejectReason").show()
         }
         if (isEmptyOrNull(this.form.HrUpdatedName.value))
             $(".HrUpdatedName").hide()
@@ -112,11 +113,12 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                 var dlg = new EmployeeBasicDataDialog(parseInt(self.form.HrUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(self.form.HrUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                $(".HrRejectReason").show()
         }
 
 
         EditorUtils.setReadonly(this.form.EmployeeName.element, true);
-        var self = this
         $('.MorningSession').hide()
         $('.AfternoonSession').hide()
         var ApprovedBy = '.ApproveEmployeeName'
@@ -150,7 +152,6 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                 var applicant = response.Entity.EmployeeRowId
                 var HrStatus = response.Entity.HrStatus
                 var EmployeeStatus = response.Entity.EmployeeStatus
-                console.log(applicant)
                 self.EmployeeApproval = response.Entity.EmployeeStatus
                 self.HrApproval = response.Entity.HrStatus
 
@@ -250,9 +251,11 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
         const EmployeeIDElement = '#' + this.idPrefix + 'EmployeeID';
         const MorningSessionElement = '#' + this.idPrefix + 'MorningSession';
         const AfternoonSessionElement = '#' + this.idPrefix + 'AfternoonSession';
-        this.form.HalfDay.value = '0'
         var HalfDay = this.form.HalfDay
-        $(HalfDayElement).prop('readonly', true);
+        if (this.isNew()) {
+            this.form.HalfDay.value = '0'
+            $(HalfDayElement).prop('readonly', true);
+        }
         $(EliglibleDayElement).prop('readonly', true);
         $(BalanceLeaveElement).prop('readonly', true);
         const LeaveReasonElement = '#' + this.idPrefix + 'LeaveReasonId'
@@ -292,6 +295,7 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                             }
                         }
                         var Row = self.RowData
+                        console.log(Row)
                         if (Row['MaternityLeave'] === undefined)
                             Row['MaternityLeave'] = 0
                         if (Row['PaternityLeave'] === undefined)
@@ -709,6 +713,7 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                 self.form.MorningSession.value = false
 
         });
+
     }
     protected save_submitHandler(response): void
     {
@@ -854,68 +859,89 @@ export class LeaveApplicationDialog extends EntityDialog<LeaveApplicationRow, an
                 icon: 'fa-times text-red',
                 onClick: () => {
                     confirm("Do you want to reject this application?", () => {
-                        let updateData: LeaveApplicationRow = {};
-                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
-                            if (self.SuperiorPermission == true) {
-                                if (self.EmployeeApproval == LeaveStatus.NotNeeded || self.HrApproval == LeaveStatus.NotNeeded) {
-                                    if (self.EmployeeApproval == LeaveStatus.NotNeeded) {
-                                        updateData = {
-                                            HrStatus: LeaveStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
+                        var rejectDlg = new LeaveApplicationRejectDialog()
+                        rejectDlg.dialogOpen()
+                        rejectDlg.element.on('dialogclose', () => {
+                            let updateData: LeaveApplicationRow = {};
+                            var rejectReason = window["rejectReason"]
+
+                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                                if (self.SuperiorPermission == true) { //both hr and also superior
+                                    if (self.EmployeeApproval == LeaveStatus.NotNeeded || self.HrApproval == LeaveStatus.NotNeeded) {
+                                        if (self.EmployeeApproval == LeaveStatus.NotNeeded) {
+                                            updateData = {
+                                                HrStatus: LeaveStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason
+                                            };
+                                        }
+                                        else if (self.HrApproval == LeaveStatus.NotNeeded) {
+                                            updateData = {
+                                                EmployeeStatus: LeaveStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
                                     }
-                                    else if (self.HrApproval == LeaveStatus.NotNeeded) {
-                                        updateData = {
-                                            EmployeeStatus: LeaveStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
+                                    else {
+                                        if (self.HrApproval == LeaveStatus.Pending) {
+                                            updateData = {
+                                                HrStatus: LeaveStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason
+                                            };
+                                        }
+                                        else if (self.EmployeeApproval == LeaveStatus.Pending) {
+                                            updateData = {
+                                                EmployeeStatus: LeaveStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
+                                        else {
+                                            updateData = {
+                                                EmployeeStatus: LeaveStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrStatus: LeaveStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
                                     }
                                 }
                                 else {
-                                    if (self.HrApproval == LeaveStatus.Pending) {
-                                        updateData = {
-                                            HrStatus: LeaveStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
-                                    else if (self.EmployeeApproval == LeaveStatus.Pending) {
-                                        updateData = {
-                                            EmployeeStatus: LeaveStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
-                                    else {
-                                        updateData = {
-                                            EmployeeStatus: LeaveStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            HrStatus: LeaveStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
+                                    updateData = {
+                                        HrStatus: LeaveStatus.Rejected,
+                                        HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        HrRejectReason: rejectReason,
+                                    };
                                 }
+
                             }
                             else {
                                 updateData = {
-                                    HrStatus: LeaveStatus.Rejected,
-                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                    EmployeeStatus: LeaveStatus.Rejected,
+                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                    SuperiorRejectReason: rejectReason,
                                 };
                             }
 
-                        }
-                        else {
-                            updateData = {
-                                EmployeeStatus: LeaveStatus.Rejected,
-                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                            };
-                        }
-                        LeaveApplicationService.Update({
-                            EntityId: self.entityId,
-                            Entity: updateData
-                        }, response => {
-                            self.loadById(response.EntityId)
-                            $('.rejectApplication, .approveApplication').hide()
-                        })
+                            LeaveApplicationService.Update({
+                                EntityId: self.entityId,
+                                Entity: updateData
+                            }, response => {
+                                self.loadById(response.EntityId, response => {
+                                    console.log(response)
+                                    if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                                        $('.SuperiorRejectReason').show()
+                                    if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                                        $('.HrRejectReason').show()
+                                })
+                                $('.rejectApplication, .approveApplication').hide()
 
+                            })
+                        })
                     });
                 },
             }

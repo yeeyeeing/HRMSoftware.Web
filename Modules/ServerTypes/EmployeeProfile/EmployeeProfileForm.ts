@@ -55,11 +55,11 @@ export interface EmployeeProfileForm {
     CountryID: LookupEditor;
     StateID: LookupEditor;
     CityID: LookupEditor;
-    Cp8dID: LookupEditor;
-    DepartmentID: LookupEditor;
     DivisionID: LookupEditor;
+    DepartmentID: LookupEditor;
     SectionID: LookupEditor;
     JobGradeID: LookupEditor;
+    Cp8dID: LookupEditor;
     OccupationID: LookupEditor;
     CostCentreID: LookupEditor;
     JobDescription: MultipleImageUploadEditor;
@@ -172,11 +172,11 @@ export class EmployeeProfileForm extends PrefixedContext {
                 'CountryID', w5,
                 'StateID', w5,
                 'CityID', w5,
-                'Cp8dID', w5,
-                'DepartmentID', w5,
                 'DivisionID', w5,
+                'DepartmentID', w5,
                 'SectionID', w5,
                 'JobGradeID', w5,
+                'Cp8dID', w5,
                 'OccupationID', w5,
                 'CostCentreID', w5,
                 'JobDescription', w7,

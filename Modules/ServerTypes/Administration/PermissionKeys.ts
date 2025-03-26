@@ -4,7 +4,7 @@
     export const Tenants = "Administration:Tenants";
     export const HumanResources = "Administration:HumanResources";
     export const Employee = "Administration:Employee";
-    export const ViewSalary = "Administration:ViewSalary";
+    export const ViewShiftAttendance = "Administration:ViewShiftAttendance";
     export const OtApproval = "Administration:OtApproval";
     export const LeaveApproval = "Administration:LeaveApproval";
     export const Appraisal = "Administration:Appraisal";

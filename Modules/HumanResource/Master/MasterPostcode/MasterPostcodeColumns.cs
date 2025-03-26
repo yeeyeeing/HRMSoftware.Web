@@ -11,6 +11,11 @@ public class MasterPostcodeColumns
 
     [EditLink]
     public string PostCode { get; set; }
-    public int MasterCity { get; set; }
-    public int MasterState { get; set; }
+    [QuickFilter(true)]
+    public string MasterCity { get; set; }
+    [QuickFilter(true)]
+    public string MasterState { get; set; }
+    [QuickFilter(true)]
+    public string CountryName { get; set; }
+
 }

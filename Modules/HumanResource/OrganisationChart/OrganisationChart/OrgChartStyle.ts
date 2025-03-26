@@ -2,12 +2,17 @@ export default function appendStyle() {
 
     var Linkx = document.createElement('style')
     Linkx.textContent = `
+    .scrollable {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
 
 .left-panel-class {
   position: fixed; /* Sticks to the left side of the page */
 display: flex;
      flex-direction: row; /* Align children in a row */
-z-index: 9999; /* Bring the panel to the front */
+    z-index: 9999; /* Bring the panel to the front */
   background-color: #f4f4f4; /* Light gray background */
   border-right: 1px solid #ccc; /* Optional border */
   padding: 15px; /* Padding inside the panel */

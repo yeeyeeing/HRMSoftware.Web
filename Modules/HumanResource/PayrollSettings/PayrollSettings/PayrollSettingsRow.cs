@@ -200,8 +200,39 @@ public sealed class PayrollSettingsRow : LoggingRow<PayrollSettingsRow.RowFields
         get => fields.ContactPerson[this];
         set => fields.ContactPerson[this] = value;
     }
+    public int? EpfFormatId
+    {
+        get => fields.EpfFormatId[this];
+        set => fields.EpfFormatId[this] = value;
+    }
+    public int? LhdnFormatId
+    {
+        get => fields.LhdnFormatId[this];
+        set => fields.LhdnFormatId[this] = value;
+    }
+    public int? EisFormatId
+    {
+        get => fields.EisFormatId[this];
+        set => fields.EisFormatId[this] = value;
+    }
+    public int? SocsoFormatId
+    {
+        get => fields.SocsoFormatId[this];
+        set => fields.SocsoFormatId[this] = value;
+    }
+    public int? AutopayFormatId
+    {
+        get => fields.AutopayFormatId[this];
+        set => fields.AutopayFormatId[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
+        public Int32Field EpfFormatId;
+        public Int32Field LhdnFormatId;
+        public Int32Field EisFormatId;
+        public Int32Field SocsoFormatId;
+        public Int32Field AutopayFormatId;
+
         public StringField Email;
         public StringField PhoneNumber;
         public StringField ContactPerson;

@@ -11,7 +11,11 @@ public class LeaveApplicationForm
 
     // public string ApproveEmployeeName { get; set; }
     public string EmployeeUpdatedName { get; set; }
+    [HideOnUpdate, HideOnInsert]
+    public string SuperiorRejectReason { get; set; }
     public string HrUpdatedName { get; set; }
+    [HideOnUpdate, HideOnInsert]
+    public string HrRejectReason { get; set; }
     public int EmployeeUpdated { get; set; }
     public int HrUpdated { get; set; }
 

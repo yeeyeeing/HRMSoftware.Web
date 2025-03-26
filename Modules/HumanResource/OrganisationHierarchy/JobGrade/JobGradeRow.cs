@@ -10,7 +10,7 @@ namespace HRMSoftware.OrganisationHierarchy;
 [ConnectionKey("Default"), Module("OrganisationHierarchy"), TableName("HumanResourcesJobGrade")]
 [DisplayName("Job Grade"), InstanceName("Job Grade")]
 
-[ReadPermission(PermissionKeys.HumanResources)]
+[ReadPermission("*")]
 [ModifyPermission(PermissionKeys.HumanResources)]
 [LookupScript("JobGrade.JobGrade", Permission = "*")]
 public sealed class JobGradeRow : LoggingRow<JobGradeRow.RowFields>, IIdRow, INameRow

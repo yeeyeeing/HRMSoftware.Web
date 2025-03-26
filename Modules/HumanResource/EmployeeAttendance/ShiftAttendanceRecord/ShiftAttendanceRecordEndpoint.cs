@@ -19,6 +19,8 @@ using System.Data;
 using System.Globalization;
 using System.Net;
 using MyRow = HRMSoftware.EmployeeAttendance.ShiftAttendanceRecordRow;
+using System.Linq;
+using Bellatrix;
 
 namespace HRMSoftware.EmployeeAttendance.Endpoints;
 public class EmployeeShiftRecord
@@ -211,22 +213,24 @@ public class ShiftAttendanceRecordEndpoint : ServiceEndpoint
     public ListResponse<MyRow> List(IDbConnection connection, ListRequest request,
         [FromServices] IShiftAttendanceRecordListHandler handler)
     {
-        request.Sort = new[] { new SortBy("ShiftStartTime", true) };
+      //  request.Sort = new[] { new SortBy("ShiftStartTime", true) };
 
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
                     return handler.List(connection, request);
         
-        
+        /*
         MyRow latest = connection.QueryFirstOrDefault<MyRow>("dbo.RetrieveEmployeeRowIDBasedOnUserID",
             param: new
             {
                 @UserID = User.GetIdentifier()
             },
                 commandType: System.Data.CommandType.StoredProcedure);
+        */
+        var EmployeeRowId = new ShiftAttendanceRecordEndpoint().GetEmployeeRowIdFromUserRowId(connection, User.GetIdentifier().ToInt());
 
-        request.Criteria = new Criteria("EmployeeRowId") == latest.EmployeeRowId.Value;
+        request.Criteria = new Criteria("EmployeeRowId") == EmployeeRowId;
 
-        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.EmployeeRowId.Value, PermissionKeys.LeaveApproval);
+        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, EmployeeRowId, PermissionKeys.ViewShiftAttendance);
         foreach (int number in ListOfEmployee)
             request.Criteria = (request.Criteria || new Criteria("EmployeeRowId") == number);
 
@@ -244,6 +248,20 @@ public class ShiftAttendanceRecordEndpoint : ServiceEndpoint
         var bytes = exporter.Export(data, typeof(Columns.ShiftAttendanceRecordColumns), request.ExportColumns);
         return ExcelContentResult.Create(bytes, "ShiftAttendanceRecordList_" +
             DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture) + ".xlsx");
+    }
+
+    [HttpGet]
+    public int GetEmployeeRowIdFromUserRowId(IDbConnection sqlConnections, int UserRowId)
+    {
+        var sql = @"declare @EmployeeRowID as int;" +
+            "select @EmployeeRowID = EmployeeRowID from dbo.Users where " +
+            "Users.UserId = @UserRowId;" +
+            "select @EmployeeRowID as EmployeeRowId ";
+        ShiftAttendanceRecordRow result = sqlConnections.QueryFirstOrDefault<ShiftAttendanceRecordRow>(sql, new
+        {
+            UserRowId = UserRowId
+        });
+        return result.EmployeeRowId.Value;
     }
 
 

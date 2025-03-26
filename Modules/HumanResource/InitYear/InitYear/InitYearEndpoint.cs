@@ -47,7 +47,7 @@ public class InitYearEndpoint : ServiceEndpoint
     public ListResponse<MyRow> List(IDbConnection connection, ListRequest request,
         [FromServices] IInitYearListHandler handler)
     {
-        request.Sort = new[] { new SortBy("Year", true) };
+      //  request.Sort = new[] { new SortBy("Year", true) };
 
         return handler.List(connection, request);
     }

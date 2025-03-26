@@ -18,18 +18,72 @@ import { EmployeeBasicDataDialog } from '../../EmployeeBasicData/EmployeeBasicDa
 import html2canvas from "html2canvas";
 
 export default function pageInit() {
+    var firstTime = 1
+    var addedClass;
+    let addedIndex = 0
+
+    var removedNodeId;
+    let indexToRemove = 0;
+
+    interface ExtractedData {
+        hierarchyId: number | null;
+        id: string | null;
+        EmployeeRowId: number | null;
+        Rights: EmployeeAdminRights | null;
+    }
     enum CardType {
         DIRECTOR = 0,
         DIVISION = 1,
         DEPARTMENT = 2,
-        SECTION = 3,
-        EMPLOYEE = 4
+        SECTION = 3
     }
+
+    function isOrgChartOutOfView() {
+        const orgChart = document.querySelector('#chart-container .orgchart'); // Adjust selector if needed
+       // const orgChart = document.querySelector('#orgChartContainer .orgchart'); // Adjust selector if needed
+
+        if (!orgChart) return false;
+
+        const rect = orgChart.getBoundingClientRect();
+
+        return (
+            rect.right < 0 || // Fully outside left
+            rect.left > window.innerWidth || // Fully outside right
+            rect.bottom < 0 || // Fully outside top
+            rect.top > window.innerHeight // Fully outside bottom
+        );
+    }
+    enum DisplayMode {
+        DISPLAY = 0,
+        FILTERING = 1
+    }
+    let orgStructDisplay = DisplayMode.DISPLAY
+    let orgChartDisplay = DisplayMode.DISPLAY
     enum ChartType {
         OrgChart = 0,
         OrgStruct = 1,
     }
-    function capitalizeFirstLetter(string) {
+    function scrollToParent() {
+        var chartToShift: string[] = ['#orgChartContainer', '#chart-container'];
+
+        for (let i = 0; i < chartToShift.length; i++) {
+            const orgChartContainer = document.querySelector(chartToShift[i]) as HTMLElement;
+            if (!orgChartContainer) {
+                console.log('aa')
+                continue; // Skip if container does not exist
+            }
+         
+            const parentNode = orgChartContainer.querySelector('.orgchart .DIRECTOR') as HTMLElement;
+            if (!parentNode) {
+
+                continue; // Skip if parent node does not exist
+            }
+            // Ensure container is scrollable
+            orgChartContainer.style.overflow = 'auto';
+            parentNode.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            // Try different scrolling methods
+        }
+    }    function capitalizeFirstLetter(string) {
         if (isEmptyOrNull(string))
             return ''; // Handle empty strings
         // Convert the first character to uppercase and the rest to lowercase
@@ -59,23 +113,132 @@ export default function pageInit() {
             CustomDialog.close();
         });
         const CustomDialogConfirmButton = CustomDialog.querySelector("#confirmAddEmployee") as HTMLButtonElement;
-        CustomDialogConfirmButton.addEventListener("click", () => {
+        CustomDialogConfirmButton.addEventListener("click", async function(e) {
+
             var EmployeeIdInput = document.getElementById('EmployeeIdInput') as HTMLInputElement;
             if ($(EmployeeIdInput).val() == '') {
                 notifyError('Please fill in the Employee')
                 return
             }
-            let ListCounter = 0, name
+            let ListCounter = 0, OccupationId
             for (ListCounter = 0; ListCounter < ListOfEmployeeData.length; ListCounter++) {
                 if (ListOfEmployeeData[ListCounter].id == $(EmployeeIdInput).val()) {
-                    name = ListOfEmployeeData[ListCounter].EmployeeName
+                    OccupationId = ListOfEmployeeData[ListCounter].OccupationId
                     break
                 }
             }
-            var HierarchyLevelToSetEmployee = DecomposeStringToList(ElementToSetEmployee, 0x88, 0x99)
+            var str
+            for (var LookupIndex in OccupationTable.items) {
+                if (OccupationTable.items[LookupIndex].Id == OccupationId) {
+                    str = OccupationTable.items[LookupIndex].Name
+                    break
+                }
+            }
+
             var FinalOrgChartBuffer = JSON.parse(JSON.stringify(datascource2))
             var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
-            var HierarchyLevel
+            console.log(ElementToSetEmployeeInDialog)
+            TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployeeInDialog)
+            SetEmployeeById(TargetedFinalOrgChartBuffer, ElementToSetEmployeeInDialog, parseInt($(EmployeeIdInput).val()))
+            datascource2 = FinalOrgChartBuffer
+            await GenerateSaveOrgStructure()
+            
+            var findEmployeeBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+            var TargetedFinalOrgChartBuffer = findEmployeeBuffer
+            var IsEmployeeInOrgChart = findEmployee(SplitOrgChartList, parseInt($(EmployeeIdInput).val()))
+            if (!isEmptyOrNull(IsEmployeeInOrgChart))//if the employee is in org chart
+            {           //after adding the employee into org struct remove the employee in orgchart
+                console.log(deleteNodeById(TargetedFinalOrgChartBuffer, IsEmployeeInOrgChart.id))
+            }
+            console.log(TargetedFinalOrgChartBuffer)
+            console.log(IsEmployeeInOrgChart)
+
+            FinalDatascource2 = findEmployeeBuffer
+
+            var findEmployeeBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+
+            var HierarchyLevelToSetEmployee = DecomposeStringToList(ElementToSetEmployeeInDialog, 0x88, 0x99)
+            var childrenHolder
+            TargetedFinalOrgChartBuffer = findEmployeeBuffer
+            for (let i = 0; i < HierarchyLevelToSetEmployee.length; i++)
+                TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, HierarchyLevelToSetEmployee[i])
+            console.log(TargetedFinalOrgChartBuffer)
+
+            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children))
+                childrenHolder = {
+                    ...TargetedFinalOrgChartBuffer.children
+                }
+
+            var insertNode: NodeRow = {
+                className: `EMPLOYEE${parseInt($(EmployeeIdInput).val())} Class`,
+                EmployeeRowId: parseInt($(EmployeeIdInput).val()),
+                id: `${TargetedFinalOrgChartBuffer.id}${EncodeString(`EMPLOYEE${parseInt($(EmployeeIdInput).val())}`, 0x88, 0x99)}`,
+                name: TargetedFinalOrgChartBuffer.name,
+                title: TargetedFinalOrgChartBuffer.title,
+                hierarchyLevel: TargetedFinalOrgChartBuffer.hierarchyLevel,
+                parentId: `${TargetedFinalOrgChartBuffer.id}`,
+                Rights: {
+                    Appraisal: false,
+                    LeaveApproval: false,
+                    OtApproval: false,
+                    MoneyClaiming: false,
+                    Training: false
+                }
+            }
+            addChildren(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.className, insertNode)
+            for (var res in childrenHolder) {
+                deleteNodeById(TargetedFinalOrgChartBuffer, childrenHolder[res].id)
+            }
+            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children))
+            TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, insertNode.className)
+            if (!isEmptyOrNull(childrenHolder)) {
+                for (var res in childrenHolder) 
+                    addChildren(TargetedFinalOrgChartBuffer, insertNode.className, childrenHolder[res])
+            }
+            
+            FinalDatascource2 = findEmployeeBuffer
+
+
+            GenerateSaveOrgChart()
+
+
+            addedClass = `EMPLOYEE${parseInt($(EmployeeIdInput).val())}`
+            addedIndex = HierarchyLevelToSetEmployee.length
+            CustomDialog.close();
+
+            return
+            var findEmployeeBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+
+            var HierarchyLevelToSetEmployee = DecomposeStringToList(ElementToSetEmployeeInDialog, 0x88, 0x99)
+            var childrenHolder
+            TargetedFinalOrgChartBuffer = findEmployeeBuffer
+            for (let i = 0; i < HierarchyLevelToSetEmployee.length; i++) 
+                TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, HierarchyLevelToSetEmployee[i])
+            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children))
+                childrenHolder = TargetedFinalOrgChartBuffer.children
+            var insertNode: NodeRow = {
+                className: `EMPLOYEE${parseInt($(EmployeeIdInput).val())} Class`,
+                EmployeeRowId: parseInt($(EmployeeIdInput).val()),
+                id: `${TargetedFinalOrgChartBuffer.id}${EncodeString(`EMPLOYEE${parseInt($(EmployeeIdInput).val())}`, 0x88, 0x99)}`,
+                name: str,
+                title: str,
+                hierarchyLevel: EmployeeEnum,
+                parentId: `${TargetedFinalOrgChartBuffer.id}`,
+                children: isEmptyOrNull(TargetedFinalOrgChartBuffer.children) ? null: childrenHolder
+            }
+
+
+
+
+            console.log(addChildren(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.className, insertNode))
+            FinalDatascource2 = findEmployeeBuffer
+            console.log(IsEmployeeInOrgChart)
+            console.log(findEmployeeBuffer)
+            console.log(ElementToSetEmployeeInDialog)
+
+            GenerateSaveOrgChart()
+          
+            /*
             if (HierarchyLevelToSetEmployee.length > 1) {
                 for (let i = 1; i < HierarchyLevelToSetEmployee.length; i++) {
                     HierarchyLevel = HierarchyLevelToSetEmployee[i]
@@ -98,10 +261,23 @@ export default function pageInit() {
                     }
                 }
             }
-            HierarchyLevel = HierarchyLevelToSetEmployee[HierarchyLevelToSetEmployee.length - 1]
-            SetEmployeeByClassName(TargetedFinalOrgChartBuffer, HierarchyLevel, parseInt($(EmployeeIdInput).val()))
-            datascource2 = FinalOrgChartBuffer
-            GenerateSaveOrgStructure()
+            */
+            //HierarchyLevel = HierarchyLevelToSetEmployee[HierarchyLevelToSetEmployee.length - 1]
+            //SetEmployeeByClassName(TargetedFinalOrgChartBuffer, HierarchyLevel, parseInt($(EmployeeIdInput).val()))
+
+
+
+
+            addedClass = `EMPLOYEE${parseInt($(EmployeeIdInput).val())}`
+            addedIndex = HierarchyLevelToSetEmployee.length
+
+
+
+            //GenerateSaveOrgChart()
+
+            //GenerateOrgChartData()
+           // setCallbacks()
+
             CustomDialog.close();
         });
         var CustomTable = document.createElement('table');
@@ -219,7 +395,7 @@ export default function pageInit() {
         .filter(value => typeof value == 'number') // Ensure we are working with numbers
         .sort((a, b) => b - a); // Sort in descending order
     const numbers: number[] = [];
-    let ElementToSetEmployee = '';
+    var ElementToSetEmployeeInDialog = '';
     for (const key of Object.keys(CardType)) {
         // Skip numeric keys which are reverse mappings
         if (isNaN(Number(key))) {
@@ -245,9 +421,6 @@ export default function pageInit() {
     var SectionPanel = document.createElement('div')
     SectionPanel.id = "SectionPanel"
     SectionPanel.className = "tabcontent"
-    var EmployeePanel = document.createElement('div')
-    EmployeePanel.id = "EmployeePanel"
-    EmployeePanel.className = "tabcontent"
     interface Node {
         id: string;
         name: string;   // The name of the person
@@ -259,8 +432,10 @@ export default function pageInit() {
         childrenIndex?: number;
         EmployeeRowId: number;
         Rights?: EmployeeAdminRights;
+        extension?:number;
     }
     interface NodeRow {
+        rowId?: number
         id: string;
         EmployeeRowId: number;
         name: string;
@@ -272,6 +447,7 @@ export default function pageInit() {
         children?: NodeRow[];
         childrenIndex?: number;
         hierarchyId?: number;
+        extension?:number;
 
     }
     interface NodeRights {
@@ -322,7 +498,12 @@ export default function pageInit() {
     let FinalDatascource2
     var OccupationTable = getLookup("Occupation.Occupation")
     var JobGradeTable = getLookup("JobGrade.JobGrade")
+    var criteria: any;
+    let ListOfEmployeeInEmployeeProfile: number[] = [];
 
+    let SectionList: number[] = [];
+    let DepartmentList: number[] = [];
+    let DivisionList: number[] = [];
     var spareOrgStructJson = null;
     var spareOrgChartJson = null;
 
@@ -330,32 +511,18 @@ export default function pageInit() {
     let SplitOrgStructList: NodeRow[] = []
 
     FullProfileService.List({
+
     }, response => {
-        var EmployeeContent = document.createElement('div')
-        EmployeeContent.className = 'side-div'
-        var EmployeeTable = document.createElement('div')
-        EmployeeTable.id = "EmployeeTable"
-        EmployeeTable.className = "wrapper"
-        var EmployeeWrapper = document.createElement('div')
-        EmployeeWrapper.className = 'wrapper'
-        EmployeeContent.appendChild(EmployeeTable)
-        var EmployeeRow = document.createElement('tr')
         for (var index in response.Entities) {
             if (response.Entities[index].Resigned == 1 ||
                 response.Entities[index].Terminated == 1 ||
                 response.Entities[index].Retired == 1
                 || response.Entities[index].IsActive == -1
             ) {
-                EmployeeFilter.push(response.Entities[index].Id)
+                EmployeeFilter.push(response.Entities[index].Id) // these are the employees to remove
                 continue
-            }    
-           // var EmployeeCard = CreateEmployeeCard(ElementId, response.Entities[index].EmployeeName,
-           //     response.Entities[index].OccupationID, response.Entities[index].EmployeeImg)
-
-            //var EmployeeCard = GenerateCard(ElementId, CardText, CardType.DIVISION)
-            var Card = GenerateCard(response.Entities[index].Id, response.Entities[index].EmployeeName, EmployeeEnum)
-            Card.className='item'
-            EmployeeWrapper.appendChild(Card)
+            }
+            ListOfEmployeeInEmployeeProfile.push(response.Entities[index].Id)
             ListOfEmployeeData.push({
                 'id': response.Entities[index].Id, 'ImgPath': response.Entities[index].EmployeeImg, 'OccupationId': response.Entities[index].OccupationId,
                 'EmployeeName': response.Entities[index].EmployeeName, 'EmployeeId': response.Entities[index].EmployeeId,
@@ -365,15 +532,14 @@ export default function pageInit() {
                 'SalaryDetails': response.Entities[index].BasicSalary
             })
         }
-        EmployeeWrapper.appendChild(EmployeeRow)
 
-        EmployeeTable.appendChild(EmployeeWrapper)
-        EmployeePanel.appendChild(EmployeeContent)
+
         OrganisationChartService.List({
         }, response => {
             if (response.Entities.length > 0)
                 spareOrgStructJson = response.Entities[0].OrgChart
             GenerateOrgStructure()
+
         })
 
         FinalOrganisationChartService.List({
@@ -382,16 +548,6 @@ export default function pageInit() {
                 spareOrgChartJson = response.Entities[0].FinalOrgChart
             GenerateOrgChart()
         })
-        const script = document.createElement('script');
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-        script.onload = function () {
-            console.log("html2canvas loaded successfully");
-        };
-        document.head.appendChild(script);
-
-        html2canvas(document.body).then((canvas) => {
-            document.body.appendChild(canvas);
-        });
 
 
         if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
@@ -473,7 +629,7 @@ export default function pageInit() {
                         SectionTable.appendChild(SectionRow)
                         SectionPanel.appendChild(SectionContent)
                         $('#defaultOpen').click()
-                        setCallbacks()
+                       // setCallbacks()
                         var EmployeeIdInputElement = document.getElementById("EmployeeIdInput")
                         $(EmployeeIdInputElement).on('change', async function () {
                             if ($(EmployeeNameInputElement).val() != $(EmployeeIdInputElement).val())
@@ -574,17 +730,11 @@ export default function pageInit() {
         var ContentRow = document.createElement("div")
         ContentRow.setAttribute("class", "row div2")
         ContentRow.setAttribute("id", "ElementsTab")
-        var EmployeeRow = document.createElement("div")
-        EmployeeRow.setAttribute("class", "row div2")
-        EmployeeRow.setAttribute("id", "EmployeeTab")
 
 
 
         var TabRowNode = document.createElement('div');
         TabRowNode.setAttribute("class", "tab");
-
-        var EmployeeTabRowNode = document.createElement('div');
-        EmployeeTabRowNode.setAttribute("class", "tab");
         var naviBar = document.createElement('nav')
         var naviBarContent = document.createElement('div')
         naviBarContent.innerHTML = `<div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
@@ -600,6 +750,7 @@ export default function pageInit() {
         orgChartContainer.id = 'orgChartContainer'
         orgChartContainer.className = 'BigTab'
         document.querySelector('#GridDiv').appendChild(orgChartContainer);
+        var init = 0
         function openBig(evt, id) {
             // Declare all variables
             var i, tabcontent, tablinks;
@@ -634,6 +785,11 @@ export default function pageInit() {
                 GenerateOrgChart()
                 DisableOrgChartMovement()
             }
+
+            if (init <= 1) {
+                init += 1
+                scrollToParent()
+            }
         }
         function open(evt, id) {
             // Declare all variables
@@ -667,13 +823,6 @@ export default function pageInit() {
             ContentRow.appendChild(SectionPanel)
             ContentRow.appendChild(DepartmentPanel)
             document.querySelector('.content').appendChild(ContentRow);
-
-            EmployeeRow.appendChild(EmployeeTabRowNode)
-            EmployeeRow.appendChild(EmployeePanel)
-
-            console.log('haha')
-            //document.querySelector('.content').appendChild(EmployeeRow);
-
         }
         var ButtonHolder = document.createElement('div')
         var DepartmentTableButton = document.createElement('button');
@@ -701,23 +850,30 @@ export default function pageInit() {
         let orgchart = null
 
     })
-    function addChildren(root, TargetClassName: string, newNode: Node): boolean {
+    function stripClassSuffix(str: string): string {
+        return str.endsWith("Class") ? str.slice(0, -5) : str;
+    }
+    function addChildren(root, TargetClassName: string, newNode: Node | NodeRow): boolean {
         // If the current node's name matches the target name, add the new node
         if (root.className.includes(TargetClassName)) {
-            if (!root.children)
+            if (!root.children) {
+                newNode.id = `${root.id}${EncodeString(stripClassSuffix(newNode.className), 0x88, 0x99)}`
                 root.children = [newNode];
+            }
             else {
                 const checkId = (id: string): boolean => root.children.some((item) => item.id === id);
                 if (checkId(newNode.id))//repeated children
                     return false
+                newNode.id = `${root.id}${EncodeString(stripClassSuffix(newNode.className),0x88,0x99)}`
                 root.children.push(newNode);
             }
             return true; // Node found and new node added
         }
         if (root.children)
             for (const child of root.children)
-                if (addChildren(child, TargetClassName, newNode))
+                if (addChildren(child, TargetClassName, newNode)) {
                     return false; // Stop recursion after adding the node
+                }
         return false; // Target node not found
     }
 
@@ -747,7 +903,17 @@ export default function pageInit() {
                     return true; // Stop recursion after adding the node
         return false; // Target node not found
     }
+    function listChildrenId(data: { id: string; parentId: string | null }[], parentId: string): string[] {
+        const children = data.filter(item => item.parentId === parentId);
+        const childIds = children.map(child => child.id);
 
+        // Recursively find children of these children
+        for (const child of children) {
+            childIds.push(...listChildrenId(data, child.id));
+        }
+
+        return childIds;
+    }
     function findTitleByClassName(data, className) {
         // Check if current node has the className
         if (data.className === className)
@@ -778,13 +944,15 @@ export default function pageInit() {
         // Return null if className is not found
         return null;
     }
-    function deleteNodeById(data, id) {
+
+    
+    function deleteNodeById(data, id, returnOnDelete?) {
         if (Array.isArray(data)) {
             // Process each item in the array
             for (let i = 0; i < data.length; i++) {
                 const child = data[i];
                 // Recursively check and modify children
-                deleteNodeById(child, child.id);
+                deleteNodeById(child,id);
                 // Remove the node if it matches the criteria
                 if (child.id == id) {
                     data.splice(i, 1); // Remove the node from the array
@@ -795,11 +963,14 @@ export default function pageInit() {
             // Process children nodes
             deleteNodeById(data.children, id);
             if (data.id == id) {
-                return null; // Indicate deletion for parent array processing
+                console.log(id)
+                return null;
             }
+            // Indicate deletion for parent array processing
+            
         }
     }
-
+    
     function removeEmptyChildren(obj) {
         if (isEmptyOrNull(obj))
             return
@@ -845,6 +1016,21 @@ export default function pageInit() {
                     }
 
 
+                     orgChartElement = document.getElementById("chart-container")
+
+                    if (!isEmptyOrNull(orgChartElement)) {
+                         orgDiv = orgChartElement.querySelector(".orgchart");
+
+                        if (!isEmptyOrNull(orgDiv)) {
+                             nodes = orgDiv.getElementsByClassName('node')
+                            for (let i = 0; i < nodes.length; i++) {
+                                var jsonObject = JSON.parse(nodes[i].getAttribute('data-source'));
+                                if (jsonObject.children.length>0)
+                                    nodes[i].draggable = false
+                            }
+                        }
+                    }
+
                 }
             }
         });
@@ -853,17 +1039,54 @@ export default function pageInit() {
     var pdfSources = [];
     var pdfOriginalName = [];
     let currentPdfIndex = 0;
-
+  
     function setCallbacks() { //callback for node on orgchart
         const observer = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
+            var CheckChart = document.querySelector('#orgChartContainer').querySelector('.orgchart')
+            var OrgStruct = document.querySelector('#chart-container').querySelector('.orgchart')
+            if (isEmptyOrNull(CheckChart) || isEmptyOrNull(OrgStruct))
+                return
+            function scroll(id) {
+                const orgChartContainer = document.getElementById(id) as HTMLElement;
+                const parentNode = orgChartContainer.querySelector('.orgchart ') as HTMLElement;
+                parentNode.style.transform = "matrix(1, 0, 0, 1, 0, 0)"; // Reset position
+
+            }
+            function isAnyNodeVisible(id) {
+                const orgChart = document.querySelector(`${id} .orgchart`);
+
+                const nodes = orgChart.querySelectorAll(".node");
+                for (let node of nodes) {
+                    const rect = node.getBoundingClientRect();
+                    if (
+                        rect.bottom > 0 && // Not fully above viewport
+                        rect.top < window.innerHeight && // Not fully below viewport
+                        rect.right > 0 && // Not fully left
+                        rect.left < window.innerWidth // Not fully right
+                    ) {
+                        return true; // At least one node is visible
+                    }
+                }
+                return false; // No nodes are visible
+            }
+            //for (const mutation of mutationsList) {
+                console.log('muuu')
+            //if (mutation.type === 'childList') {
+            if ($('.tab-nav-item.nav-link.active').text() == 'Organisation Chart') {
+                if (isAnyNodeVisible(`#orgChartContainer`) == false)//cannot see any node
+                    scroll(`orgChartContainer`)
+            }
+            else if ($('.tab-nav-item.nav-link.active').text() == 'Organisation Structure') {
+                if (isAnyNodeVisible(`#chart-container`) == false)//cannot see any node
+                    scroll(`chart-container`)
+            }
                     var nodes = document.getElementsByClassName("node");
                     if (nodes.length > 0) {
                         let ElementArray: any[] = []
                         for (let j = 0; j < nodes.length; j++) {
                             var TargetElement = nodes[j] as HTMLDivElement
                             //console.log(TargetElement.className)
+
                             ElementArray.push(TargetElement)
                             ElementArray[j].addEventListener("dragover", function (event) {
                                 const dragEvent = event as DragEvent;
@@ -878,6 +1101,9 @@ export default function pageInit() {
                             if (relation != '001' || nodes.length == 1)
                                 if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
                                     ElementArray[j].draggable = true
+                            if (relation == '111')
+                                ElementArray[j].draggable = false
+
                             ElementArray[j].addEventListener("drop", function (event) {
                                 event.stopImmediatePropagation();
                                 var StartPointData = event.dataTransfer.getData('text/plain'); // oobtain the data of the dropped element
@@ -893,6 +1119,9 @@ export default function pageInit() {
                                     while (isEmptyOrNull(EventTargetElement.parent().attr('data-source')))
                                         EventTargetElement = EventTargetElement.parent()
                                 }
+
+                                if (isEmptyOrNull(StartPointJson.external))
+                                    return
                                 var destinationJson = JSON.parse(EventTargetElement.parent().attr('data-source'));
                                 var EventTargetHierarchy = destinationJson.hierarchyLevel
                                 var destinationClassName = destinationJson.className
@@ -933,6 +1162,9 @@ export default function pageInit() {
                                     if (DestinationNode == ClassName)
                                         return
                                     if (StartPointHierarchy == EmployeeEnum) {
+                                        if (EventTargetHierarchy == StartPointHierarchy)
+                                            return
+                                        console.log('haha')
                                         let i = 0
                                         var EmployeeRowId = parseInt(StartPointJson.EmployeeRowId)
                                         for (i = 0; i < ListOfEmployeeData.length; i++) {
@@ -991,8 +1223,8 @@ export default function pageInit() {
                                     //   console.log('from ' + StartPointJson.className)
                                     //    console.log('to ' + EventTargetElement.parent().attr('class'))
                                     var child_list;
-                                   // console.log(datascource2)
-                                   // console.log(StartPointId)
+                                    // console.log(datascource2)
+                                    // console.log(StartPointId)
 
                                     if (StartPointHierarchy == EmployeeEnum)
                                         child_list = findChildrenById(FinalDatascource2, StartPointId);
@@ -1031,7 +1263,6 @@ export default function pageInit() {
                                             return
                                     }
                                     if (StartPointHierarchy == EmployeeEnum) {
-
                                         var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
                                         var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
                                         TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, StartPointParentId)
@@ -1043,17 +1274,22 @@ export default function pageInit() {
                                         TargetedFinalOrgChartBuffer = FinalDatascource2
                                         TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, destinationId)
                                         if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
-                                            if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {
-                                                if (TargetedFinalOrgChartBuffer.children[0].title == TargetedFinalOrgChartBuffer.title)//go down
-                                                {
+                                            if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {//go down
+                                                if (TargetedFinalOrgChartBuffer.children[0].hierarchyLevel == TargetedFinalOrgChartBuffer.hierarchyLevel) {
                                                     if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].EmployeeRowId)) {
-                                                        destinationId = TargetedFinalOrgChartBuffer.children[0].id
-                                                        DestinationNode = TargetedFinalOrgChartBuffer.children[0].className
-                                                        TargetedFinalOrgChartBuffer = TargetedFinalOrgChartBuffer.children[0]
+                                                        console.log(TargetedFinalOrgChartBuffer.children[0])
+                                                       // if (TargetedFinalOrgChartBuffer.children[0].Extension == 1) {
+
+                                                            destinationId = TargetedFinalOrgChartBuffer.children[0].id
+                                                            DestinationNode = TargetedFinalOrgChartBuffer.children[0].className
+                                                            TargetedFinalOrgChartBuffer = TargetedFinalOrgChartBuffer.children[0]
+                                                       // }
                                                     }
                                                 }
+                                                
                                             }
                                         }
+                                        console.log('haha')
                                         var EncodingBuffer = EncodeString(`EMPLOYEE${parseInt(StartPointJson.EmployeeRowId)}`, 0x88, 0x99)
                                         bufferNode.id = `${destinationId}${EncodingBuffer}`
                                         addChildren(TargetedFinalOrgChartBuffer, DestinationNode, bufferNode)
@@ -1094,20 +1330,54 @@ export default function pageInit() {
                                                     TargetedFinalOrgChartBuffer.children.push(child_list[index])
                                             }
                                         }
-
                                         TargetedFinalOrgChartBuffer = datascource2
-
                                         if (!isEmptyOrNull(HierarchyLevelToSearch))
                                             TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, destinationId)
+                                        console.log(bufferNode)
                                         addChildren(TargetedFinalOrgChartBuffer, DestinationNode, bufferNode)
                                         removeEmptyChildren(datascource2)
-                                       // console.log(bufferNode.name)
-                                       // console.log(destinationId)
                                         addListItem(destinationId, bufferId, bufferNode.name)
                                         if (!isEmptyOrNull(datascource2))
                                             GenerateSaveOrgStructure()
+                                        console.log(destinationId)
+                                        console.log(bufferId)
+                                        console.log(bufferNode)
+                                        console.log(DestinationNode)
+                                        /*
+                                          var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                                            var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                                            TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployee)
+                                            TargetedFinalOrgChartBuffer.Rights[this.name] = isChecked
+                                            FinalDatascource2 = FinalOrgChartBuffer
+                                        */
+                                        var PathList = DecomposeStringToList(destinationId, 0x88, 0x99)
+                                        var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                                        var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                                        let i=0
+                                        for ( i = 0; i < PathList.length; i++) 
+                                            TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, PathList[i])
+                                        deleteNodeById
+
+                                        var TargetedClassName = PathList[PathList.length - 1]
+                                        if (!isEmptyOrNull(TargetedFinalOrgChartBuffer)) {
+                                            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
+                                                if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {
+                                                    if (TargetedFinalOrgChartBuffer.children[0].hierarchyLevel == TargetedFinalOrgChartBuffer.hierarchyLevel) {
+                                                        if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].EmployeeRowId)) {
+                                                            TargetedFinalOrgChartBuffer = TargetedFinalOrgChartBuffer.children[0]
+                                                            TargetedClassName = TargetedFinalOrgChartBuffer.className
+                                                        }
+                                                    }
+                                                    
+                                                }
+                                            }
+                                            const bufferNodeCopy: Node = { ...bufferNode };
+                                            bufferNodeCopy.id = `${TargetedFinalOrgChartBuffer.id}${EncodeString(stripClassSuffix(bufferNodeCopy.className), 0x88, 0x99)}`
+                                            addChildren(TargetedFinalOrgChartBuffer, TargetedClassName, bufferNodeCopy)
+                                            FinalDatascource2 = FinalOrgChartBuffer
+                                            GenerateSaveOrgChart()
+                                        }
                                     }
-                                    setCallbacks()
                                     event.dataTransfer.dropEffect = 'none';
                                 }
                             })
@@ -1120,7 +1390,6 @@ export default function pageInit() {
                                 event.dataTransfer.dropEffect = 'move';  // Set the drop effect
                             })
                         }
-                        observer.disconnect(); // Stop observing after finding the nodes
                     }
                     var AvatarNodes = document.getElementsByClassName("avatar")
                     for (let j = 0; j < AvatarNodes.length; j++) {
@@ -1167,6 +1436,7 @@ export default function pageInit() {
                                         'id': bufferId, 'name': child_list[index].name,
                                         'title': child_list[index].title, 'className': child_list[index].className
                                     };
+
                                     addChildren(TargetedFinalOrgChartBuffer, targetedId, bufferNode)
                                 }
                                 datascource2 = FinalOrgChartBuffer
@@ -1176,6 +1446,70 @@ export default function pageInit() {
                                 var key = getEnumNameFromValue(hierarchy)
                                 id = id.replace(key, "")
 
+                                var PathList = DecomposeStringToList(StartPointJsonObject.id, 0x88, 0x99)
+                                console.log(PathList)
+                                var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                                var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                                var TargetedFinalOrgChartParentBuffer = FinalOrgChartBuffer
+                                let i = 0
+                                for (i = 0; i < PathList.length-1; i++)
+                                    TargetedFinalOrgChartParentBuffer = findByClassName(TargetedFinalOrgChartParentBuffer, PathList[i])
+                                TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartParentBuffer, PathList[i])
+                                if (!isEmptyOrNull(TargetedFinalOrgChartBuffer)) {
+                                    //FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                                  
+                                    /*
+                                    if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
+                                        if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {
+                    
+                                            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].EmployeeRowId)) {
+                                                //deleteNodeById(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.children[0].id)
+                                                TargetedFinalOrgChartBuffer = TargetedFinalOrgChartParentBuffer.children[0]
+                                            }
+                                            
+                                        }
+                                    }
+                                    */
+                                    var ListOfPath = DecomposeStringToList(TargetedFinalOrgChartBuffer.id, 0x88, 0x99)
+                                    var newId = ''
+                                    for (let i = 0; i < ListOfPath.length - 1; i++)
+                                        newId = `${newId}${EncodeString(ListOfPath[i],0x88,0x99)}`
+                                    
+                                    var parentOfElementToRemove = SearchById(TargetedFinalOrgChartParentBuffer, newId)
+                                    console.log(newId)
+                                    console.log(parentOfElementToRemove)
+                                    var childrenToAppend = TargetedFinalOrgChartBuffer.children
+                                    if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
+                                        if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {
+                                            if (TargetedFinalOrgChartBuffer.children[0].hierarchyLevel == TargetedFinalOrgChartBuffer.hierarchyLevel) {
+                                                if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].EmployeeRowId)) { // go down
+                                                    console.log(TargetedFinalOrgChartBuffer.children[0])
+                                                   // if (TargetedFinalOrgChartBuffer.children[0].Extension == 1) {
+                                                        childrenToAppend = TargetedFinalOrgChartBuffer.children[0].children
+                                                        deleteNodeById(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.children[0].id)
+
+                                                   // }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    deleteNodeById(parentOfElementToRemove, TargetedFinalOrgChartBuffer.id)
+
+                                    console.log(TargetedFinalOrgChartParentBuffer)
+                                    console.log(TargetedFinalOrgChartBuffer)
+                                    //deleteNodeById(FinalOrgChartBuffer, TargetedFinalOrgChartBuffer.id)
+                                    // deleteNodeById(FinalOrgChartBuffer, TargetedFinalOrgChartParentBuffer.id)
+                                    if (!isEmptyOrNull(childrenToAppend)) {
+                                        for (let i = 0; i < childrenToAppend.length; i++) {
+                                            childrenToAppend[i].id = `${parentOfElementToRemove.id}${EncodeString(stripClassSuffix(childrenToAppend[i].className), 0x88, 0x99)
+                                        }`
+                                            addChildren(parentOfElementToRemove, parentOfElementToRemove.className, childrenToAppend[i])
+
+                                        }
+                                    }
+                                    FinalDatascource2 = FinalOrgChartBuffer
+                                    GenerateSaveOrgChart()
+                                }
                             }
 
                         })
@@ -1201,15 +1535,37 @@ export default function pageInit() {
                             var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
                             var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
                             TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployee)
-                            TargetedFinalOrgChartBuffer.Rights[this.id] = isChecked
+
+
+
+
+
+
+                            console.log(isEmptyOrNull(TargetedFinalOrgChartBuffer))
+
+
+
+
+
+
+                            if (isEmptyOrNull(TargetedFinalOrgChartBuffer.Rights))
+                                TargetedFinalOrgChartBuffer.Rights = {
+                                "Appraisal": false,
+                                    "LeaveApproval": false,
+                                    "OtApproval": false,
+                                    "Training": false,
+                                    "MoneyClaiming": false,
+                                }
+
+                            TargetedFinalOrgChartBuffer.Rights[this.name] = isChecked
                             FinalDatascource2 = FinalOrgChartBuffer
                             var ListOfRights: NodeRights[] = extractRights(FinalOrgChartBuffer)
-
                             EmployeeRightsService.ClearOldAdminRightRecord({
                             }, response => {
                                 for (let i = 0; i < ListOfRights.length; i++) {
+
                                     if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
-                                        if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR)
+                                        if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR) {
                                             EmployeeRightsService.Create({
                                                 Entity: {
                                                     "EmployeeRowId": ListOfRights[i].EmployeeRowId,
@@ -1221,7 +1577,8 @@ export default function pageInit() {
                                                     "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
                                                 }
                                             })
-                                        else
+                                        }
+                                        else {
                                             EmployeeRightsService.Create({
                                                 Entity: {
                                                     "EmployeeRowId": ListOfRights[i].EmployeeRowId,
@@ -1232,7 +1589,12 @@ export default function pageInit() {
                                                     "Training": true,
                                                     "MoneyClaiming": true,
                                                 }
-                                            })                                    }
+                                            })
+
+                                        }
+
+
+                                    }
 
                                 }
 
@@ -1246,9 +1608,11 @@ export default function pageInit() {
                         event.stopImmediatePropagation();
                         let target = $(this)
                         let targetJson = JSON.parse(target.parent().attr('data-source'))
+                        console.log(targetJson)
+
                         var targetId = targetJson.id
                         var ElementToSet = target.parent().attr('class')
-                        ElementToSetEmployee = targetId
+                        ElementToSetEmployeeInDialog = targetId
                         var ElementToSetEmployeeClassName = ElementToSet.replace('node', '').trim()
                         var TargetElementSpan = document.getElementById('TargetElementSpan')
                         TargetElementSpan.textContent = findTitleByClassName(datascource2, ElementToSetEmployeeClassName)
@@ -1267,12 +1631,9 @@ export default function pageInit() {
                         OrgChartFilterCheckBox[i].addEventListener('change', function handleCheckboxChange(this) {
                             event.stopImmediatePropagation();
                             GenerateOrgChart()
-                            console.log('haha')
                         })
                     }
-
-                    
-                    $('.clickable-icon').on('click', function (e) {
+                    $('.clickable-icon').on('click', async function (e) { // remove PIC
                         e.stopImmediatePropagation();
                         var target = $(e.target)
                         var targetData = null
@@ -1281,22 +1642,108 @@ export default function pageInit() {
                             target = target.parent()
                         }
                         var targetJson = JSON.parse(targetData)
-                        var targetId = targetJson.id
+                        var targetId = removedNodeId = targetJson.id
+                        removedNodeId = `${removedNodeId}${EncodeString(`EMPLOYEE${targetJson.EmployeeRowId}`, 0x88, 0x99)}`
+                        indexToRemove = DecomposeStringToList(removedNodeId,0x88,0x99).length - 1
+
                         var targetClassName = targetJson.className
                         var FinalOrgChartBuffer = JSON.parse(JSON.stringify(datascource2))
                         var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
                         TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, targetId)
                         SetEmployeeByClassName(TargetedFinalOrgChartBuffer, targetClassName, null)
                         datascource2 = FinalOrgChartBuffer
-                        GenerateSaveOrgStructure()
-                    })
-                    function clickExportButton(divId) {
-                        let chartContainer = document.querySelector(divId)
-                        let mask = chartContainer.querySelector(':scope > .mask')
-                        let sourceChart = chartContainer.querySelector('.orgchart')
-                      
+                        await GenerateSaveOrgStructure()
 
-                        let flag = sourceChart.classList.contains('l2r') || sourceChart.classList.contains('r2l');
+
+                        var pathList = DecomposeStringToList(TargetedFinalOrgChartBuffer.id, 0x88, 0x99)
+                        var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                        var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                        var ChildrenList;
+                        for (let i = 0; i < pathList.length; i++) 
+                            TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, pathList[i])
+                        if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
+                            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].children))
+                                ChildrenList = TargetedFinalOrgChartBuffer.children[0].children
+                            deleteNodeById(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.children[0].id)
+                            if (!isEmptyOrNull(ChildrenList))
+                                for (let i = 0; i < ChildrenList.length; i++)
+                                    addChildren(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.className, ChildrenList[i])
+                        }                        
+                        FinalDatascource2 = FinalOrgChartBuffer
+                        
+
+
+                        var EmployeeInOrgStruct = countEmployee(SplitOrgStructList, targetJson.EmployeeRowId)
+                        console.log(EmployeeInOrgStruct)
+                        console.log(SplitOrgStructList)
+
+                        if (EmployeeInOrgStruct == 0) //if employee not in org struct, add it back to the org chart
+                        {
+                            var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                            var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                            var EmployeeData = ListOfEmployeeData.filter(Employee => Employee.id == targetJson.EmployeeRowId)
+                            var DivisionClass = `DIVISION${EmployeeData[0].DivisionId}`
+                            var DepartmentClass = `DEPARTMENT${EmployeeData[0].DepartmentId}`
+                            var SectionClass = `SECTION${EmployeeData[0].SectionId}`
+                            if (!isEmptyOrNull(EmployeeData)) {
+                                if (!isEmptyOrNull(EmployeeData[0].DivisionId))
+                                    TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, DivisionClass)
+                                if (!isEmptyOrNull(EmployeeData[0].DepartmentId))
+                                    TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, DepartmentClass)
+                                if (!isEmptyOrNull(EmployeeData[0].SectionId))
+                                    TargetedFinalOrgChartBuffer = findByClassName(TargetedFinalOrgChartBuffer, SectionClass)
+                                console.log(TargetedFinalOrgChartBuffer)
+                                console.log(EmployeeData)
+                                var id = EncodeString(`EMPLOYEE${EmployeeData[0]["id"]}`, 0x88, 0x99)
+                                var bufferNode: Node = {
+                                    'hierarchyId': EmployeeData[0]["id"],
+                                    'EmployeeRowId': EmployeeData[0]["id"],
+                                    'hierarchyLevel': EmployeeEnum,
+                                    'id': id, 'name': EmployeeData[0].EmployeeName,
+                                    'title': EmployeeData[0].EmployeeName, 'className': `EMPLOYEE${EmployeeData[0].id} Class`
+                                };
+                                if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children)) {
+                                    if (TargetedFinalOrgChartBuffer.children.length == 1 && isEmptyOrNull(TargetedFinalOrgChartBuffer.EmployeeRowId)) {//go down
+                                        if (TargetedFinalOrgChartBuffer.children[0].hierarchyLevel == TargetedFinalOrgChartBuffer.hierarchyLevel) {
+                                            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer.children[0].EmployeeRowId)) {
+                                                console.log(TargetedFinalOrgChartBuffer.children[0])
+                                               // if (TargetedFinalOrgChartBuffer.children[0].Extension == 1)
+                                                    TargetedFinalOrgChartBuffer = TargetedFinalOrgChartBuffer.children[0]
+                                            }
+                                        }
+
+                                    }
+                                }
+
+                                addChildren(TargetedFinalOrgChartBuffer, TargetedFinalOrgChartBuffer.className, bufferNode)
+                                FinalDatascource2 = FinalOrgChartBuffer
+
+                            }
+                        }
+
+
+                        GenerateSaveOrgChart()
+                   
+                    })
+                    $('#generateOrgChartButton').on('click', function (e) {
+                        e.stopImmediatePropagation();
+
+                        if (!isEmptyOrNull(FinalDatascource2)) {
+                            confirmDialog("Do you want to generate Organization Chart? The original chart will be override.", () => {
+                                GenerateOrgChartData()
+                               // setCallbacks()
+                            });
+                        }
+                        else {
+                            GenerateOrgChartData()
+                            //setCallbacks()
+                        }
+                    })
+                    function clickExportButton(id) {
+                        let chartContainer = document.querySelector(id),
+                            mask = chartContainer.querySelector(':scope > .mask'),
+                            sourceChart: HTMLElement = chartContainer.querySelector('.orgchart'),
+                            flag = sourceChart.classList.contains('l2r') || sourceChart.classList.contains('r2l');
 
                         if (!mask) {
                             mask = document.createElement('div');
@@ -1306,16 +1753,15 @@ export default function pageInit() {
                         } else {
                             mask.classList.remove('hidden');
                         }
-                        
                         chartContainer.classList.add('canvasContainer');
+
                         html2canvas(sourceChart, {
                             'width': flag ? sourceChart.clientHeight : sourceChart.clientWidth,
                             'height': flag ? sourceChart.clientWidth : sourceChart.clientHeight,
                             'onclone': function (cloneDoc) {
                                 let canvasContainer = cloneDoc.querySelector('.canvasContainer');
-
                                 canvasContainer.style.overflow = 'visible';
-                                canvasContainer.querySelector('.orgchart').transform = '';
+                                canvasContainer.querySelector('.orgchart').transform = ''
                             }
                         })
                             .then((canvas) => {
@@ -1332,33 +1778,16 @@ export default function pageInit() {
                                 chartContainer.classList.remove('canvasContainer');
                             });
                     }
-
-                    $('#downloadOrgStructButton').on('click', function (e) {
+                    $('#exportOrgStructButton').on('click', function (e) {
+                        e.stopImmediatePropagation();
                         clickExportButton('#chart-container')
-                        e.stopImmediatePropagation();
                     })
-
-                    $('#downloadOrgChartButton').on('click', function (e) {
+                    $('#exportOrgChartButton').on('click', function (e) {
+                        e.stopImmediatePropagation();
                         clickExportButton('#orgChartContainer')
-                        e.stopImmediatePropagation();
-                    })
-
-                    $('#generateOrgChartButton').on('click', function (e) {
-                        e.stopImmediatePropagation();
-
-                        if (!isEmptyOrNull(FinalDatascource2)) {
-                            confirmDialog("Do you want to generate Organization Chart? The original chart will be override.", () => {
-                                GenerateOrgChartData()
-                                setCallbacks()
-                            });
-                        }
-                        else {
-                            GenerateOrgChartData()
-                            setCallbacks()
-                        }
                     })
                     $('#togglePanel').on('click', function (e) {
-                      //  console.log('haha')
+                        //  console.log('haha')
                         e.stopImmediatePropagation();
                         function isDivHidden(div) {
                             // Get the computed style of the div
@@ -1375,7 +1804,7 @@ export default function pageInit() {
                         }
                     })
                     $('#toggleSidePanel').on('click', function (e) {
-                      //  console.log('haha')
+                        //  console.log('haha')
                         function isDivHidden(div) {
                             // Get the computed style of the div
                             const style = window.getComputedStyle(div);
@@ -1403,7 +1832,6 @@ export default function pageInit() {
                             // Check if display is 'none'
                             return style.display === 'none';
                         }
-                        console.log('haha')
                         // Usage example
                         const myDiv = document.getElementById('chart-left-panel');
 
@@ -1427,9 +1855,8 @@ export default function pageInit() {
                         if (!isEmptyOrNull(orgDiv)) {
                             var nodes = orgDiv.getElementsByClassName('node')
                             for (let i = 0; i < nodes.length; i++) {
-
                                 var jsonObject = JSON.parse(nodes[i].getAttribute('data-source'));
-                                if (jsonObject.hierarchyLevel != EmployeeEnum)
+                                if (jsonObject.hierarchyLevel != EmployeeEnum) 
                                     nodes[i].draggable = false
                                 if (!isEmptyOrNull(jsonObject.EmployeeRowId)) {
                                     nodes[i].addEventListener("click", function (event) {
@@ -1437,8 +1864,10 @@ export default function pageInit() {
                                         var target = $(event.target)
                                         let displayPdf = false
 
-                                        if (target.hasClass('CheckBox'))
+                                        if (target.hasClass('CheckBox')) {
                                             return
+                                        }
+
                                         else if (target.hasClass('dot'))//display pdf
                                             displayPdf = true
                                         var targetData = null
@@ -1454,13 +1883,13 @@ export default function pageInit() {
                                             const employeeRow = ListOfEmployeeData.find(employee => employee.id === targetEmployeeRowId);
                                             //console.log(employeeRow)
                                             var pdf = document.getElementById('pdf')
-                                          //  console.log(pdf)
-                                          //  console.log($(pdf))
+                                            //  console.log(pdf)
+                                            //  console.log($(pdf))
                                             pdfSources = []
                                             pdfOriginalName = []
                                             try {
                                                 const result = JSON.parse(employeeRow.JobDescPath);
-                                               // console.log(result); // This line will not be executed if jsonString is invalid
+                                                // console.log(result); // This line will not be executed if jsonString is invalid
                                                 for (let i = 0; i < result.length; i++) {
                                                     pdfSources.push(`/upload/${result[i].Filename}`)
                                                     pdfOriginalName.push(`${result[i].OriginalName}`)
@@ -1486,11 +1915,16 @@ export default function pageInit() {
                             }
                         }
                     }
+                   
+                    if (firstTime == 1)
+                        scrollToParent()
+                    firstTime = 0
+                    observer.disconnect(); // Stop observing after finding the nodes
 
-                }
-            }
+               // }
+           // }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.querySelector('#orgChartContainer'), { childList: true, subtree: true, attributes: true });
     }
     function extractEmployeeInOrgChart(node) {
         let results = [];
@@ -1517,14 +1951,16 @@ export default function pageInit() {
                 child.children = [];
                 // Encode the ID
                 idBuffer = `${child.id}${EncodeString(`EMPLOYEE${child.EmployeeRowId}`, 0x88, 0x99)}`;
-                var bufferNode = {
+                var bufferNode: NodeRow = {
                     EmployeeRowId: child.EmployeeRowId,
                     hierarchyLevel: child.hierarchyLevel,
                     name: child.name,
                     id: idBuffer,
                     title: child.title,
                     className: `EMPLOYEE${child.EmployeeRowId} Class`,
-                    children: nestedChildren.length ? nestedChildren : undefined // Only add children if they exist
+                    children: nestedChildren.length ? nestedChildren : undefined, // Only add children if they exist
+                    extension: 1,
+                    parentId: child.id
                 }
                 // Push modified child information into the children array
                 child.children.push(bufferNode);
@@ -1556,30 +1992,41 @@ export default function pageInit() {
         }
         return null;
     }
+    function extractRightsAndEmployeeRowId(node: Node): ExtractedData[] {
+        let result: ExtractedData[] = [];
+        // Check if the current node has Rights and EmployeeRowId
+        if (node.Rights && node.EmployeeRowId) {
+            result.push({
+                hierarchyId: node.hierarchyLevel,
+                id: node.id,
+                EmployeeRowId: node.EmployeeRowId,
+                Rights: node.Rights
+            });
+        }
+        else if (!isEmptyOrNull(node.EmployeeRowId) && node.hierarchyLevel != EmployeeEnum)
+            result.push({
+                hierarchyId: node.hierarchyLevel,
+                id: node.id,
+                EmployeeRowId: node.EmployeeRowId,
+                Rights: {
+                    OtApproval: false,
+                    LeaveApproval: false,
+                    Appraisal: false,
+                    MoneyClaiming: false,
+                    Training:false
+                }
+            });
+        // Recursively process children if they exist
+        if (node.children) {
+            for (const child of node.children)
+                result = result.concat(extractRightsAndEmployeeRowId(child));
+        }
+        return result;
+    }
+
     function GenerateOrgChartData() {
-        interface ExtractedData {
-            id: string | null;
-            EmployeeRowId: number | null;
-            Rights: EmployeeAdminRights | null;
-        }
+        
         // Recursive function to traverse the employee structure and collect data
-        function extractRightsAndEmployeeRowId(node): ExtractedData[] {
-            let result: ExtractedData[] = [];
-            // Check if the current node has Rights and EmployeeRowId
-            if (node.Rights && node.EmployeeRowId) {
-                result.push({
-                    id: node.id,
-                    EmployeeRowId: node.EmployeeRowId,
-                    Rights: node.Rights
-                });
-            }
-            // Recursively process children if they exist
-            if (node.children) {
-                for (const child of node.children)
-                    result = result.concat(extractRightsAndEmployeeRowId(child));
-            }
-            return result;
-        }
         function fillInRights(node) {
             if (node.hierarchy == CardType.DIRECTOR) {
                 var Right = {
@@ -1607,8 +2054,8 @@ export default function pageInit() {
             }
         }
         if (!isEmptyOrNull(FinalDatascource2))
-            var ListOfRights: any[] = extractRightsAndEmployeeRowId(FinalDatascource2)
-        let EmployeeInOrgChart: any[] = extractEmployeeInOrgChart(datascource2)
+            var ListOfRights: ExtractedData[] = extractRightsAndEmployeeRowId(FinalDatascource2)
+        let EmployeeInOrgChart: number[] = extractEmployeeInOrgChart(datascource2)
         //console.log(JSON.parse(JSON.stringify(datascource2)))
         var GenerativeOrgChartBuffer = JSON.parse(JSON.stringify(datascource2))
         var FinalOrgChartBuffer
@@ -1668,7 +2115,7 @@ export default function pageInit() {
                 'EmployeeRowId': ListOfEmployeeData[i]["id"],
                 'hierarchyLevel': EmployeeEnum,
                 'id': id, 'name': str,
-                'title': str, 'className': `EMPLOYEE${ListOfEmployeeData[i]["id"]} Class`
+                'title': str, 'className': `EMPLOYEE${ListOfEmployeeData[i].id} Class`
             };
             var PrevDestination;
             let counter = 0;
@@ -1686,12 +2133,13 @@ export default function pageInit() {
                             DestinationNode = PrevDestination
                         }
                         else {
+                            TargetedFinalOrgChartBuffer = findByClassName(FinalOrgChartBuffer, `${getEnumNameFromValue(CardType.DIRECTOR)}`) 
                             ignore = 1;
                         }
                         break
                     }
                     PrevDestination = DestinationNode
-                    counter+=1
+                    counter += 1
                 }
             }
             /*
@@ -1701,7 +2149,7 @@ export default function pageInit() {
             }
             else {
             */
-            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer)&&ignore == 0) {
+            if (!isEmptyOrNull(TargetedFinalOrgChartBuffer)) {
                 if (!EmployeeInOrgChart.includes(ListOfEmployeeData[i].id)) {
                     bufferNode.id = TargetedFinalOrgChartBuffer.id + bufferNode.id
                     addChildren(TargetedFinalOrgChartBuffer, DestinationNode, bufferNode)
@@ -1730,13 +2178,50 @@ export default function pageInit() {
 
         //THIS SECTION WILL fill in rights
         //START
+        var ListOfUnusedRights: ExtractedData[] = []
         if (!isEmptyOrNull(ListOfRights)) {
             for (let i = 0; i < ListOfRights.length; i++) {
                 var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
-                var buffer = SearchById(TargetedFinalOrgChartBuffer, ListOfRights[i].id)
-                if (!isEmptyOrNull(buffer))
-                    buffer.Rights = ListOfRights[i].Rights
+                var buffer: Node = SearchById(TargetedFinalOrgChartBuffer, ListOfRights[i].id)
+                //console.log(buffer)
+                if (isEmptyOrNull(buffer)) {
+                    if (ListOfRights[i].hierarchyId <= CardType.SECTION) {
+                        if (ListOfRights[i].id != removedNodeId)
+                        ListOfUnusedRights.push(ListOfRights[i])
+                    }
+                    continue
+                }
+                //if (!isEmptyOrNull(buffer))
+                 buffer.Rights = ListOfRights[i].Rights
+
             }
+        }
+        if (!isEmptyOrNull(removedNodeId)) {
+
+            for (let i = 0; i < ListOfUnusedRights.length; i++) {
+                var newPath = DecomposeStringToList(ListOfUnusedRights[i].id, 0x88, 0x99)
+                newPath.splice(indexToRemove, 1)
+                var newId = ComposeListToString(newPath, 0x88, 0x99)
+
+                var buffer: Node = SearchById(TargetedFinalOrgChartBuffer, newId)
+                if (!isEmptyOrNull(buffer))
+                    buffer.Rights = ListOfUnusedRights[i].Rights
+            }
+
+
+            removedNodeId = ''
+        }
+        else if (!isEmptyOrNull(addedClass)) {
+            for (let i = 0; i < ListOfUnusedRights.length; i++) {
+                var newPath = DecomposeStringToList(ListOfUnusedRights[i].id, 0x88, 0x99)
+                newPath.splice(addedIndex, 0, addedClass)
+                var newId = ComposeListToString(newPath, 0x88, 0x99)
+
+                var buffer: Node = SearchById(TargetedFinalOrgChartBuffer, newId)
+                if (!isEmptyOrNull(buffer))
+                    buffer.Rights = ListOfUnusedRights[i].Rights
+            }
+            addedClass=''
         }
         TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
         fillInRights(TargetedFinalOrgChartBuffer)
@@ -1798,6 +2283,57 @@ export default function pageInit() {
                     return false; // Stop recursion after adding the node
         return false; // Target node not found
     }
+    function SetEmployeeById(root, id, EmployeeRowId) {
+        // If the current node's name matches the target name, add the new node
+        if (root.id === id) {
+            if (isEmptyOrNull(EmployeeRowId))
+                root.EmployeeRowId = null
+            else
+                root.EmployeeRowId = parseInt(EmployeeRowId)
+            return true; // Node found and new node added
+        }
+        if (root.children)
+            for (const child of root.children)
+                if (SetEmployeeById(child, id, EmployeeRowId))
+                    return false; // Stop recursion after adding the node
+        return false; // Target node not found
+    }
+    function findEmployee(data: NodeRow[], EmployeeRowId: number): NodeRow {
+        
+        let result = null; // Variable to hold the result
+        if (isEmptyOrNull(data))
+            return result
+       // console.log(EmployeeRowId)
+        for (let i = 0; i < data.length;i++)
+        {
+            //if (data[i].hierarchyLevel == EmployeeEnum)
+            //    console.log(data[i])
+
+            if (data[i].hierarchyLevel == EmployeeEnum && data[i].EmployeeRowId == EmployeeRowId) {
+                return data[i]; // Return the found object
+            }
+        }
+
+        return null; // Return null if no match is found
+    }
+    function countEmployee(data: NodeRow[], EmployeeRowId):number {
+
+        let result = 0; // Variable to hold the result
+        if (isEmptyOrNull(data))
+            return result
+
+        for (let i = 0; i < data.length; i++) {
+            if (data[i].EmployeeRowId == EmployeeRowId) {
+                result+=1
+            }
+        }
+      
+
+        return result; // Return null if no match is found
+    }
+
+
+
     function findByClassName(data, className) {
         // console.log(data)
 
@@ -1857,9 +2393,8 @@ export default function pageInit() {
         }
         return parents;
     }
-    var structureState = 1
-    var structureStatePrev = structureState
     function GenerateOrgStructure() {
+
         SplitOrganisationStructureService.List({
         }, response => {
             if (SplitOrgStructList.length == 0) {
@@ -1893,7 +2428,6 @@ export default function pageInit() {
             var Json, filterFlag = 0;
             if (checkedIds.length > 0) {
                 filterFlag = 1;
-                structureState = 2
                 let OrgStructFinalResult = [];
                 checkedIds.forEach(item => {
                     OrgStructFinalResult.push(item);
@@ -1905,9 +2439,10 @@ export default function pageInit() {
                 Json = GenerateJson(OrgStructFinalResult)
             }
             else {
-                structureState = 1
                 Json = GenerateJson(SplitOrgStructList)
+                datascource2 = JSON.parse(JSON.stringify(Json))
             }
+
             if (isEmptyOrNull(Json)) {
                 if (isEmptyOrNull(spareOrgStructJson))
                     Json = GenerateDefaultOrgStruct()
@@ -1915,8 +2450,9 @@ export default function pageInit() {
                     Json = JSON.parse(spareOrgStructJson)
             }
 
+            if (filterFlag == 0)
+                datascource2 = JSON.parse(JSON.stringify(Json))
 
-            datascource2 = JSON.parse(JSON.stringify(Json))
             var orgChartElement = document.getElementById("chart-container")
             var panel = orgChartElement.querySelector("#left-panel");
             if (isEmptyOrNull(panel)) {
@@ -1924,50 +2460,146 @@ export default function pageInit() {
                 LeftPanel.id = "left-panel"
                 LeftPanel.className = "left-panel-class"
                 orgChartElement.append(LeftPanel)
-                var BulletList = GenerateUl(Json, ChartType.OrgStruct)
+                var BulletList = GenerateUl(datascource2, ChartType.OrgStruct)
                 $('#left-panel').append(BulletList)
+                $('#left-panel').addClass("scrollable")
             }
 
-            let orgchart = GenerateStructure(Json, 'chart-container', filterFlag);
+            GenerateStructure(Json, 'chart-container', filterFlag);
+
             if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) {
+              //  console.log('haha')
                 var generateOrgChartButton = orgChartElement.querySelector("#chart-container .buttonGroup");
                 if (isEmptyOrNull(generateOrgChartButton)) {
-                    console.log('haha')
+                  //  console.log('haha')
 
                     generateOrgChartButton = document.createElement('div')
                     generateOrgChartButton.className = 'buttonGroup'
                     generateOrgChartButton.innerHTML =
                         `
             <button id="generateOrgChartButton" class="btn btn-light btn-rounded" style="top: 50px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Generate Organisation Chart</button>
-           <button id="downloadOrgStructButton" class="oc-export-btn btn btn-light btn-rounded" style="top: 90px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Structure</button>
-           <a class = 'oc-download-btn' download = 'MyOrgStruct.png'></a>
+            <a id="downloadOrgStructButton" class="btn btn-light btn-rounded oc-download-btn"  download="orgStruct.png" style="top: 85px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Structure</a>
+            <button id="exportOrgStructButton" class="btn btn-light btn-rounded oc-export-btn"  style="top: 85px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Structure</button>
+
             <button id="togglePanel" class="btn btn-light btn-rounded" style="bottom: 10px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Tab</button>
             <button id="toggleSidePanel" class="btn btn-light btn-rounded" style="bottom: 10px; left: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Filter Tab</button>
             `
                     orgChartElement.appendChild(generateOrgChartButton)
                 }
             }
-            setCallbacks()
-            if (structureStatePrev == structureState) {
-                orgchart.chart.style = Style
-                console.log('haha')
-            }
-            structureStatePrev = structureState
+            //setCallbacks()
+
         })
 
 
     }
+    let StructArray: NodeRow[]
+    async function GenerateSaveOrgStructure() {
+        function extractFirstNumber(input: string): number | null {
+            const match = input.match(/\d+/);
+            return match ? Number(match[0]) : null;
+        }
+
+        function isEmployeeClassFormat(input: string): boolean {
+            return /^EMPLOYEE\d+/.test(input);
+        }
+
+        // ✅ Step 1: Ensure DeleteAll completes before proceeding
+        await new Promise<void>((resolve, reject) => {
+            SplitOrganisationStructureService.DeleteAll({}, response => resolve(), error => reject(error));
+        });
+
+        // ✅ Step 2: Process and store data after DeleteAll completes
+        datascource = JSON.parse(JSON.stringify(datascource2));
+        StructArray = splitIntoNodes(datascource2);
+
+        // ✅ Step 3: Create all nodes and wait for them to complete
+        const createRequests = StructArray.map(struct => {
+            return new Promise<void>((resolve, reject) => {
+                let ElementRowID;
+                const ClassList = DecomposeStringToList(struct.id, 0x88, 0x99);
+
+                if (isEmployeeClassFormat(ClassList[ClassList.length - 1])) {
+                    ElementRowID = extractFirstNumber(ClassList[ClassList.length - 2]);
+                } else {
+                    ElementRowID = extractFirstNumber(struct.className);
+                }
+
+                SplitOrganisationStructureService.Create({
+                    Entity: {
+                        "ParentId": struct.parentId,
+                        "NodeId": struct.id,
+                        "Name": struct.name,
+                        "Title": struct.title,
+                        "ClassName": struct.className,
+                        "HierarchyLevel": struct.hierarchyLevel,
+                        "EmployeeRowId": struct.EmployeeRowId,
+                        "hierarchyId": struct.hierarchyId,
+                        "childrenIndex": struct.childrenIndex,
+                        "ElementRowId": ElementRowID
+                    }
+                }, response => {
+                    if (response && response.EntityId) 
+                        struct.rowId = response.EntityId; // Assign NodeRowId
+                    resolve()
+                }, error => reject(error));
+            });
+        });
+
+        // ✅ Wait until ALL Create requests are completed before moving forward
+        await Promise.all(createRequests);
+
+        // ✅ Step 4: Proceed with the rest of the logic after everything is completed
+        SplitOrgStructList = StructArray;
+        const checkedBoxes = Array.from(document.querySelectorAll('.filterCheckBox:checked'));
+        const checkedIds = checkedBoxes.map(box => box.getAttribute('wantedId'));
+
+        let Json;
+        let filterFlag = 0;
+        if (checkedIds.length > 0) {
+            filterFlag = 1;
+            let OrgStructFinalResult = [];
+            checkedIds.forEach(item => {
+                OrgStructFinalResult.push(item);
+                const parents = traceParents(item, SplitOrgStructList);
+                OrgStructFinalResult.push(...parents);
+            });
+            OrgStructFinalResult = Array.from(new Set(OrgStructFinalResult.map(obj => obj.id)))
+                .map(id => SplitOrgStructList.find(obj => obj.id === id));
+            Json = GenerateJson(OrgStructFinalResult);
+        } else {
+            Json = GenerateJson(SplitOrgStructList);
+        }
+
+        const BulletList = GenerateUl(datascource2, ChartType.OrgStruct);
+        $('#left-panel').html('');
+        $('#left-panel').append(BulletList);
+        $('#left-panel').addClass('scrollable');
+
+        GenerateStructure(Json, 'chart-container', filterFlag);
+    }
+
+    /*
     function GenerateSaveOrgStructure() {
+        function extractFirstNumber(input: string): number | null {
+            const match = input.match(/\d+/);
+            return match ? Number(match[0]) : null;
+        }
+        function isEmployeeClassFormat(input: string): boolean {
+            return /^EMPLOYEE\d+/.test(input);
+        }
         SplitOrganisationStructureService.DeleteAll({
         }, response => {
             datascource = JSON.parse(JSON.stringify(datascource2))
-            let StructArray: NodeRow[] = splitIntoNodes(datascource2)
+            StructArray = splitIntoNodes(datascource2)
             for (let i = 0; i < StructArray.length; i++) {
-                function extractNumber(text: string): number | null {
-                    const match = text.match(/\d+/); // Find the first number in the string
-                    return match ? parseInt(match[0], 10) : null;
-                }
-                var extracted = extractNumber(StructArray[i].className)
+                var ElementRowID
+                var ClassList = DecomposeStringToList(StructArray[i].id, 0x88, 0x99)
+                if (isEmployeeClassFormat(ClassList[ClassList.length - 1]))
+                    ElementRowID = extractFirstNumber(ClassList[ClassList.length - 2])
+                else
+                    ElementRowID = extractFirstNumber(StructArray[i].className)
+
                 SplitOrganisationStructureService.Create({
                     Entity:
                     {
@@ -1980,7 +2612,7 @@ export default function pageInit() {
                         "EmployeeRowId": StructArray[i].EmployeeRowId,
                         "hierarchyId": StructArray[i].hierarchyId,
                         "childrenIndex": StructArray[i].childrenIndex,
-                        "ElementRowId": extracted
+                        "ElementRowId": ElementRowID
                     },
                 });
             }
@@ -2006,10 +2638,10 @@ export default function pageInit() {
             $('#left-panel').html('');
             $('#left-panel').append(BulletList);
             GenerateStructure(Json, 'chart-container', filterFlag)
-            setCallbacks()
         })
 
     }
+    */
     function GenerateDefaultOrgStruct() {
         var title = getEnumNameFromValue(CardType.DIRECTOR)
         var name = title
@@ -2023,7 +2655,6 @@ export default function pageInit() {
         };
         return bufferNode
     }
-    
     function GenerateStructure(InputJson, containerId, filter) {
         var orgChartElement = document.getElementById(containerId)
         if (orgChartElement) {
@@ -2034,6 +2665,7 @@ export default function pageInit() {
                 orgDiv.remove()
             }
         }
+
         let orgchart = new OrgChart({
             'chartContainer': `#${containerId}`,
             'data': InputJson,
@@ -2041,8 +2673,11 @@ export default function pageInit() {
             'nodeId': 'thisOrgChart',
             'zoom': true,
             'pan': true,
+            'renderCompleted':setCallbacks(),
+            //'renderCompleted': setCallbacks(),
             'createNode': function (node, data) {
                 let image = ""
+    
                 if (node.hierarchyLevel != EmployeeEnum)
                     node.draggable = false
                 let $jqueryObject = $(node);
@@ -2097,20 +2732,146 @@ export default function pageInit() {
                 content.remove()
             }
         });
-       // if (filter == 0)
-      //      orgchart.chart.style = Style
+        console.log(filter)
+        console.log(orgStructDisplay)
+        console.log(isOrgChartOutOfView())
+        if (filter == orgStructDisplay) 
+            orgchart.chart.style = Style
+        
+        else 
+            orgStructDisplay = filter
+
         return orgchart
     }
+    function GenerateUl(node, type) {
+        if (isEmptyOrNull(node)) return;
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        if (type === ChartType.OrgStruct)
+            checkbox.className = 'filterCheckBox';
+        else if (type === ChartType.OrgChart)
+            checkbox.className = 'OrgChartFilterCheckBox';
+
+        // Step 1: Collect the state of all checkboxes and toggle buttons before regenerating the list
+        const checkedCheckboxes = {};
+        const toggleStates = {};
+
+        const allCheckboxes = document.querySelectorAll(`input.${checkbox.className}`);
+        allCheckboxes.forEach(cb => {
+            checkedCheckboxes[cb.getAttribute('wantedId')] = cb.checked;
+        });
+
+        const allToggles = document.querySelectorAll(`.${checkbox.className}.toggle`);
+        allToggles.forEach(toggle => {
+            const nodeId = toggle.getAttribute('wantedid');
+            toggleStates[nodeId] = toggle.textContent === '-';
+        });
+
+        // Step 2: Create the main <ul> element
+        const ul = document.createElement('ul');
+        ul.classList.add('nested');
+       // ul.id = 'bulletList';
+
+        const li = document.createElement('li');
+        li.textContent = `${node.name}`;
+
+        if (!isEmptyOrNull(node.EmployeeRowId)) {
+            const employeeRow = ListOfEmployeeData.find(employee => employee.id === node.EmployeeRowId);
+            if (!isEmptyOrNull(employeeRow))
+                li.textContent = `${li.textContent} (${employeeRow.EmployeeId})`;
+        }
+
+        // Step 3: Create and restore checkbox states
+        checkbox.setAttribute('wantedId', node.id);
+        checkbox.style.marginLeft = '10px';
+
+        if (checkedCheckboxes[node.id] !== undefined && checkedCheckboxes[node.id] === true)
+            checkbox.checked = checkedCheckboxes[node.id];
+        if (node.className != 'DIRECTOR Class')
+        li.appendChild(checkbox);
+
+        // Step 4: Toggle button for parent nodes
+        if (node.children && node.children.length > 0 && node.hierarchyLevel !== CardType.DIRECTOR) {
+            const toggleSpan = document.createElement('span');
+            toggleSpan.classList.add('toggle');
+            toggleSpan.classList.add(`${checkbox.className}`);
+
+            toggleSpan.textContent = '+'; // Default to collapsed
+            toggleSpan.style.cursor = 'pointer';
+            toggleSpan.style.color = '#007BFF';
+            toggleSpan.style.textDecoration = 'underline';
+            toggleSpan.setAttribute('wantedId', node.id);
+
+            li.prepend(toggleSpan);
+
+            // Toggle event listener
+            toggleSpan.addEventListener('click', () => {
+                console.log('haha')
+                toggleChildNodes(li, toggleSpan);
+            });
+
+            // Restore previous toggle state
+            if (toggleStates[node.id]) toggleSpan.textContent = '-';
+        }
+
+        // Step 5: Generate child elements
+        if (node.children && node.children.length > 0) {
+            const childUl = document.createElement('ul');
+            childUl.style.display = node.hierarchyLevel === CardType.DIRECTOR ? 'block' : (toggleStates[node.id] ? 'block' : 'none');
+
+            node.children.forEach(child => {
+                childUl.appendChild(GenerateUl(child, type));
+            });
+
+            li.appendChild(childUl);
+        }
+
+        // Step 6: Ensure checking a parent also checks all children
+        checkbox.addEventListener('change', (event) => {
+            event.stopPropagation(); // Prevents accidental triggering of parent events
+            setChildCheckboxes(li, checkbox.checked);
+        });
+
+        ul.appendChild(li);
+        return ul;
+    }
+
+    // **Helper function to toggle all child elements and checkboxes**
+    function toggleChildNodes(parentLi: HTMLElement, toggleSpan: HTMLElement) {
+        const childUls = parentLi.querySelector('ul');
+        const isExpanding = toggleSpan.textContent === '+';
+        childUls.style.display = isExpanding ? 'block' : 'none';
+     
+
+        // Update the toggle button symbol for ALL child nodes
+        const allChildToggles = parentLi.querySelector('.toggle');
+        allChildToggles.textContent = isExpanding ? '-' : '+';
+
+
+        // Update the clicked toggle button itself
+        toggleSpan.textContent = isExpanding ? '-' : '+';
+    }
+
+    // **Helper function to check/uncheck all child checkboxes**
+    function setChildCheckboxes(parentLi: HTMLElement, isChecked: boolean) {
+        const childCheckboxes = parentLi.querySelectorAll('input[type="checkbox"]');
+        childCheckboxes.forEach(childCheckbox => {
+            (childCheckbox as HTMLInputElement).checked = isChecked;
+        });
+    }
+
+    /*
     function GenerateUl(node, type) {
         if (isEmptyOrNull(node))
             return
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        if (type === ChartType.OrgStruct) {
+        if (type === ChartType.OrgStruct) 
             checkbox.className = 'filterCheckBox';
-        } else if (type === ChartType.OrgChart) {
+         else if (type === ChartType.OrgChart)
             checkbox.className = 'OrgChartFilterCheckBox';
-        }
+        
 
         // Step 1: Collect the state of all checkboxes with the class 'filterCheckBox' before generating the list
         const checkedCheckboxes = {};
@@ -2133,17 +2894,17 @@ export default function pageInit() {
         const li = document.createElement('li');
         li.textContent = `${node.name}`;
         if (!isEmptyOrNull(node.EmployeeRowId)) {
-          //  console.log(node)
+            //  console.log(node)
             const employeeRow = ListOfEmployeeData.find(employee => employee.id === node.EmployeeRowId);
             //console.log(employeeRow)
             if (!isEmptyOrNull(employeeRow))
-            li.textContent = `${li.textContent} (${employeeRow.EmployeeId})`;
+                li.textContent = `${li.textContent} (${employeeRow.EmployeeId})`;
         }
         // Step 3: Create the checkbox
         checkbox.setAttribute('wantedId', node.id); // Set a custom attribute for the node ID
         checkbox.style.marginLeft = '10px';
         // Restore the checked state if applicable
-        if (checkedCheckboxes[node.id] !== undefined && checkedCheckboxes[node.id] === true) 
+        if (checkedCheckboxes[node.id] !== undefined && checkedCheckboxes[node.id] === true)
             checkbox.checked = checkedCheckboxes[node.id];
         // Add the checkbox to the <li> element
         li.appendChild(checkbox);
@@ -2173,9 +2934,9 @@ export default function pageInit() {
             });
 
             // Check if this node was previously expanded and set its state
-            if (toggleStates[node.id]) {
+            if (toggleStates[node.id]) 
                 toggleSpan.textContent = '-'; // If previously expanded, set to '-'
-            }
+            
         }
 
         // Step 5: If the node has children, create child <ul> elements
@@ -2198,13 +2959,14 @@ export default function pageInit() {
         // Step 6: Return the generated <ul>
         return ul;
     }
+    */
 
     function addListItem(parentId, newItemId, newItemContent, checkboxClass = 'filterCheckBox') {
         // Find the checkbox with the matching parent ID
         const targetCheckbox = document.querySelector(`[wantedid="${parentId}"]`);
 
         if (!targetCheckbox) {
-            console.error(`No element found with wantedId: ${parentId}`);
+           // console.error(`No element found with wantedId: ${parentId}`);
             return;
         }
 
@@ -2212,7 +2974,7 @@ export default function pageInit() {
         const parentListItem = targetCheckbox.closest('li');
 
         if (!parentListItem) {
-            console.error(`No parent <li> found for wantedId: ${parentId}`);
+           // console.error(`No parent <li> found for wantedId: ${parentId}`);
             return;
         }
 
@@ -2252,7 +3014,7 @@ export default function pageInit() {
         // Check if an <li> with the same wantedId already exists
         const existingItem = nestedUl.querySelector(`[wantedid="${newItemId}"]`);
         if (existingItem) {
-            console.warn(`Item with wantedId "${newItemId}" already exists.`);
+            //console.warn(`Item with wantedId "${newItemId}" already exists.`);
             return;
         }
 
@@ -2278,8 +3040,6 @@ export default function pageInit() {
         return buildHierarchy(ListOfStruct);
     }
 
-    var OrgChartState = 1 // 1 for normal, 2 for filter
-    var OrgChartPrevState = OrgChartState
     function GenerateOrgChart() {
         function findParentByEmployeeRowId(children, employeeRowIdToRemove) {
             for (let child of children) {
@@ -2353,6 +3113,7 @@ export default function pageInit() {
             }
             return result
         }
+        var ListOfCurrentEmployeeInOrgChart: number[] = []
 
         SplitOrganisationChartService.List({
         }, response => {
@@ -2361,7 +3122,10 @@ export default function pageInit() {
                 insert = 1
                 for (let i = 0; i < response.Entities.length; i++) {
                     var EmployeeRowId = response.Entities[i].EmployeeRowId
+                    ListOfCurrentEmployeeInOrgChart.push(EmployeeRowId)
                     SplitOrgChartList.push({
+                        extension: response.Entities[i].Extension,
+                        rowId: response.Entities[i].Id,
                         id: response.Entities[i].NodeId,
                         EmployeeRowId: EmployeeRowId,
                         name: response.Entities[i].Name,
@@ -2369,7 +3133,7 @@ export default function pageInit() {
                         className: response.Entities[i].ClassName,
                         hierarchyLevel: response.Entities[i].HierarchyLevel,
                         parentId: response.Entities[i].ParentId,
-                        childrenIndex: response.Entities[i].childrenIndex
+                        childrenIndex: response.Entities[i].childrenIndex,
                     })
                 }
             }
@@ -2392,9 +3156,9 @@ export default function pageInit() {
                 }
                 const checkedBoxes = Array.from(document.querySelectorAll('.OrgChartFilterCheckBox:checked'));
                 const checkedIds = checkedBoxes.map(box => box.getAttribute('wantedId'));
-                var Json
+                var Json,filter = 0
                 if (checkedIds.length > 0) {
-                    OrgChartState = 2
+                    filter = 1
                     let OrgChartFinalResult = [];
                     checkedIds.forEach(item => {
                         OrgChartFinalResult.push(item);
@@ -2408,28 +3172,32 @@ export default function pageInit() {
                 }
                 else {
                     Json = GenerateJson(SplitOrgChartList)
-                    OrgChartState = 1
+                    FinalDatascource2 = JSON.parse(JSON.stringify(Json))
                 }
                 if (isEmptyOrNull(Json)) {
                     if (isEmptyOrNull(spareOrgStructJson))
                         return
-                    else
+                    else {
                         Json = JSON.parse(spareOrgChartJson)
+                        FinalDatascource2 = JSON.parse(JSON.stringify(Json))
+                    }
                 }
 
                 var orgChartElement = document.getElementById("orgChartContainer")
                 var panel = orgChartElement.querySelector("#chart-left-panel");
                 //console.log(Json)
-                FinalDatascource2 = JSON.parse(JSON.stringify(Json))
                 var GenerateSave = false
-                for (let i = 0; i < EmployeeFilter.length; i++) {
-                    var result = removeNodeByEmployeeRowId(FinalDatascource2, EmployeeFilter[i])
-                    if (result == true && GenerateSave == false)
-                        GenerateSave = result
+                if (checkedIds.length == 0) {
+                    for (let i = 0; i < EmployeeFilter.length; i++) {
+                        //  console.log(EmployeeFilter[i])
+                        var result = removeNodeByEmployeeRowId(FinalDatascource2, EmployeeFilter[i])
+                        if (result == true && GenerateSave == false)
+                            GenerateSave = result
+                    }
                 }
-              //  console.log('here')
-              //  console.log(GenerateSave)
-              //  console.log(FinalDatascource2)
+                 // console.log('here')
+                //  console.log(GenerateSave)
+                //  console.log(FinalDatascource2)
                 if (GenerateSave == true) {
                     GenerateSaveOrgChart()
                     return
@@ -2439,8 +3207,10 @@ export default function pageInit() {
                     LeftPanel.id = "chart-left-panel"
                     LeftPanel.className = "left-panel-class"
                     orgChartElement.append(LeftPanel)
-                    var BulletList = GenerateUl(Json, ChartType.OrgChart)
+                    var BulletList = GenerateUl(FinalDatascource2, ChartType.OrgChart)
                     $('#chart-left-panel').append(BulletList)
+                    $('#chart-left-panel').addClass('scrollable');
+
                 }
                 var orgChartElement = document.getElementById("orgChartContainer")
                 if (orgChartElement) {
@@ -2450,71 +3220,101 @@ export default function pageInit() {
                         orgDiv.remove()
                     }
                 }
-
-                FinalDatascource = JSON.parse(JSON.stringify(FinalDatascource2))
+                if (filter == 1)
+                    FinalDatascource = JSON.parse(JSON.stringify(Json))
+                else
+                    FinalDatascource = JSON.parse(JSON.stringify(FinalDatascource2))
                 let orgchart = new OrgChart({
                     'chartContainer': '#orgChartContainer',
                     'data': FinalDatascource,
                     'nodeContent': 'title',
                     'zoom': true,
                     'pan': true,
+                    'renderCompleted': setCallbacks(), // Delay to allow rendering
                     'createNode': function (node, data) {
-                        //console.log(FinalDatascource)
                         let image = ""
-                        if (node.hierarchyLevel == EmployeeEnum)
-                            node.draggable = false
+                        if (data.hierarchyLevel > CardType.SECTION)
+                            node.draggable = true
+
                         let $jqueryObject = $(node);
                         if (!isEmptyOrNull(data.EmployeeRowId)) {
                             var employeeRow = ListOfEmployeeData.find(employee => employee.id === data.EmployeeRowId);
-                            //   console.log(JobGradeTable.itemById)
-                            //  console.log(employeeRow.JobGradeId)
-                            var JobGradeName = '-'
+                            var JobGradeName = '-';
+                            // console.log(employeeRow)
                             if (!isEmptyOrNull(employeeRow.JobGradeId)) {
                                 if (!isEmptyOrNull(JobGradeTable.itemById[employeeRow.JobGradeId].Name))
                                     JobGradeName = JobGradeTable.itemById[employeeRow.JobGradeId].Name;
                             }
-                            var basicPay = Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] == true ? employeeRow.SalaryDetails : 'N/A'
+                            var basicPay = Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] == true ? employeeRow.SalaryDetails : ''
+                            if (!isEmptyOrNull(basicPay))
+                             basicPay = `Salary Details : ${basicPay}`
                             var imgPath = employeeRow.ImgPath;
                             image = ` 
-                    <div  style="display: flex; align-items: center; height: 100%; flex-direction: column;" class=" rowData">
+                    <div  style=" display: flex; align-items: center; height: 100%; flex-direction: column;" class=" rowData">
                         </div>
-                <div style="text-align: left;height: 100%;padding-right:0;align-items: center;justify-content: center;display: flex;padding-top: 5px;padding-bottom: 5px">
+                    <div style=" text-align: left;height: 100%;padding-right:0;align-items: center;justify-content: center;display: flex;padding-top: 5px;padding-bottom: 5px">
                     <div style="text-align: left;height: 100%;width:100%;padding-right:0">
-                            <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> Salary Details : ${basicPay} </span>  </div>
-                            </div>`
-                            if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
-                                var button = `
-                <div>
-                     <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
-                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
-                    <i class="far fa-clock" title="Manage Training Requests"></i>
-                </div>
-                <div>`
-                                var desiredOrder: (keyof EmployeeAdminRights)[] = [
-                                    'LeaveApproval',
-                                    'OtApproval',
-                                    'MoneyClaiming',
-                                    'Appraisal',
-                                    'Training'
-                                ];
+                            <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> ${basicPay} </span>  </div>
+                            </div>
+                    `;
+                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
+                            {
+                                if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
+                                    var button
+                                    if (!isEmptyOrNull(data.Rights)) {
+                                        button = `
+                                <div>
+                                    <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
+                                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
+                                    <i class="far fa-clock" title="Manage Training Requests"></i>
+                                </div>
+                                <div>
+                            `;
+                                        var desiredOrder: (keyof EmployeeAdminRights)[] = [
+                                            'LeaveApproval',
+                                            'OtApproval',
+                                            'MoneyClaiming',
+                                            'Appraisal',
+                                            'Training'
+                                        ];
+                                        // Loop through the rights object to create the checkbox elements
 
-                                for (const key of desiredOrder) {
-                                    var value = data.Rights[key]
-                                    // Determine the checked attribute based on the value
-                                    const checkedAttribute = value ? 'checked' : '';
-                                    //  console.log(value)
-                                    //  console.log(key)
-                                    button += `
-                    <input class="CheckBox" id="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
+                                        for (const key of desiredOrder) {
+                                            var value = data.Rights[key]
+                                            // Determine the checked attribute based on the value
+                                            const checkedAttribute = value ? 'checked' : '';
+                                            button += `
+                    <input class="CheckBox" name="${key}" type="checkbox"  title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
                 `;
+                                        }
+                                        button += '</div>';
+                                    }
+                                    else {
+                                        button = `
+                    <div>
+                    <i class="fas fa-band-aid" title="Approve Leave Requests" ></i>
+                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                    <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                    <i class="fa fa-check"  title="Evaluate Employee Requests"></i>
+                    <i class="far fa-clock" title="Manage Training Requests"></i>
+                    </div>
+                    <div>
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
+
+                    </div>    
+`
+                                    }
+                                    image = button + image
                                 }
-                                button += '</div>';
-                                image = button + image
+
                             }
                             $jqueryObject.append(image)
-
                             var img = document.createElement('img');
                             img.src = `/upload/${imgPath}`;
                             img.className = 'avatar';
@@ -2523,93 +3323,208 @@ export default function pageInit() {
                             img.width = 63;
                             img.height = 112.5;
                             img.style.marginRight = '20px'
-
                             img.onerror = function () {
                                 // Handle the error, e.g., set a placeholder image
                                 img.src = ''; // Replace with your placeholder path
                             };
-
                             let row = $jqueryObject.find(".rowData")
                             row.append(img)
                             var ViewButton = document.createElement('span');
                             ViewButton.className = 'dot';
                             if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources])//is HR
                                 row.append(ViewButton)
-
-
                         }
                         let content = $jqueryObject.find(".content")
                         content.remove()
                     }
                 });
-                setCallbacks()
+               // setCallbacks()
+                $("#orgChartContainer").on("change", ".CheckBox", function () {
+                    const isChecked = this.checked;
+                    var targetJson = JSON.parse(this.parentElement.parentElement.getAttribute('data-source'))
+                    var targetEmployeeRowId = targetJson.EmployeeRowId
+                    for (let ListCounter = 0; ListCounter < ListOfEmployeeData.length; ListCounter++) {
+                        if (ListOfEmployeeData[ListCounter].id == targetEmployeeRowId) {
+                            break
+                        }
+                    }
+                    var ElementToSetEmployee = targetJson.id
+                    var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+                    var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                    TargetedFinalOrgChartBuffer = SearchById(TargetedFinalOrgChartBuffer, ElementToSetEmployee)
+                    TargetedFinalOrgChartBuffer.Rights[this.name] = isChecked
+                    FinalDatascource2 = FinalOrgChartBuffer
+                    var ListOfRights: NodeRights[] = extractRights(FinalOrgChartBuffer)
+                    //console.log(ListOfRights)
+                    EmployeeRightsService.ClearOldAdminRightRecord({
+                    }, response => {
+                        for (let i = 0; i < ListOfRights.length; i++) {
+                            if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
+                                if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR) {
+                                    EmployeeRightsService.Create({
+                                        Entity: {
+                                            "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                            "NodeId": ListOfRights[i].id,
+                                            "Appraisal": ListOfRights[i].Rights.Appraisal,
+                                            "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
+                                            "OtApproval": ListOfRights[i].Rights.OtApproval,
+                                            "Training": ListOfRights[i].Rights.Training,
+                                            "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
+                                        }
+                                    })
+                                }
+                                else {
+                                    EmployeeRightsService.Create({
+                                        Entity: {
+                                            "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                            "NodeId": ListOfRights[i].id,
+                                            "Appraisal":true,
+                                            "LeaveApproval": true,
+                                            "OtApproval": true,
+                                            "Training": true,
+                                            "MoneyClaiming": true,
+                                        }
+                                    })
+
+                                }
+                            }
+
+                        }
+
+
+
+                    })
+                })
+                if (filter == orgChartDisplay) {
+                    orgchart.chart.style = Style
+                }
+                else
+                    orgChartDisplay = filter
+
                 if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) {
-                    var generateOrgChartButton = orgChartElement.querySelector("#orgChartContainer .buttonGroup");
+                    var generateOrgChartButton = orgChartElement.querySelector(".buttonGroup");
                     if (isEmptyOrNull(generateOrgChartButton)) {
                         generateOrgChartButton = document.createElement('div')
                         generateOrgChartButton.className = 'buttonGroup'
                         generateOrgChartButton.innerHTML =
                             `
-           <button id="downloadOrgChartButton" class="oc-export-btn btn btn-light btn-rounded" style="top: 60px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Chart</button>
-           <a class = 'oc-download-btn' download = 'MyOrgChart.png'></a>
+            <a id="downloadOrgChartButton" class="btn btn-light btn-rounded oc-download-btn"  download="orgChart.png" style="top: 50px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Chart</a>
+            <button id="exportOrgChartButton" class="btn btn-light btn-rounded oc-export-btn"  style="top: 50px; right: 10px; position: absolute; background-color: rgb(197, 216, 240);">Download Organisation Chart</button>
+
             <button id="toggleOrgChartSidePanel" class="btn btn-light btn-rounded" style="bottom: 10px; left: 10px; position: absolute; background-color: rgb(197, 216, 240);">Hide Filter Tab</button>
             `
                         orgChartElement.appendChild(generateOrgChartButton)
                     }
                 }
 
-                if (OrgChartPrevState == OrgChartState )
-                    orgchart.chart.style = Style
-                OrgChartPrevState = OrgChartState
+
             })
         })
 
     }
     function GenerateSaveOrgChart() {
+        function extractFirstNumber(input: string): number | null {
+            const match = input.match(/\d+/);
+            return match ? Number(match[0]) : null;
+        }
+        function isEmployeeClassFormat(input: string): boolean {
+            return /^EMPLOYEE\d+/.test(input);
+        }
         SplitOrganisationChartService.DeleteAll({
         }, response => {
-            SplitOrgChartList = splitIntoNodes(FinalDatascource2)
+            console.log(FinalDatascource2)
+            SplitOrgChartList = splitIntoNodes(FinalDatascource2);
             for (let i = 0; i < SplitOrgChartList.length; i++) {
-                console.log(SplitOrgChartList[i].className)
-                function extractNumber(text: string): number | null {
-                    const match = text.match(/\d+/); // Find the first number in the string
-                    return match ? parseInt(match[0], 10) : null;
-                }
-                var extracted = extractNumber(SplitOrgChartList[i].className)
+                var ElementRowID
+                var ClassList = DecomposeStringToList(SplitOrgChartList[i].id, 0x88, 0x99)
+                if (isEmployeeClassFormat(ClassList[ClassList.length - 1]))
+                    ElementRowID = extractFirstNumber(ClassList[ClassList.length - 2])
+                else
+                    ElementRowID = extractFirstNumber(SplitOrgChartList[i].className)
+                var title = SplitOrgChartList[i].title
+                var name = SplitOrgChartList[i].name
+                if (isEmptyOrNull(title))
+                    title = '-'
+                if (isEmptyOrNull(name))
+                    name = '-'
+
                 SplitOrganisationChartService.Create({
                     Entity:
                     {
                         "ParentId": SplitOrgChartList[i].parentId,
                         "NodeId": SplitOrgChartList[i].id,
-                        "Name": SplitOrgChartList[i].name,
-                        "Title": SplitOrgChartList[i].title,
+                        "Name": name,
+                        "Title": title,
                         "ClassName": SplitOrgChartList[i].className,
                         "HierarchyLevel": SplitOrgChartList[i].hierarchyLevel,
                         "EmployeeRowId": SplitOrgChartList[i].EmployeeRowId,
                         "childrenIndex": SplitOrgChartList[i].childrenIndex,
-                        "ElementRowId": extracted
+                        "ElementRowId": ElementRowID
                     },
+                }, response => {
+                    SplitOrgChartList[i].rowId = response.EntityId
                 });
             }
-            var ListOfRights: NodeRights[] = extractRights(FinalDatascource2)
+            var ListOfRights: ExtractedData[] = extractRightsAndEmployeeRowId(FinalDatascource2)
+            var ListOfUnusedRights: ExtractedData[] = []
+            var FinalOrgChartBuffer = JSON.parse(JSON.stringify(FinalDatascource2))
+            if (!isEmptyOrNull(ListOfRights)) {
+                for (let i = 0; i < ListOfRights.length; i++) {
+                    var TargetedFinalOrgChartBuffer = FinalOrgChartBuffer
+                    var buffer: Node = SearchById(TargetedFinalOrgChartBuffer, ListOfRights[i].id)
+                    //console.log(buffer)
+                    if (isEmptyOrNull(buffer)) {
+                        if (ListOfRights[i].hierarchyId <= CardType.SECTION) {
+                            if (ListOfRights[i].id != removedNodeId)
+                                ListOfUnusedRights.push(ListOfRights[i])
+                        }
+                        continue
+                    }
+                    buffer.Rights = ListOfRights[i].Rights
+
+                }
+            }
+            if (!isEmptyOrNull(removedNodeId)) {
+                for (let i = 0; i < ListOfUnusedRights.length; i++) {
+                    var newPath = DecomposeStringToList(ListOfUnusedRights[i].id, 0x88, 0x99)
+                    newPath.splice(indexToRemove, 1)
+                    var newId = ComposeListToString(newPath, 0x88, 0x99)
+                    var buffer: Node = SearchById(FinalOrgChartBuffer, newId)
+                    if (!isEmptyOrNull(buffer))
+                        buffer.Rights = ListOfUnusedRights[i].Rights
+                }
+                removedNodeId = ''
+            }
+            else if (!isEmptyOrNull(addedClass)) {
+                for (let i = 0; i < ListOfUnusedRights.length; i++) {
+                    var newPath = DecomposeStringToList(ListOfUnusedRights[i].id, 0x88, 0x99)
+                    newPath.splice(addedIndex, 0, addedClass)
+                    var newId = ComposeListToString(newPath, 0x88, 0x99)
+                    var buffer: Node = SearchById(FinalOrgChartBuffer, newId)
+                    if (!isEmptyOrNull(buffer))
+                        buffer.Rights = ListOfUnusedRights[i].Rights
+                }
+                addedClass = ''
+            }
 
             EmployeeRightsService.ClearOldAdminRightRecord({
             }, response => {
                 for (let i = 0; i < ListOfRights.length; i++) {
-                    if (ListOfRights[i].nodeHierarchy != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
-                        if (ListOfRights[i].nodeHierarchy != CardType.DIRECTOR)
-                        EmployeeRightsService.Create({
-                            Entity: {
-                                "EmployeeRowId": ListOfRights[i].EmployeeRowId,
-                                "NodeId": ListOfRights[i].id,
-                                "Appraisal": ListOfRights[i].Rights.Appraisal,
-                                "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
-                                "OtApproval": ListOfRights[i].Rights.OtApproval,
-                                "Training": ListOfRights[i].Rights.Training,
-                                "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
-                            }
-                        })
-                        else
+                    if (ListOfRights[i].hierarchyId != EmployeeEnum && !isEmptyOrNull(ListOfRights[i].EmployeeRowId)) {
+                        if (ListOfRights[i].hierarchyId != CardType.DIRECTOR) {
+                            EmployeeRightsService.Create({
+                                Entity: {
+                                    "EmployeeRowId": ListOfRights[i].EmployeeRowId,
+                                    "NodeId": ListOfRights[i].id,
+                                    "Appraisal": ListOfRights[i].Rights.Appraisal,
+                                    "LeaveApproval": ListOfRights[i].Rights.LeaveApproval,
+                                    "OtApproval": ListOfRights[i].Rights.OtApproval,
+                                    "Training": ListOfRights[i].Rights.Training,
+                                    "MoneyClaiming": ListOfRights[i].Rights.MoneyClaiming,
+                                }
+                            })
+                        }
+                        else {
                             EmployeeRightsService.Create({
                                 Entity: {
                                     "EmployeeRowId": ListOfRights[i].EmployeeRowId,
@@ -2621,6 +3536,8 @@ export default function pageInit() {
                                     "MoneyClaiming": true,
                                 }
                             })
+
+                        }
 
                     }
                 }
@@ -2640,6 +3557,7 @@ export default function pageInit() {
             var BulletList = GenerateUl(FinalDatascource2, ChartType.OrgChart)
             $('#chart-left-panel').html('');
             $('#chart-left-panel').append(BulletList);
+            $('#chart-left-panel').addClass('scrollable');
 
             removeEmptyChildren(FinalDatascource2)
 
@@ -2652,40 +3570,42 @@ export default function pageInit() {
                 'zoom': true,
                 'pan': true,
                 'id': 'orgChart',
+                'renderCompleted':  setCallbacks(),
                 'createNode': function (node, data) {
                     let image = ""
                     let $jqueryObject = $(node);
                     if (!isEmptyOrNull(data.EmployeeRowId)) {
                         var employeeRow = ListOfEmployeeData.find(employee => employee.id === data.EmployeeRowId);
-                     //   console.log(JobGradeTable.itemById)
-                      //  console.log(employeeRow.JobGradeId)
-                        var JobGradeName = '-' 
+                        //   console.log(JobGradeTable.itemById)
+                        //  console.log(employeeRow.JobGradeId)
+                        var JobGradeName = '-'
                         if (!isEmptyOrNull(employeeRow.JobGradeId)) {
                             if (!isEmptyOrNull(JobGradeTable.itemById[employeeRow.JobGradeId].Name))
-                                 JobGradeName = JobGradeTable.itemById[employeeRow.JobGradeId].Name;
+                                JobGradeName = JobGradeTable.itemById[employeeRow.JobGradeId].Name;
                         }
-                        var basicPay = Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] == true ? employeeRow.SalaryDetails : 'N/A'
+                        var basicPay = Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] == true ? employeeRow.SalaryDetails : ''
+                        if (!isEmptyOrNull(basicPay))
+                            basicPay = `Salary Details : ${basicPay}`
                         var imgPath = employeeRow.ImgPath;
                         image = ` 
                     <div  style="display: flex; align-items: center; height: 100%; flex-direction: column;" class=" rowData">
                         </div>
                 <div style="text-align: left;height: 100%;padding-right:0;align-items: center;justify-content: center;display: flex;padding-top: 5px;padding-bottom: 5px">
                     <div style="text-align: left;height: 100%;width:100%;padding-right:0">
-                            <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> Salary Details : ${basicPay} </span>  </div>
+                            <div class="col-1"  style="font-size: 10px; display: flex; justify-content: space-between; align-items: center; width: 100%; white-space: nowrap;"> <span  style="display: block;white-space: nowrap;"> Name : ${employeeRow.EmployeeName} <br> Job Grade : ${JobGradeName} <br> ${basicPay} </span>  </div>
                             </div>`
                         if (data.hierarchyLevel != EmployeeEnum && data.hierarchyLevel != CardType.DIRECTOR) {
-                            var button = `
-                        <div>
-                             <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
-                            <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
-                           <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
-                            <i class="fa fa-check" title="Evaluate Employee Requests"></i>
-                            <i class="far fa-clock" title="Manage Training Requests"></i>
-                        </div>
-                        <div>`
-
-                          //  if (!isEmptyOrNull(data.Rights)) {
-                       
+                            var button
+                            if (!isEmptyOrNull(data.Rights)) {
+                                button = `
+                <div>
+                     <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
+                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
+                    <i class="far fa-clock" title="Manage Training Requests"></i>
+                </div>
+                <div>`;
                                 var desiredOrder: (keyof EmployeeAdminRights)[] = [
                                     'LeaveApproval',
                                     'OtApproval',
@@ -2705,27 +3625,33 @@ export default function pageInit() {
                                     //  console.log(key)
 
                                     button += `
-                    <input class="CheckBox" id="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
+                    <input class="CheckBox" name="${key}" type="checkbox" title="${key.replace(/([A-Z])/g, ' $1')}" ${checkedAttribute}>
                 `;
                                 }
 
                                 // Close the div tag
                                 button += '</div>';
-                           // }
-                            /*
+                            }
                             else {
-                                button += `
-                    <input class = "CheckBox"  id="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
-                    <input  class = "CheckBox" id="OtApproval" type="checkbox" title="Approve Overtime Requests">
-                    <input class = "CheckBox"  id="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
-                    <input class = "CheckBox"  id="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
-                    <input class = "CheckBox"  id="Training" type="checkbox" title="Manage Training Requests" >
+                                button = `
+                    <div>
+                 <i class="fas fa-band-aid" title="Approve Leave Requests"></i>
+                    <i class="fa fa-wrench" title="Approve Overtime Requests"></i>
+                   <i class="fa fa-money-bill" title="Approve Money Claiming Requests"></i>
+                    <i class="fa fa-check" title="Evaluate Employee Requests"></i>
+                    <i class="far fa-clock" title="Manage Training Requests"></i>
+                    </div>
+                    <div>
+                    <input class = "CheckBox"  name="LeaveApproval" type="checkbox"  title="Approve Leave Requests">
+                    <input  class = "CheckBox" name="OtApproval" type="checkbox" title="Approve Overtime Requests">
+                    <input class = "CheckBox"  name="MoneyClaiming" type="checkbox" title="Approve Money Claiming Requests" >
+                    <input class = "CheckBox"  name="Appraisal" type="checkbox" title="Evaluate Employee Requests" >
+                    <input class = "CheckBox"  name="Training" type="checkbox" title="Manage Training Requests" >
 
                     </div>    
 `
 
                             }
-                            */
                             image = button + image
                         }
                         $jqueryObject.append(image)
@@ -2758,22 +3684,25 @@ export default function pageInit() {
                 }
 
             });
+
+            console.log(isOrgChartOutOfView())
+
             if (!isEmptyOrNull(Style))
                 orgchart.chart.style = Style
 
-            setCallbacks()
+            const jsonString = JSON.stringify(FinalDatascource2);
+            FinalOrganisationChartService.Create({
+                Entity:
+                {
+                    "FinalOrgChart": jsonString,
+                },
+            });
+           // setCallbacks()
 
         })
 
 
 
-        const jsonString = JSON.stringify(FinalDatascource2);
-        FinalOrganisationChartService.Create({
-            Entity:
-            {
-                "FinalOrgChart": jsonString,
-            },
-        });
     }
     function GetLookupValueFromId(destinationHierarchy, destinationHierarchyId) {
         var str
@@ -2788,7 +3717,7 @@ export default function pageInit() {
         return str
     }
 
-    function DecomposeStringToList(StringToDecompose, Starter, Ender) {
+    function DecomposeStringToList(StringToDecompose: String, Starter, Ender) {
         var buffer = '', start = false
         var bufferList: any[] = []
         for (let i = 0; i < StringToDecompose.length; i++) {
@@ -2808,19 +3737,25 @@ export default function pageInit() {
         }
         return bufferList
     }
+    function ComposeListToString(List: string[], Starter, Ender) {
+        var result: string = '';
+        for (let i = 0; i < List.length; i++) {
+            result = `${result}${EncodeString(List[i], Starter, Ender)}`
+        }
+        return result
+    }
     function EncodeString(OriginalString, Starter, Ender) {
         if (OriginalString.endsWith('Class'))
             OriginalString = OriginalString.slice(0, -5); // Remove the last 5 characters
         var buffer = String.fromCharCode(Starter) + OriginalString + String.fromCharCode(Ender)
         return buffer.replace(/\s+/g, ''); // Removes all spaces
     }
-
+    var counter = 0
     function splitIntoNodes(root) {
         const nodes: NodeRow[] = [];
-
         function processNode(node: Node, parentId: string | null, childIndex: number | null = 0) {
             // Add current node to the nodes table
-
+            counter+=1
             nodes.push({
                 id: node.id,
                 EmployeeRowId: node.EmployeeRowId,
@@ -2832,7 +3767,6 @@ export default function pageInit() {
                 hierarchyId: node.hierarchyId,
                 childrenIndex: childIndex // Store the index of this child in its parent's children array
             });
-
             // Recursively process children
             if (node.children)
                 node.children.forEach((child, index) => processNode(child, node.id, index));

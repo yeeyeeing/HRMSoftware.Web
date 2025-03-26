@@ -1,5 +1,6 @@
 ﻿export * from "./MoneyClaimApplication/MoneyClaimApplicationColumns"
 export * from "./MoneyClaimApplication/MoneyClaimApplicationForm"
+export * from "./MoneyClaimApplication/MoneyClaimApplicationRejectRow"
 export * from "./MoneyClaimApplication/MoneyClaimApplicationRow"
 export * from "./MoneyClaimApplication/MoneyClaimApplicationService"
 export * from "./MoneyClaimApplication/MoneyClaimingStatus"

@@ -26,7 +26,6 @@ export class PermissionCheckEditor extends DataGrid<PermissionCheckItem, Permiss
                 GrantRevoke: null,
                 IsGroup: key.charAt(key.length - 1) === ':'
             });
-
             this.byParentKey = toGrouping(items, x => x.ParentKey);
             this.setItems(items);
             this.value = this._value;

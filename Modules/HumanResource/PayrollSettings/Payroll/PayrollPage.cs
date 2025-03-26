@@ -1034,7 +1034,7 @@ namespace HRMSoftware.PayrollSettings.Pages
 
                         var companySocso = item.CompanySocsoAccountNumber;
                         var CompanyRegistrationNumber = item.CompanyRegistrationNumber;
-                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(20,' ')}";
+                        var FirstPart = $"{companySocso}{CompanyRegistrationNumber.PadRight(21,' ')}";
                         var identity = "";
                         if (item.EmployeeType == (int)EmployeeType.Local)
                         {
@@ -1057,7 +1057,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                         string employeeDetails = $"{identity}{Name}";
                         string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}"; // Year, Month, Amount (24 chars)
                         string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
                         fileContent += formattedRecord;
                     }
                 }
@@ -1102,7 +1101,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                         string employeeDetails = $"{identity}{Name}";
                         string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}{EmployerSocsoString}{EmployeeSocsoString}{EmployerEisString}{EmployeeEisString}"; // Year, Month, Amount (24 chars)
                         string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
                         fileContent += formattedRecord;
                     }
                 }
@@ -1137,8 +1135,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                         string employeeDetails = $"{NRIC}{CapitalisedName}".PadRight(92); // Combine NRIC + Name to 92 chars
                         string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}".PadRight(24); // Year, Month, Amount (24 chars)
                         string formattedRecord = $"{FirstPart.PadRight(23)}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
-
                         fileContent += formattedRecord;
                     }
                 }
@@ -1183,7 +1179,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                         string employeeDetails = $"{identity}{Name}";
                         string contributionDetails = $"{PayMonth:D2}{PayYear}{paddedAmount}{EmployerSocsoString}{EmployeeSocsoString}{EmployerEisString}{EmployeeEisString}"; // Year, Month, Amount (24 chars)
                         string formattedRecord = $"{FirstPart}{employeeDetails}{contributionDetails}{Environment.NewLine}";
-                        formattedRecord = Regex.Replace(formattedRecord, "[^a-zA-Z0-9 \n]", "");
                         fileContent += formattedRecord;
                     }
                 }
@@ -1191,14 +1186,11 @@ namespace HRMSoftware.PayrollSettings.Pages
             }
             else if (Type == (int)TextClass.EPF)
             {
-
                 DateTime today = DateTime.Parse(CreditingDate);
                 string formattedDate = today.ToString("yyyyMMdd");
                 string formattedDate2 = today.ToString("yyyyMM");
                 string formattedDate3 = today.ToString("MMyyyy");
-
                 string formattedTimeStamp = ($"{formattedDate}{CreationTime}").PadRight(8,'0');
-
                 List<string> myList = new List<string> { };
                 double EmployerTotal = 0;
                 double EmployeeTotal = 0;
@@ -1228,13 +1220,16 @@ namespace HRMSoftware.PayrollSettings.Pages
 
                     if (item.NRIC.IsEmptyOrNull() == true)
                         continue;
-                    var NRIC = RemoveNonDigits(item.NRIC);
+                    var NRIC = RemoveNonDigits(item.NRIC).PadRight(15, ' ');
+                    var EmployeeName = item.EmployeeName.PadRight(40, ' ');
+                    var EmployeeEpfAccountNumber = item.EPFAccountNumber.PadLeft(19, '0');
                     var EmployerString = (EmployerEPF * 100).ToString().PadLeft(15, '0');
                     var EmployeeString = (EmployeeEPF * 100).ToString().PadLeft(15, '0');
                     var EpfStatutoryString = (EpfStatutory * 100).ToString().PadLeft(15, '0');
+                    var EmployeeId = item.EmployeeId.PadRight(20, ' ');
                     string amountPart = $"{EmployerString}{EmployeeString}{EpfStatutoryString}{Environment.NewLine}";
-                    string firstPart = $"02{item.EPFAccountNumber.PadLeft(19, '0')}{NRIC}   {item.EmployeeName.PadRight(40,' ')}";
-                    string secondPart = $"{item.EmployeeId.PadLeft(20, ' ')}   {amountPart}";
+                    string firstPart = $"02{EmployeeEpfAccountNumber}{NRIC}{EmployeeName}";
+                    string secondPart = $"{EmployeeId}{amountPart}";
                     string formattedRecord = $"{firstPart}{secondPart}";
                     myList.Add(formattedRecord);
 
@@ -1243,21 +1238,6 @@ namespace HRMSoftware.PayrollSettings.Pages
                 var EmployeeTotalString = (EmployeeTotal * 100).ToString().PadLeft(15, '0');
                 var header = "";
                 var TestChar = testMode == (int)TestingMode.Yes ? 'Y' : 'N';
-                Console.WriteLine("hereeee");
-
-                Console.WriteLine(TestChar);
-                Console.WriteLine(TestChar);
-                Console.WriteLine(TestChar);
-                Console.WriteLine(TestChar);
-                Console.WriteLine(TestChar);
-                Console.WriteLine(TestChar);
-
-                Console.WriteLine("hereeee");
-                Console.WriteLine("hereeee");
-                Console.WriteLine("hereeee");
-                Console.WriteLine("hereeee");
-                Console.WriteLine("hereeee");
-
                 if (TextFormat == (int)TextFormatEpf.CIMB)
                 {
                     string EpfContactPerson = ContactPerson.PadRight(40, ' ');

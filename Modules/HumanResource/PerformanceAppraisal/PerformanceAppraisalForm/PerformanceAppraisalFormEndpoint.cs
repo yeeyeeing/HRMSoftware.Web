@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Serenity.Data;
 using Serenity.Reporting;
 using Serenity.Services;
@@ -80,7 +80,7 @@ public class PerformanceAppraisalFormEndpoint : ServiceEndpoint
     {
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
         {
-            request.Sort = new[] { new SortBy("ID", true) };
+           // request.Sort = new[] { new SortBy("ID", true) };
             return handler.List(connection, request);
         }
         
@@ -120,7 +120,7 @@ public class PerformanceAppraisalFormEndpoint : ServiceEndpoint
         foreach (int number in ListOfEmployee)
             request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
 
-        request.Sort = new[] { new SortBy("ID", true) };
+       // request.Sort = new[] { new SortBy("ID", true) };
         return handler.List(connection, request);
     }
 

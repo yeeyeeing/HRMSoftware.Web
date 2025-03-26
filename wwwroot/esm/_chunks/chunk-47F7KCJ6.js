@@ -1,0 +1,2 @@
+import{b as t,c,d as n}from"./chunk-C45P7KJQ.js";import{a as d}from"./chunk-DNINIZJD.js";import{c as o,g as s,h as i}from"./chunk-L3ECGIWB.js";var r=s(d(),1);var e=class extends r.EntityDialog{constructor(){super(...arguments);this.form=new t(this.idPrefix)}getFormKey(){return t.formKey}getRowDefinition(){return c}getService(){return n.baseUrl}};o(e,"PublicHolidayDialog"),e=i([r.Decorators.registerClass("HRMSoftware.PublicHoliday.PublicHolidayDialog")],e);export{e as a};
+//# sourceMappingURL=chunk-47F7KCJ6.js.map

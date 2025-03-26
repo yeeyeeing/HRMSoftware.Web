@@ -65,7 +65,7 @@ public class PublicHolidayEndpoint : ServiceEndpoint
 
         var required_country_code = latest.Entities[0].CountryCode;
         request.Criteria = new Criteria(PublicHolidayRow.Fields.CountryCode.Name) == required_country_code;
-        request.Sort = new[] { new SortBy("Date", false) };
+        //request.Sort = new[] { new SortBy("Date", false) };
         if (Permissions.HasPermission(PermissionKeys.HumanResources)==false)//if user is HR guy
             request.Criteria = new Criteria(PublicHolidayRow.Fields.IsActive.Name) == 1;
 

@@ -1,6 +1,8 @@
+using Bellatrix;
 using HRMSoftware.Administration;
+using HRMSoftware.EmployeeAttendance.Endpoints;
+using HRMSoftware.EmployeeProfile.Endpoints;
 using HRMSoftware.OrganisationChart.Endpoints;
-using HRMSoftware.OTApplication.Endpoints;
 using Microsoft.AspNetCore.Mvc;
 using Serenity;
 using Serenity.Data;
@@ -11,6 +13,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
+using System.Linq;
 using MyRow = HRMSoftware.MoneyClaimApplication.MoneyClaimApplicationRow;
 
 namespace HRMSoftware.MoneyClaimApplication.Endpoints;
@@ -54,26 +59,29 @@ public class MoneyClaimApplicationEndpoint : ServiceEndpoint
         
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
         {
-            request.Sort = new[] { new SortBy("ClaimingDate", true) };
+           // request.Sort = new[] { new SortBy("ClaimingDate", true) };
             return handler.List(connection, request);
         }
         
-        ListResponse<MyRow> latest = new ListResponse<MyRow>();
-        latest.Entities = (List<MyRow>)connection.Query<MyRow>("dbo.RetrieveEmployeeRowIDBasedOnUserID",
-            param: new
-            {
-                @UserID = User.GetIdentifier()
-            },
-                commandType: System.Data.CommandType.StoredProcedure);
 
+        var EmployeeRowId = new ShiftAttendanceRecordEndpoint().GetEmployeeRowIdFromUserRowId(connection, User.GetIdentifier().ToInt());
 
-        request.Criteria = new Criteria("EmployeeRowID") == latest.Entities[0].EmployeeRowId.Value;
+        request.Criteria = new Criteria(MoneyClaimApplicationRow.Fields.EmployeeRowId.Name) == EmployeeRowId;
+        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, EmployeeRowId, PermissionKeys.MoneyClaiming);
+        //foreach (int number in ListOfEmployee)
+      //  {
+      //      request.Criteria = (request.Criteria || new Criteria(MoneyClaimApplicationRow.Fields.EmployeeRowId.Name) == number);
+      //  }
 
-        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.Entities[0].EmployeeRowId.Value, PermissionKeys.MoneyClaiming);
-        foreach (int number in ListOfEmployee)
-            request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
-
-        request.Sort = new[] { new SortBy("ClaimingDate", true) };
+        
+        if (ListOfEmployee.Count > 0)
+        {
+            request.Criteria = ListOfEmployee
+                .Select(number => new Criteria(MoneyClaimApplicationRow.Fields.EmployeeRowId.Name) == number)
+                .Aggregate((current, next) => current || next);
+        }
+        
+        // request.Sort = new[] { new SortBy("ClaimingDate", true) };
         return handler.List(connection, request);
     }
 

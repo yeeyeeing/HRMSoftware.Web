@@ -1,6 +1,7 @@
 ﻿import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface SplitOrganisationChartRow {
+    Extension?: number;
     Id?: number;
     ParentId?: string;
     NodeId?: string;
@@ -9,6 +10,7 @@ export interface SplitOrganisationChartRow {
     ClassName?: string;
     HierarchyLevel?: number;
     EmployeeRowId?: number;
+    hierarchyId?: number;
     childrenIndex?: number;
     ElementRowId?: number;
     InsertUserId?: number;

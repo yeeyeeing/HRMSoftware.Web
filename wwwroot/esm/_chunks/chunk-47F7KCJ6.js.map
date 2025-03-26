@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../Modules/HumanResource/PublicHoliday/PublicHoliday/PublicHolidayDialog.ts"],
+  "sourcesContent": ["import { Decorators, EntityDialog } from '@serenity-is/corelib';\nimport { PublicHolidayForm, PublicHolidayRow, PublicHolidayService } from '../../../ServerTypes/PublicHoliday';\n\n@Decorators.registerClass('HRMSoftware.PublicHoliday.PublicHolidayDialog')\nexport class PublicHolidayDialog extends EntityDialog<PublicHolidayRow, any> {\n    protected getFormKey() { return PublicHolidayForm.formKey; }\n    protected getRowDefinition() { return PublicHolidayRow; }\n    protected getService() { return PublicHolidayService.baseUrl; }\n\n    protected form = new PublicHolidayForm(this.idPrefix);\n}"],
+  "mappings": "+IAAA,IAAAA,EAAyC,SAIlC,IAAMC,EAAN,cAAkC,cAAoC,CAAtE,kCAKH,KAAU,KAAO,IAAIC,EAAkB,KAAK,QAAQ,EAJ1C,YAAa,CAAE,OAAOA,EAAkB,OAAS,CACjD,kBAAmB,CAAE,OAAOC,CAAkB,CAC9C,YAAa,CAAE,OAAOC,EAAqB,OAAS,CAGlE,EANaC,EAAAJ,EAAA,uBAAAA,EAANK,EAAA,CADN,aAAW,cAAc,+CAA+C,GAC5DL",
+  "names": ["import_corelib", "PublicHolidayDialog", "PublicHolidayForm", "PublicHolidayRow", "PublicHolidayService", "__name", "__decorateClass"]
+}

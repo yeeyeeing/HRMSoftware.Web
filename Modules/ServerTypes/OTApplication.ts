@@ -1,5 +1,6 @@
 ﻿export * from "./OTApplication/OTApplicationColumns"
 export * from "./OTApplication/OTApplicationForm"
+export * from "./OTApplication/OTApplicationRejectRow"
 export * from "./OTApplication/OTApplicationRow"
 export * from "./OTApplication/OTApplicationService"
 export * from "./OTApplication/OTApplicationStatus"

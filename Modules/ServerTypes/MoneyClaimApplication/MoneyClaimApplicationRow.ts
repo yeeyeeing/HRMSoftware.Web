@@ -2,6 +2,8 @@
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface MoneyClaimApplicationRow {
+    SuperiorRejectReason?: string;
+    HrRejectReason?: string;
     SubjectionEis?: boolean;
     SubjectionEpf?: boolean;
     SubjectionHrdf?: boolean;
@@ -61,10 +63,10 @@ export abstract class MoneyClaimApplicationRow {
     static getLookup() { return getLookup<MoneyClaimApplicationRow>('MoneyClaimApplication.MoneyClaimApplication') }
     static async getLookupAsync() { return getLookupAsync<MoneyClaimApplicationRow>('MoneyClaimApplication.MoneyClaimApplication') }
 
-    static readonly deletePermission = 'Administration:Employee';
-    static readonly insertPermission = 'Administration:Employee';
-    static readonly readPermission = 'Administration:Employee';
-    static readonly updatePermission = 'Administration:Employee';
+    static readonly deletePermission = '*';
+    static readonly insertPermission = '*';
+    static readonly readPermission = '*';
+    static readonly updatePermission = '*';
 
     static readonly Fields = fieldsProxy<MoneyClaimApplicationRow>();
 }

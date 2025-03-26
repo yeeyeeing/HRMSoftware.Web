@@ -359,13 +359,14 @@ export class PayrollGeneratingWizardDialog extends EntityDialog<PayrollGeneratin
         })
 
 
-        $(PayMonthElement).on('change', async function () {
+        $(PayMonthEditor).on('change', async function () {
+            console.log("haha")
             if (isEmptyOrNull($(PayMonthElement).val()) || isEmptyOrNull($(PayYearElement).val())) 
                 self.form.EmployeeRowList.value = ""
             self.SearchCallback();
             //self.SearchEmployeeCallback();
         })
-        $(PayYearElement).on('change', async function () {
+        $(PayYearEditor).on('change', async function () {
             if (isEmptyOrNull($(PayMonthElement).val()) || isEmptyOrNull($(PayYearElement).val())) 
                 self.form.EmployeeRowList.value = ""
             

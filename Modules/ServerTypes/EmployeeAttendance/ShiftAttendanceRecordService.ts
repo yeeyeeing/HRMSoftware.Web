@@ -10,13 +10,15 @@ export namespace ShiftAttendanceRecordService {
     export declare function Delete(request: DeleteRequest, onSuccess?: (response: DeleteResponse) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function Retrieve(request: RetrieveRequest, onSuccess?: (response: RetrieveResponse<ShiftAttendanceRecordRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
     export declare function List(request: ListRequest, onSuccess?: (response: ListResponse<ShiftAttendanceRecordRow>) => void, opt?: ServiceOptions<any>): JQueryXHR;
+    export declare function GetEmployeeRowIdFromUserRowId(request: number, onSuccess?: (response: number) => void, opt?: ServiceOptions<any>): JQueryXHR;
 
     export const Methods = {
         Create: "EmployeeAttendance/ShiftAttendanceRecord/Create",
         Update: "EmployeeAttendance/ShiftAttendanceRecord/Update",
         Delete: "EmployeeAttendance/ShiftAttendanceRecord/Delete",
         Retrieve: "EmployeeAttendance/ShiftAttendanceRecord/Retrieve",
-        List: "EmployeeAttendance/ShiftAttendanceRecord/List"
+        List: "EmployeeAttendance/ShiftAttendanceRecord/List",
+        GetEmployeeRowIdFromUserRowId: "EmployeeAttendance/ShiftAttendanceRecord/GetEmployeeRowIdFromUserRowId"
     } as const;
 
     [
@@ -24,7 +26,8 @@ export namespace ShiftAttendanceRecordService {
         'Update', 
         'Delete', 
         'Retrieve', 
-        'List'
+        'List', 
+        'GetEmployeeRowIdFromUserRowId'
     ].forEach(x => {
         (<any>ShiftAttendanceRecordService)[x] = function (r, s, o) {
             return serviceRequest(baseUrl + '/' + x, r, s, o);

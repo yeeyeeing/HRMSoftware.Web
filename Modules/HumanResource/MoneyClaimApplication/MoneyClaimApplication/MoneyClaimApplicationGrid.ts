@@ -6,7 +6,8 @@ import { OccupationService, JobGradeService, DepartmentService, DivisionService 
 import { EmployeeProfileService } from '../../../ServerTypes/EmployeeProfile';
 import { MasterCostCentreService } from '../../../ServerTypes/Master';
 import { OrganisationChartService } from '../../../ServerTypes/OrganisationChart';
-import { serviceCall,Authorization, isEmptyOrNull, getLookup, confirm } from '@serenity-is/corelib/q';
+import { serviceCall, Authorization, isEmptyOrNull, getLookup, confirm, alertDialog, notifyInfo } from '@serenity-is/corelib/q';
+import { MoneyClaimApplicationRejectDialog } from './MoneyClaimApplicationRejectDialog';
 
 @Decorators.registerClass('HRMSoftware.MoneyClaimApplication.MoneyClaimApplicationGrid')
 export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationRow, any> {
@@ -20,7 +21,6 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
 
         // console.log(filters[3].type = Select2Editor)
 
-        if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
             filters.push({
                 cssClass: "hidden-xs",
                 field: MoneyClaimApplicationRow.Fields.OccupationName,
@@ -72,14 +72,13 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
             });
 
             filters.reverse()
-        }
+        
         return filters;
     }
     protected createQuickFilters(): void {
         // let base class to create quick filters first
         super.createQuickFilters();
 
-        if (Authorization.hasPermission(PermissionKeys.HumanResources)) {
             const months: string[] = [
                 'January',   // 0
                 'February',  // 1
@@ -133,7 +132,7 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
             })
 
 
-        }
+        
 
     }
 
@@ -144,13 +143,19 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
     protected getButtons() {
         var buttons = super.getButtons();
         var self = this
-         buttons.push({
+        /*
+        buttons.push({
                 title: 'Money Claim Batch Approve',
              cssClass: 'fas fa-hat-wizard text-bg-success approveButton',
-                onClick: e => {
+             onClick: e => {
+                 if (self.rowSelection.getSelectedAsInt64().length == 0) {
+                     alertDialog('Please select at least one application to approve')
+                     return
+                 }
                     confirm(
                         "Do you want to approve all selected applications?",
                         () => {
+                            let selectedIds = self.rowSelection.getSelectedAsInt64();
                             let approvePromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
                                 return MoneyClaimApplicationService.Retrieve({ EntityId: dataId })
                                     .then(response => {
@@ -233,13 +238,15 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
                             // Wait for all operations to complete before refreshing
                             Promise.all(approvePromises)
                                 .then(() => {
+                                    notifyInfo(`${selectedIds.length} records have been approved.`)
                                     self.internalRefresh();
                                 })
                                 .catch(error => {
                                     console.error('Error in update operations:', error);
                                 });
-                        }
-                    )
+                                    
+                            
+                        })
                 },
                 separator: true
             });
@@ -247,157 +254,443 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
             title: 'Money Claim Batch Reject',
             cssClass: 'fas fa-hat-wizard text-bg-danger rejectButton',
             onClick: e => {
+                if (self.rowSelection.getSelectedAsInt64().length == 0) {
+                    alertDialog('Please select at least one application to reject')
+                    return
+                }
                 confirm(
                     "Do you want to reject all selected applications?",
                     () => {
+                        var rejectDlg = new MoneyClaimApplicationRejectDialog()
+                        rejectDlg.dialogOpen()
 
-                        // Create an array of promises for each delete operation
-                        let rejectPromises = self.rowSelection.getSelectedAsInt64().map(dataId=> {
+                        rejectDlg.element.on('dialogclose', () => {
+                            let selectedIds = self.rowSelection.getSelectedAsInt64();
+                            var rejectReason = window["rejectReason"]
+                            // Create an array of promises for each delete operation
+                            let rejectPromises = self.rowSelection.getSelectedAsInt64().map(dataId => {
 
-                            return MoneyClaimApplicationService.Retrieve({
-                                EntityId: dataId
-                            }).then(response => {
-                                let EmployeeApproval = response.Entity.EmployeeStatus;
-                                let HrApproval = response.Entity.HrStatus;
-                                let entityId = response.Entity.Id;
-                                let updateData: any = {};
-                                let EmployeeRowId = response.Entity.EmployeeRowId
+                                return MoneyClaimApplicationService.Retrieve({
+                                    EntityId: dataId
+                                }).then(response => {
+                                    let EmployeeApproval = response.Entity.EmployeeStatus;
+                                    let HrApproval = response.Entity.HrStatus;
+                                    let entityId = response.Entity.Id;
+                                    let updateData: MoneyClaimApplicationRow = {};
+                                    let EmployeeRowId = response.Entity.EmployeeRowId
+                                    return new Promise((resolve, reject) => {
+                                        serviceCall<RetrieveResponse<any>>({
+                                            service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                                            data: {
+                                                'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                                                'ApplicantEmployeeRowID': EmployeeRowId
+                                            },
+                                            method: "GET",
+                                            async: false,
+                                            onSuccess: (response) => {
+                                                console.log(response)
+                                                var SuperiorPermission = response
+                                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                                                    if (SuperiorPermission == true) {
+                                                        if (EmployeeApproval == MoneyClaimingStatus.NotNeeded || HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                                            if (EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
+                                                                updateData = {
+                                                                    HrStatus: MoneyClaimingStatus.Rejected,
+                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    HrRejectReason:rejectReason
+                                                                };
+                                                            }
+                                                            else if (HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                                                updateData = {
+                                                                    EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    SuperiorRejectReason: rejectReason
 
-                                serviceCall<RetrieveResponse<any>>({
-                                    service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                                    data: {
-                                        'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                                        'ApplicantEmployeeRowID': EmployeeRowId
-                                    },
-                                    method: "GET",
-                                    async: false,
-                                    onSuccess: (response) => {
-                                        console.log(response)
-                                        var SuperiorPermission = response
-                                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
-                                            if (SuperiorPermission == true) {
-                                                if (EmployeeApproval == MoneyClaimingStatus.NotNeeded || HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                                    if (EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
-                                                        updateData = {
-                                                            HrStatus: MoneyClaimingStatus.Rejected,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                    else if (HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                                        updateData = {
-                                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                }
-                                                else {
-                                                    if (HrApproval == MoneyClaimingStatus.Pending) {
-                                                        updateData = {
-                                                            HrStatus: MoneyClaimingStatus.Rejected,
-                                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
-                                                    }
-                                                    else if (EmployeeApproval == MoneyClaimingStatus.Pending) {
-                                                        updateData = {
-                                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                                        };
+                                                                };
+                                                            }
+                                                        }
+                                                        else {
+                                                            if (HrApproval == MoneyClaimingStatus.Pending) {
+                                                                updateData = {
+                                                                    HrStatus: MoneyClaimingStatus.Rejected,
+                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    HrRejectReason: rejectReason
+                                                                };
+                                                            }
+                                                            else if (EmployeeApproval == MoneyClaimingStatus.Pending) {
+                                                                updateData = {
+                                                                    EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    SuperiorRejectReason: rejectReason
+
+                                                                };
+                                                            }
+                                                            else {
+                                                                updateData = {
+                                                                    EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    HrStatus: MoneyClaimingStatus.Rejected,
+                                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                                    SuperiorRejectReason: rejectReason,
+                                                                    HrRejectReason: rejectReason
+
+                                                                };
+                                                            }
+                                                        }
                                                     }
                                                     else {
                                                         updateData = {
-                                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
                                                             HrStatus: MoneyClaimingStatus.Rejected,
                                                             HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                            HrRejectReason:rejectReason
+
                                                         };
                                                     }
+
                                                 }
+                                                else {
+                                                    updateData = {
+                                                        SuperiorRejectReason: rejectReason,
+                                                        EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                                                    };
+                                                }
+
+                                                MoneyClaimApplicationService.Update({
+                                                    EntityId: entityId,
+                                                    Entity: updateData
+                                                }).then(resolve).catch(reject);
+
                                             }
-                                            else {
-                                                updateData = {
-                                                    HrStatus: MoneyClaimingStatus.Rejected,
-                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
-                                                };
-                                            }
+                                        })
+                                    })
+                                });
+                            }); // Convert jQuery object to array
 
-                                        }
-                                        else {
-                                            updateData = {
-                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                                            };
-                                        }
-
-                                        return MoneyClaimApplicationService.Update({
-                                            EntityId: entityId,
-                                            Entity: updateData
-                                        });
-
-                                    }
+                            // Wait for all operations to complete before refreshing
+                            Promise.all(rejectPromises)
+                                .then(() => {
+                                    notifyInfo(`${selectedIds.length} records have been rejected.`)
+                                    self.internalRefresh();
                                 })
-
-                            });
-                        }); // Convert jQuery object to array
-
-                        // Wait for all operations to complete before refreshing
-                        Promise.all(rejectPromises)
-                            .then(() => {
-                                self.internalRefresh();
-                            })
-                            .catch(error => {
-                                console.error('Error in update operations:', error);
-                            });
-
+                                .catch(error => {
+                                    console.error('Error in update operations:', error);
+                                });
+                        })
                     }
                 )
             },
             separator: true
         });
+        */
 
+
+
+        buttons.push({
+            title: 'Money Claim Batch Approve',
+            cssClass: 'fas fa-hat-wizard text-bg-success approveButton hidden',
+            onClick: e => {
+                confirm(
+                    "Do you want to approve all selected applications?",
+                    async () => {
+                        if (self.rowSelection.getSelectedAsInt64().length == 0) {
+                            alertDialog('Please select at least one application to approve')
+                            return
+                        }
+
+                        let selectedIds = self.rowSelection.getSelectedAsInt64();
+
+                        for (const dataId of selectedIds) {
+                            try {
+                                let response = await MoneyClaimApplicationService.Retrieve({ EntityId: dataId });
+                                let EmployeeApproval = response.Entity.EmployeeStatus;
+                                let HrApproval = response.Entity.HrStatus;
+                                let entityId = response.Entity.Id;
+                                let EmployeeRowId = response.Entity.EmployeeRowId;
+                                let updateData: MoneyClaimApplicationRow = {};
+                                /*
+                                let SuperiorPermission = await new Promise((resolve, reject) => {
+                                    serviceCall<RetrieveResponse<any>>({
+                                        service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                                        data: {
+                                            'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                                            'ApplicantEmployeeRowID': EmployeeRowId
+                                        },
+                                        method: "GET",
+                                        onSuccess: resolve,
+                                        onError: reject
+                                    });
+                                });
+                                */
+                                let SuperiorPermission = self.SuperiorOfEmployeeRowIdList.includes(EmployeeRowId)
+
+                                if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // HR
+                                    if (SuperiorPermission == true) {
+                                        if (EmployeeApproval === MoneyClaimingStatus.NotNeeded || HrApproval === MoneyClaimingStatus.NotNeeded) {
+                                            if (EmployeeApproval === MoneyClaimingStatus.NotNeeded) {
+                                                updateData = {
+                                                    HrStatus: MoneyClaimingStatus.Approved,
+                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                };
+                                            } else if (HrApproval === MoneyClaimingStatus.NotNeeded) {
+                                                updateData = {
+                                                    EmployeeStatus: MoneyClaimingStatus.Approved,
+                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                };
+                                            }
+                                        } else {
+                                            if (HrApproval === MoneyClaimingStatus.Approved) {
+                                                updateData = {
+                                                    EmployeeStatus: MoneyClaimingStatus.Approved,
+                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                };
+                                            } else if (EmployeeApproval === MoneyClaimingStatus.Approved) {
+                                                updateData = {
+                                                    HrStatus: MoneyClaimingStatus.Approved,
+                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                };
+                                            } else {
+                                                updateData = {
+                                                    EmployeeStatus: MoneyClaimingStatus.Approved,
+                                                    HrStatus: MoneyClaimingStatus.Approved,
+                                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                                };
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        updateData = {
+                                            HrStatus: MoneyClaimingStatus.Approved,
+                                            HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                        };
+                                    }
+                                }
+                                else {
+                                    updateData = {
+                                        EmployeeStatus: MoneyClaimingStatus.Approved,
+                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                                    };
+                                }
+
+                                await MoneyClaimApplicationService.Update({ EntityId: entityId, Entity: updateData });
+
+                            } catch (error) {
+                                console.error(`Error updating application ${dataId}:`, error);
+                            }
+
+                        }
+
+                        notifyInfo(`${selectedIds.length} records have been approved.`)
+                        self.internalRefresh(); // Refresh after all updates complete
+                    }
+                );
+            },
+            separator: true
+        });
+
+        buttons.push({
+            title: 'Money Claim Batch Reject',
+            cssClass: 'fas fa-hat-wizard text-bg-danger rejectButton hidden',
+            onClick: e => {
+                if (self.rowSelection.getSelectedAsInt64().length == 0) {
+                    alertDialog('Please select at least one application to reject')
+                    return
+                }
+                confirm(
+                    "Do you want to reject all selected applications?",
+                    async () => {
+
+                        let selectedIds = self.rowSelection.getSelectedAsInt64();
+                        var rejectDlg = new MoneyClaimApplicationRejectDialog()
+                        rejectDlg.dialogOpen()
+                        rejectDlg.element.on('dialogclose', async () => {
+                            var rejectReason = window["rejectReason"]
+
+                            for (const dataId of selectedIds) {
+                                try {
+                                    let response = await MoneyClaimApplicationService.Retrieve({ EntityId: dataId });
+                                    let EmployeeApproval = response.Entity.EmployeeStatus;
+                                    let HrApproval = response.Entity.HrStatus;
+                                    let entityId = response.Entity.Id;
+                                    let EmployeeRowId = response.Entity.EmployeeRowId;
+                                    let updateData: MoneyClaimApplicationRow = {};
+
+                                    let SuperiorPermission = await new Promise((resolve, reject) => {
+                                        serviceCall<RetrieveResponse<any>>({
+                                            service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
+                                            data: {
+                                                'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                                                'ApplicantEmployeeRowID': EmployeeRowId
+                                            },
+                                            method: "GET",
+                                            onSuccess: resolve,
+                                            onError: reject
+                                        });
+                                    });
+                                    if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                                        if (SuperiorPermission == true) {
+                                            if (EmployeeApproval == MoneyClaimingStatus.NotNeeded || HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                                if (EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
+                                                    updateData = {
+                                                        HrStatus: MoneyClaimingStatus.Rejected,
+                                                        HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        HrRejectReason: rejectReason
+                                                    };
+                                                }
+                                                else if (HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                                    updateData = {
+                                                        EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        SuperiorRejectReason: rejectReason
+
+                                                    };
+                                                }
+                                            }
+                                            else {
+                                                if (HrApproval == MoneyClaimingStatus.Pending) {
+                                                    updateData = {
+                                                        HrStatus: MoneyClaimingStatus.Rejected,
+                                                        HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        HrRejectReason: rejectReason
+                                                    };
+                                                }
+                                                else if (EmployeeApproval == MoneyClaimingStatus.Pending) {
+                                                    updateData = {
+                                                        EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        SuperiorRejectReason: rejectReason
+
+                                                    };
+                                                }
+                                                else {
+                                                    updateData = {
+                                                        EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                        EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        HrStatus: MoneyClaimingStatus.Rejected,
+                                                        HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                        SuperiorRejectReason: rejectReason,
+                                                        HrRejectReason: rejectReason
+
+                                                    };
+                                                }
+                                            }
+                                        }
+                                        else {
+                                            updateData = {
+                                                HrStatus: MoneyClaimingStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason
+
+                                            };
+                                        }
+
+                                    }
+                                    else {
+                                        updateData = {
+                                            SuperiorRejectReason: rejectReason,
+                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                                        };
+                                    }
+
+                                    await MoneyClaimApplicationService.Update({ EntityId: entityId, Entity: updateData });
+                                }
+                                catch (error) {
+                                    console.error(`Error updating application ${dataId}:`, error);
+                                }
+                            }
+                            notifyInfo(`${selectedIds.length} records have been rejected.`)
+                            self.internalRefresh(); // Refresh after all updates complete
+                        })
+
+                    })
+            }
+        });
         return buttons;
     }
     public rowSelection: GridRowSelectionMixin;
+    public SuperiorOfEmployeeRowIdList: number[] = [];
 
     protected createToolbarExtensions() {
         super.createToolbarExtensions();
-        
+        /*
         this.rowSelection = new GridRowSelectionMixin(this, {
             // demo code
             selectable: (item: MoneyClaimApplicationRow) => {
+                if (item.EmployeeRowId == Authorization.userDefinition.EmployeeRowID
+                    || (item.Status != MoneyClaimingStatus.Pending))
+                    return
                 var getResponse = 0
                 var superior
-                serviceCall<RetrieveResponse<any>>({
-                    service: OrganisationChartService.baseUrl + '/PermissionToAcknowledge',
-                    data: {
-                        'UserEmployeeRowID': Authorization.userDefinition.EmployeeRowID,
-                        'ApplicantEmployeeRowID': item.EmployeeRowId
-                    },
-                    method: "GET",
-                    async: false,
-                    onSuccess: (response) => {
-                        getResponse = 1
-                        console.log(response)
-                        superior = response
-                    }
-                })
-                while (getResponse == 0);
+               
                 const isHr = Authorization.hasPermission(PermissionKeys.HumanResources)
                 if (item.Status == MoneyClaimingStatus.Pending) {
-                    if ((item.EmployeeRowId == Authorization.userDefinition.EmployeeRowID)
+                    if ((item.EmployeeStatus == MoneyClaimingStatus.NotNeeded)
                         || (isHr && item.HrStatus == MoneyClaimingStatus.NotNeeded))
                         return
 
                     else if ((isHr && item.HrStatus == MoneyClaimingStatus.Pending)
-                        || (superior && item.EmployeeStatus == MoneyClaimingStatus.Pending)) //is superior
+                        || (item.EmployeeStatus == MoneyClaimingStatus.Pending)) //is superior
                     {
-                        $('.approveButton, .rejectButton').show()
-                        return true;
+                        $('.approveButton, .rejectButton').removeClass("hidden")
 
+//                        $('.approveButton, .rejectButton').show()
+                        return true;
                     }
                 }
                 
             }
         });
+        */
+       var self = this
+        let employeeRowNumber = new Promise<number[]>((resolve, reject) => {
+            serviceCall<RetrieveResponse<number[]>>({
+                service: OrganisationChartService.baseUrl + '/GetEmployeeUserCanView',
+                data: {
+                    'EmployeeRowID': Authorization.userDefinition.EmployeeRowID,
+                    'PermissionKey': PermissionKeys.MoneyClaiming
+                },
+                method: "GET",
+                onError: (error) => reject(error), // Handle failure properly
+                onSuccess: (response) => resolve(response || []),  // Ensure data is resolved
+            })
+        });
+        employeeRowNumber
+            .then(response => {
+                self.SuperiorOfEmployeeRowIdList = response
+
+                self.rowSelection = new GridRowSelectionMixin(self, {
+                    // demo code
+                    selectable: (item: MoneyClaimApplicationRow) => {
+                        var superior = response.includes(item.EmployeeRowId)
+                        if (item.EmployeeRowId == Authorization.userDefinition.EmployeeRowID
+                            || (item.Status != MoneyClaimingStatus.Pending))
+                            return
+                        const isHr = Authorization.hasPermission(PermissionKeys.HumanResources)
+                        if (item.Status == MoneyClaimingStatus.Pending) {
+                            if ((item.EmployeeStatus == MoneyClaimingStatus.NotNeeded)
+                                || (isHr && item.HrStatus == MoneyClaimingStatus.NotNeeded))
+                                return
+
+                            else if ((isHr && item.HrStatus == MoneyClaimingStatus.Pending)
+                                || (superior&&item.EmployeeStatus == MoneyClaimingStatus.Pending)) //is superior
+                            {
+                                $('.approveButton, .rejectButton').removeClass("hidden")
+
+                                //                        $('.approveButton, .rejectButton').show()
+                                return true;
+                            }
+                        }
+
+                    }
+                });
+
+
+            })
+            .catch(error => {
+                console.error("Error fetching data:", error);
+            });
         $(document).on('click', '.select-item.check-box.no-float', function () {
             // Remove highlight from previously highlighted rows
             $('.select-item.check-box.no-float').parent().parent().removeClass('highlighted-row');
@@ -461,10 +754,22 @@ export class MoneyClaimApplicationGrid extends EntityGrid<MoneyClaimApplicationR
 
     protected onViewProcessData(response: ListResponse<MoneyClaimApplicationRow>) {
         response = super.onViewProcessData(response);
-        $('.approveButton, .rejectButton').hide()
-
+        let userDefinition = Authorization.userDefinition
+        let userId = userDefinition.EmployeeRowID
+        const allSame = response.Entities.every(entity => entity.EmployeeRowId === userId);
+        if (allSame) {
+            const isHr = Authorization.hasPermission(PermissionKeys.HumanResources)
+            if (isHr) {
+                $('.approveButton, .rejectButton').removeClass("hidden")
+            }
+            else {
+                $('.approveButton, .rejectButton').addClass("hidden")
+            }
+        }
+        else {
+            $('.approveButton, .rejectButton').removeClass("hidden")
+        }
         this.toolbar.findButton("column-picker-button").toggle(false);
-       
         return response;
 
     }

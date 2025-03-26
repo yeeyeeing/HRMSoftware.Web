@@ -7,6 +7,8 @@ export interface MasterPostcodeRow {
     PostCode?: string;
     StateName?: string;
     CityName?: string;
+    MasterCountry?: number;
+    CountryName?: string;
     InsertUserId?: number;
     InsertDate?: string;
     UpdateUserId?: number;

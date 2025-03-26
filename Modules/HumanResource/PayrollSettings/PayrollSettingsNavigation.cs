@@ -4,6 +4,8 @@ using MyPages = HRMSoftware.PayrollSettings.Pages;
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Epf Subjection", typeof(MyPages.EpfSubjectionPage), icon: "fa-list-alt")]
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Eis Subjection", typeof(MyPages.EisSubjectionPage), icon: "fa-list-alt")]
 [assembly: NavigationLink(int.MaxValue, "HumanResource/Payroll Management/Payroll", typeof(MyPages.PayrollPage), icon: "fa-money-check")]
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Payroll Management/Weekly Payroll Settings", typeof(MyPages.WeeklyPayrollSettingsPage), icon: "fa-money-check")]
+[assembly: NavigationLink(int.MaxValue, "HumanResource/Payroll Management/Weekly Payroll", typeof(MyPages.WeeklyPayrollPage), icon: "fa-money-check")]
 
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Hrdf Subjection", typeof(MyPages.HrdfSubjectionPage), icon: "fa-list-alt")]
 //[assembly: NavigationLink(int.MaxValue, "Payroll/Socso Subjection", typeof(MyPages.SocsoSubjectionPage), icon: "fa-list-alt")]

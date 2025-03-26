@@ -8,7 +8,7 @@ namespace HRMSoftware.OrganisationHierarchy;
 
 [ConnectionKey("Default"), Module("OrganisationHierarchy"), TableName("HumanResourcesOccupation")]
 [DisplayName("Occupation"), InstanceName("Occupation")]
-[ReadPermission("Administration:HumanResources")]
+[ReadPermission("*")]
 [ModifyPermission("Administration:HumanResources")]
 [LookupScript("Occupation.Occupation", Permission = "*")]
 public sealed class OccupationRow : LoggingRow<OccupationRow.RowFields>, IIdRow, INameRow

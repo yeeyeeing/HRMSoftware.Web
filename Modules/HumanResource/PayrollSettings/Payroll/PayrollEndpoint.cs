@@ -60,7 +60,7 @@ public class PayrollEndpoint : ServiceEndpoint
     {
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
         {
-            request.Sort = new[] { new SortBy("PayDate", true) };
+            //request.Sort = new[] { new SortBy("PayDate", true) };
             return handler.List(connection, request);
         }
         
@@ -73,7 +73,7 @@ public class PayrollEndpoint : ServiceEndpoint
         commandType: System.Data.CommandType.StoredProcedure) ;
         
         request.Criteria = new Criteria("EmployeeRowID") == latest.Entities[0].EmployeeRowId.Value;
-        request.Sort = new[] { new SortBy("PayDate", true) };
+        //request.Sort = new[] { new SortBy("PayDate", true) }; 
        
         return handler.List(connection, request);
     }

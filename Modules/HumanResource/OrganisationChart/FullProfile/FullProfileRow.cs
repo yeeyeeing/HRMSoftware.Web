@@ -463,14 +463,14 @@ public sealed class FullProfileRow : Row<FullProfileRow.RowFields>, IIdRow, INam
         get => fields.ChildrenInUniversity[this];
         set => fields.ChildrenInUniversity[this] = value;
     }
-
+    /*
     [DisplayName("Postal Code")]
     public string PostalCode
     {
         get => fields.PostalCode[this];
         set => fields.PostalCode[this] = value;
     }
-
+    */
     [DisplayName("Country Id"), Column("CountryID")]
     public int? CountryId
     {
@@ -823,7 +823,7 @@ public sealed class FullProfileRow : Row<FullProfileRow.RowFields>, IIdRow, INam
         public Int32Field WorkingSpouse;
         public Int32Field ChildrenUnderEighteen;
         public Int32Field ChildrenInUniversity;
-        public StringField PostalCode;
+        //public StringField PostalCode;
         public Int32Field CountryId;
         public Int32Field SocsoClass;
         public StringField SocsoAccountNumber;

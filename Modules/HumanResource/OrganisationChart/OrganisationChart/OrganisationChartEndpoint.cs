@@ -17,7 +17,7 @@ namespace HRMSoftware.OrganisationChart.Endpoints;
 public class Rights
 {
  public int LeaveApproval { get; set; }
-    public int OtApprobal { get; set; }
+    public int OtApproval { get; set; }
     public int MoneyClaiming { get; set; }
     public int Appraisal { get; set; }
     public int Training { get; set; }
@@ -207,12 +207,11 @@ public class OrganisationChartEndpoint : ServiceEndpoint
         if (json.Count == 0)
             return numbers;
         var newJson = JsonSerializer.Serialize(json);
-       // var right = JsonSerializer.Deserialize<List<Rights>>(newJson);
 
         var permissionMapping = new Dictionary<string, Func<Rights, int>>
         {
             { PermissionKeys.MoneyClaiming, r => r.MoneyClaiming },
-            { PermissionKeys.OtApproval, r => r.OtApprobal },
+            { PermissionKeys.OtApproval, r => r.OtApproval },
             { PermissionKeys.LeaveApproval, r => r.LeaveApproval },
             { PermissionKeys.Appraisal, r => r.Appraisal },
             { PermissionKeys.Training, r => r.Training }

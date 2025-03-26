@@ -23,6 +23,8 @@ export class UserPermissionDialog extends TemplatedDialog<UserPermissionDialogOp
             Module: null,
             Submodule: null
         }, response => {
+            console.log(response.Entities)
+
             this.permissions.value = response.Entities;
         });
 
@@ -36,6 +38,7 @@ export class UserPermissionDialog extends TemplatedDialog<UserPermissionDialogOp
             Module: null,
             Submodule: null,
         }, response => {
+            console.log(response.Entities)
             this.permissions.rolePermissions = response.Entities;
         });
 

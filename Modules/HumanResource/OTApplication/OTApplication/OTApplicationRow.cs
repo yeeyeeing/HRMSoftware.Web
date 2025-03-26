@@ -97,7 +97,7 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
 
 
     [DisplayName("Ot Reason"), Column("OTReasonID"), ForeignKey("HumanResourcesOTReason", "ID"), LeftJoin(jOtReason), TextualField(nameof(OtReason))]
-    [LookupEditor(typeof(OTApplication.OTReasonRow), InplaceAdd = true)]
+    [LookupEditor(typeof(OTApplication.OTReasonRow)),NotNull]
     public int? OtReasonId
     {
         get => fields.OtReasonId[this];
@@ -139,6 +139,18 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
         set => fields.EndingMinute[this] = value;
     }
 
+    [DisplayName("OT Hour"), NotNull,NotMapped]
+    public double? OtHourBuffer
+    {
+        get => fields.OtHourBuffer[this];
+        set => fields.OtHourBuffer[this] = value;
+    }
+    [DisplayName("Subtotal"), NotNull, NotMapped]
+    public double? OtPayBuffer
+    {
+        get => fields.OtPayBuffer[this];
+        set => fields.OtPayBuffer[this] = value;
+    }
 
     [DisplayName("OT Rate"),NotNull]
     public double? OtRate
@@ -211,7 +223,6 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
         get => fields.EndingAt[this];
         set => fields.EndingAt[this] = value;
     }
-
     [Expression($"c.JobGradeID"), ForeignKey("HumanResourcesJobGrade", "ID"), LeftJoin("o")]
     // [LookupEditor(typeof(JobGradeRow))]
     public int? JobGradeID
@@ -354,8 +365,22 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
         get => fields.WeekdayOt[this];
         set => fields.WeekdayOt[this] = value;
     }
+    [DisplayName("Superior Reject Reason")]
+    public string SuperiorRejectReason
+    {
+        get => fields.SuperiorRejectReason[this];
+        set => fields.SuperiorRejectReason[this] = value;
+    }
+    [DisplayName("HR Reject Reason")]
+    public string HrRejectReason
+    {
+        get => fields.HrRejectReason[this];
+        set => fields.HrRejectReason[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
+        public StringField SuperiorRejectReason;
+        public StringField HrRejectReason;
         public BooleanField WeekendOt;
         public BooleanField PublicHolidayOt;
         public BooleanField WeekdayOt;
@@ -371,6 +396,8 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
 
         public EnumField<OTApplicationStatus> EmployeeStatus;
         public EnumField<OTApplicationStatus> HrStatus;
+        
+        public DoubleField OtHourBuffer;
 
         public Int32Field CostCentreID;
         public StringField CostCentreName;
@@ -386,7 +413,7 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
         public Int32Field Paid;
         public Int32Field OtMinute;
 
-        
+
         public Int32Field Id;
         public Int32Field EmployeeRowId;
         public StringField EmployeeName;
@@ -412,6 +439,7 @@ public sealed class OTApplicationRow : LoggingRow<OTApplicationRow.RowFields>, I
         public EnumField<OTApplicationStatus> Status;
         public DoubleField OtRate;
         public DoubleField TotalOtPay;
+        public DoubleField OtPayBuffer;
 
         public StringField EmployeeID;
 

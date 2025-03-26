@@ -4,6 +4,7 @@ import { initFormType } from "@serenity-is/corelib/q";
 export interface MasterPostcodeForm {
     MasterCity: LookupEditor;
     MasterState: LookupEditor;
+    MasterCountry: LookupEditor;
     PostCode: StringEditor;
 }
 
@@ -23,6 +24,7 @@ export class MasterPostcodeForm extends PrefixedContext {
             initFormType(MasterPostcodeForm, [
                 'MasterCity', w0,
                 'MasterState', w0,
+                'MasterCountry', w0,
                 'PostCode', w1
             ]);
         }

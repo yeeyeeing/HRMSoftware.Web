@@ -57,7 +57,7 @@ public sealed class LeaveApplicationRow : LoggingRow<LeaveApplicationRow.RowFiel
         set => fields.EmployeeRowId[this] = value;
     }
 
-    [DisplayName("Employee Name"), Expression($"c.EmployeeName")]
+    [DisplayName("Employee Name"), Expression($"c.EmployeeName"),QuickFilter]
     public string EmployeeName
     {
         get => fields.EmployeeName[this];
@@ -323,8 +323,24 @@ public sealed class LeaveApplicationRow : LoggingRow<LeaveApplicationRow.RowFiel
         get => fields.WeekdaysList[this];
         set => fields.WeekdaysList[this] = value;
     }
+    [DisplayName("Superior Reject Reason")]
+    public string SuperiorRejectReason
+    {
+        get => fields.SuperiorRejectReason[this];
+        set => fields.SuperiorRejectReason[this] = value;
+    }
+    [DisplayName("HR Reject Reason")]
+    public string HrRejectReason
+    {
+        get => fields.HrRejectReason[this];
+        set => fields.HrRejectReason[this] = value;
+    }
+
     public class RowFields : LoggingRowFields
     {
+        public StringField SuperiorRejectReason;
+        public StringField HrRejectReason;
+
         public StringField EmployeeUpdatedName;
         public StringField HrUpdatedName;
         public Int32Field EmployeeUpdated;

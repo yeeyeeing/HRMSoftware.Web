@@ -12,8 +12,8 @@ namespace HRMSoftware.MoneyClaimApplication;
 
 [ConnectionKey("Default"), Module("MoneyClaimApplication"), TableName("HumanResourcesMoneyClaiming")]
 [DisplayName("Money Claim Application"), InstanceName("Money Claim Application")]
-[ReadPermission(PermissionKeys.Employee)]
-[ModifyPermission(PermissionKeys.Employee)]
+[ReadPermission("*")]
+[ModifyPermission("*")]
 [LookupScript("MoneyClaimApplication.MoneyClaimApplication", Permission = "*")]
 public sealed class MoneyClaimApplicationRow : LoggingRow<MoneyClaimApplicationRow.RowFields>, IIdRow, INameRow
 {
@@ -291,8 +291,22 @@ public sealed class MoneyClaimApplicationRow : LoggingRow<MoneyClaimApplicationR
         get => fields.HrStatus[this];
         set => fields.HrStatus[this] = value;
     }
+    [DisplayName("Superior Reject Reason")]
+    public string SuperiorRejectReason
+    {
+        get => fields.SuperiorRejectReason[this];
+        set => fields.SuperiorRejectReason[this] = value;
+    }
+    [DisplayName("HR Reject Reason")]
+    public string HrRejectReason
+    {
+        get => fields.HrRejectReason[this];
+        set => fields.HrRejectReason[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
+        public StringField SuperiorRejectReason;
+        public StringField HrRejectReason;
         public BooleanField SubjectionEis;
         public BooleanField SubjectionEpf;
         public BooleanField SubjectionHrdf;

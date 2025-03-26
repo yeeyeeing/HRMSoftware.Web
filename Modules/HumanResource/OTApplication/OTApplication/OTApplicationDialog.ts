@@ -14,6 +14,8 @@ import { PermissionKeys } from '../../../ServerTypes/Administration';
 import { EmployeeBasicDataDialog } from '../../EmployeeBasicData/EmployeeBasicData/EmployeeBasicDataDialog';
 import { OrganisationChartService } from '../../../ServerTypes/OrganisationChart';
 import { AnnouncementWizardService } from '../../../ServerTypes/Announcement';
+import { OTApplicationRejectDialog } from './OTApplicationRejectDialog';
+import { PublicHolidayService } from '../../../ServerTypes/PublicHoliday';
 
 @Decorators.registerClass('HRMSoftware.OTApplication.OTApplicationDialog')
 export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
@@ -29,8 +31,43 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
     public EmployeeApproval: number;
     public HrApproval: number;
     public SuperiorPermission: boolean;
+    public ListOfPublicHolidayDate: string[]=[];
+    public SundayWeekday: boolean;
+    public MondayWeekday: boolean;
+    public TuesdayWeekday: boolean;
+    public WednesdayWeekday: boolean;
+    public ThursdayWeekday: boolean;
+    public FridayWeekday: boolean;
+    public SaturdayWeekday: boolean;
+
     constructor() {
         super();
+        var self = this
+        CompanySettingsService.List({}, response => {
+            var CountryCode
+            for (var res in response.Entities) {
+                if (response.Entities[res].IsActive == 1) {
+                    CountryCode = response.Entities[res].BasedCountry
+                    this.SundayWeekday = response.Entities[res].SundayWeekday
+                    this.MondayWeekday = response.Entities[res].MondayWeekday
+                    this.TuesdayWeekday = response.Entities[res].TuesdayWeekday
+                    this.WednesdayWeekday = response.Entities[res].WednesdayWeekday
+                    this.ThursdayWeekday = response.Entities[res].ThursdayWeekday
+                    this.FridayWeekday = response.Entities[res].FridayWeekday
+                    this.SaturdayWeekday = response.Entities[res].SaturdayWeekday
+                }
+            }
+            PublicHolidayService.List({}, response => {
+                for (var res in response.Entities) {
+                    if (response.Entities[res].IsActive == 1 && response.Entities[res].CountryCode.replace(/\s+/g, "") == CountryCode) 
+                        self.ListOfPublicHolidayDate.push(response.Entities[res].Date.substring(0,10))
+                    
+                }
+
+            })
+
+        })
+
         // Create link element for CSS
         var linkElement = document.createElement('link');
         linkElement.rel = 'stylesheet';
@@ -72,16 +109,49 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
         EndClocklet.addEventListener("clocklet.closed", function (event) {
         });
     }
-    public calculateOtRate(): void {
-        var self = this
+    public calculateOtRate(check:boolean): void {
+        function getDayOfWeek(dateString: string): number {
+            const date = new Date(dateString);
+            return date.getDay();
+        }
+        function isDateInArray(dateArray: string[], targetDate: string): boolean {
+            // Normalize the target date (remove dashes for easy comparison)
+            const normalizedTarget = targetDate.replace(/-/g, "");
 
-        if (
-            self.form.WeekendOt.value == false
-            && self.form.WeekdayOt.value == false
-            && self.form.PublicHolidayOt.value == false
-        ) {
-            self.form.OtRate.value = 0
+            // Normalize and check each date in the array
+            return dateArray.some(date => {
+                const normalizedDate = date.replace(/-/g, "").padEnd(8, "0");
+                return normalizedDate === normalizedTarget;
+            });
+        }
+        var self = this
+        if (isEmptyOrNull(self.form.EmployeeRowId.value) || isEmptyOrNull(self.form.OtDate.value)) {
+            self.form.OtRate.value = null
             return
+        }
+        if (check == true) {
+            self.form.PublicHolidayOt.value = self.form.WeekendOt.value = self.form.WeekdayOt.value = false
+
+            var isPublicHoliday = isDateInArray(self.ListOfPublicHolidayDate, self.form.OtDate.value)
+            if (isPublicHoliday == true) {
+                self.form.PublicHolidayOt.value = true
+            }
+            else {
+                var day = getDayOfWeek(self.form.OtDate.value)
+                if ((day == 0 && self.SundayWeekday == false) ||
+                    (day == 1 && self.MondayWeekday == false) ||
+                    (day == 2 && self.TuesdayWeekday == false) ||
+                    (day == 3 && self.WednesdayWeekday == false) ||
+                    (day == 4 && self.ThursdayWeekday == false) ||
+                    (day == 5 && self.FridayWeekday == false) ||
+                    (day == 6 && self.SaturdayWeekday == false)) {
+
+                    self.form.WeekendOt.value = true;
+                } else {
+                    self.form.WeekdayOt.value = true; // Reset if the day is allowed
+                }
+            }
+
         }
         serviceCall<RetrieveResponse<any>>({
             service: EmployeeProfileService.baseUrl + '/CalculateOtRate',
@@ -100,7 +170,10 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                     self.form.OtRate.value = response.Entities[0].OtRateWeekday
                 else if (self.form.PublicHolidayOt.value == true)
                     self.form.OtRate.value = response.Entities[0].OtRatePublicHoliday
-
+                if (!isEmptyOrNull(self.form.OtHourBuffer.value)) {
+                    var subTotal = self.form.OtRate.value * self.form.OtHourBuffer.value
+                    self.form.TotalOtPayBuffer.value = subTotal
+                }
             }
         })
 
@@ -109,7 +182,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
     }
     public dialogOpen(asPanel?: boolean): void {
         super.dialogOpen(asPanel);
-
+       
         EditorUtils.setReadonly(this.form.OtRate.element, true);
 
         EditorUtils.setReadonly(this.form.EmployeeName.element, true);
@@ -117,7 +190,9 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
 
         var OtDate = document.getElementById(this.idPrefix + 'OtDate')
         $(OtDate).on('change', () => {
-            self.calculateOtRate()
+
+
+            self.calculateOtRate(true)
         });
 
         var WeekendOt = document.getElementById(this.idPrefix + 'WeekendOt')
@@ -127,7 +202,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             if (self.form.WeekdayOt.value == true)
                 self.form.WeekdayOt.value = false
 
-            self.calculateOtRate()
+            self.calculateOtRate(false)
         });
 
         var PublicHolidayOt = document.getElementById(this.idPrefix + 'PublicHolidayOt')
@@ -137,7 +212,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             if (self.form.WeekdayOt.value == true)
                 self.form.WeekdayOt.value = false
 
-            self.calculateOtRate()
+            self.calculateOtRate(false)
         });
         var WeekdayOt = document.getElementById(this.idPrefix + 'WeekdayOt')
         $(WeekdayOt).on('change', () => {
@@ -146,11 +221,56 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             if (self.form.PublicHolidayOt.value == true)
                 self.form.PublicHolidayOt.value = false
 
-            self.calculateOtRate()
+            self.calculateOtRate(false)
+        });
+        function getHoursBetween(start: string, end: string): number {
+            const startTime = new Date();
+            const endTime = new Date();
+
+            // Parse the HH:mm format and set the time in Date object
+            const [startHour, startMinute] = start.split(":").map(Number);
+            const [endHour, endMinute] = end.split(":").map(Number);
+
+            startTime.setHours(startHour, startMinute, 0, 0);
+            endTime.setHours(endHour, endMinute, 0, 0);
+
+            // If end time is earlier than start time, it means the shift crossed midnight
+            if (endTime < startTime) {
+                // Add 24 hours to the end time to correctly calculate night shift hours
+                endTime.setDate(endTime.getDate() + 1);
+            }
+
+            // Calculate the difference in milliseconds and convert to hours
+            return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        }
+        var StartingElement = document.getElementById('ot-start-clocklet') as HTMLInputElement
+        var EndingElement = document.getElementById('ot-end-clocklet') as HTMLInputElement
+       
+        $(StartingElement).on('change', () => {
+            console.log('hahaha')
+            var startTimeStr = StartingElement.value
+            var endTimeStr = EndingElement.value
+            var hours = getHoursBetween(startTimeStr, endTimeStr)
+            self.form.OtHourBuffer.value = hours
+            if (!isEmptyOrNull(self.form.OtRate.value)) {
+                var subTotal = self.form.OtRate.value * self.form.OtHourBuffer.value
+                self.form.OtPayBuffer.value = subTotal
+            }
+        });
+        $(EndingElement).on('change', () => {
+            var startTimeStr = StartingElement.value
+            var endTimeStr = EndingElement.value
+            var hours = getHoursBetween(startTimeStr, endTimeStr)
+            self.form.OtHourBuffer.value = hours
+            if (!isEmptyOrNull(self.form.OtRate.value)) {
+                var subTotal = self.form.OtRate.value * self.form.OtHourBuffer.value
+                self.form.OtPayBuffer.value = subTotal
+            }
+
         });
 
 
-
+        /*
         serviceCall<ListResponse<any>>({
             service: AnnouncementWizardService.baseUrl + '/GetTodayDateTime',
             method: "GET",
@@ -162,7 +282,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             }
         })
 
-        /*
+        
         if (this.isNew()) { 
             CompanySettingsService.List({}, response => {
                 for (var index in response.Entities)
@@ -199,7 +319,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
 
 
     protected save_submitHandler(response): void {
-
+        var self = this
         var StartingElement = document.getElementById('ot-start-clocklet') as HTMLInputElement
         var EndingElement = document.getElementById('ot-end-clocklet') as HTMLInputElement
         var startTimeStr = StartingElement.value
@@ -221,6 +341,10 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
             alertDialog('This OT cannot be applied as the duration is less than minimum time')
             return
         }
+        if (self.form.PublicHolidayOt.value == false && self.form.WeekdayOt.value == false && self.form.WeekendOt.value == false)
+            alertDialog('Please choose the type of ot to determine the rate')
+
+
         super.save_submitHandler(response)
 
     }
@@ -228,6 +352,8 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
         super.onDialogOpen()
         $(".EmployeeUpdated").hide()
         $(".HrUpdated").hide()
+        var self = this
+
         if (isEmptyOrNull(this.form.EmployeeUpdatedName.value))
             $(".EmployeeUpdatedName").hide()
         else {
@@ -236,22 +362,27 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                 var dlg = new EmployeeBasicDataDialog(parseInt(this.form.EmployeeUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(this.form.EmployeeUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                $(".SuperiorRejectReason").show()
+
         }
         if (isEmptyOrNull(this.form.HrUpdatedName.value))
             $(".HrUpdatedName").hide()
         else {
+
             var HrUpdatedNameNameElement = document.getElementById(this.idPrefix + 'HrUpdatedName')
             $(HrUpdatedNameNameElement).on('click', async function () {
                 var dlg = new EmployeeBasicDataDialog(parseInt(this.form.HrUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(this.form.HrUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                $(".HrRejectReason").show()
         }
 
 
         var RejectedBy = '.RejectedEmployeeName'
         var ApprovedBy = '.ApproveEmployeeName'
         var EmployeeRowIdElement = document.getElementById(this.idPrefix + 'EmployeeRowId')
-        var self = this
         var OtDate = document.getElementById(this.idPrefix + 'OtDate')
 
         if (!Authorization.userDefinition.Permissions[PermissionKeys.HumanResources] && this.isNew()) {
@@ -266,16 +397,18 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
         }
         if (this.isNew()) {
             $(EmployeeRowIdElement).on('change', async function () {
-                self.form.EmployeeName.value = ''
                 if (isEmptyOrNull($(EmployeeRowIdElement).val())) {
+                    self.form.EmployeeName.value = ''
                     $(self.form.OtRate.element).val('')
                     return
                 }
+                self.calculateOtRate()
+
                 EmployeeProfileService.Retrieve({
                     EntityId: $(EmployeeRowIdElement).val()
                 }, response => {
                     self.form.EmployeeName.value = response.Entity.EmployeeName
-
+                    /*
                     if (self.fixedOtRateOption == true && response.Entity.BasicSalary < self.thresholdSalary)
                         self.form.OtRate.value = self.fixedOtRate
                     else
@@ -288,6 +421,7 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                     var yyyy = parts[2];
                     var mm = parts[0];
                     var dd = parts[1];
+                    */
                     // Construct the new date string in the desired format
                     /*
                     if (self.fixedOtRateOption == true && response.Entity.BasicSalary > self.thresholdSalary) 
@@ -546,7 +680,13 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                 icon: 'fa-times text-red',
                 onClick: () => {
                     confirm("Do you want to reject this application?", () => {
+                        var rejectDlg = new OTApplicationRejectDialog()
+                        rejectDlg.dialogOpen()
+                        rejectDlg.element.on('dialogclose', () => {
                         let updateData: OTApplicationRow = {};
+                         var rejectReason = window["rejectReason"]
+
+
                         if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
                             if (self.SuperiorPermission == true) {
                                 if (self.EmployeeApproval == OTApplicationStatus.NotNeeded || self.HrApproval == OTApplicationStatus.NotNeeded) {
@@ -554,12 +694,14 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                                         updateData = {
                                             HrStatus: OTApplicationStatus.Rejected,
                                             HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrRejectReason: rejectReason,
                                         };
                                     }
                                     else if (self.HrApproval == OTApplicationStatus.NotNeeded) {
                                         updateData = {
                                             EmployeeStatus: OTApplicationStatus.Rejected,
                                             EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            SuperiorRejectReason: rejectReason
                                         };
                                     }
                                 }
@@ -568,12 +710,14 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                                         updateData = {
                                             HrStatus: OTApplicationStatus.Rejected,
                                             HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrRejectReason: rejectReason,
                                         };
                                     }
                                     else if (self.EmployeeApproval == OTApplicationStatus.Pending) {
                                         updateData = {
                                             EmployeeStatus: OTApplicationStatus.Rejected,
                                             EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            SuperiorRejectReason: rejectReason
                                         };
                                     }
                                     else {
@@ -582,6 +726,8 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                                             EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
                                             HrStatus: OTApplicationStatus.Rejected,
                                             HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                            HrRejectReason: rejectReason,
+                                            SuperiorRejectReason: rejectReason
                                         };
                                     }
                                 }
@@ -589,7 +735,8 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                             else {
                                 updateData = {
                                     HrStatus: OTApplicationStatus.Rejected,
-                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                    HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                     HrRejectReason: rejectReason,
                                 };
                             }
 
@@ -597,16 +744,27 @@ export class OTApplicationDialog extends EntityDialog<OTApplicationRow, any> {
                         else {
                             updateData = {
                                 EmployeeStatus: OTApplicationStatus.Rejected,
-                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
+                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                SuperiorRejectReason: rejectReason
                             };
                         }
+
+
                         OTApplicationService.Update({
                             EntityId: self.entityId,
                             Entity: updateData
                         }, response => {
-                            self.loadById(response.EntityId)
+                            self.loadById(response.EntityId, response => {
+                                console.log(response)
+                                if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                                    $('.SuperiorRejectReason').show()
+                                if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                                    $('.HrRejectReason').show()
+                            })
                             $('.rejectApplication, .approveApplication').hide()
+
                         })
+                    })
 
                     });
                 },

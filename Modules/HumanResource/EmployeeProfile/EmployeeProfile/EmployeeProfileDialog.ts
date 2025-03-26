@@ -1,4 +1,4 @@
-import { DataGrid, Decorators, EditorUtils, EntityDialog, SaveResponse, Select2Editor } from '@serenity-is/corelib';
+import { DataGrid, Decorators, EditorUtils, EntityDialog, SaveResponse, Select2Editor, Criteria } from '@serenity-is/corelib';
 import { EmployeeCareerPathRow, EmployeeCareerPathService, EmployeeProfileForm, EmployeeProfileRow, EmployeeProfileService, EmployeeType, ProbationClass, SOCSOClass } from '../../../ServerTypes/EmployeeProfile';
 import { alertDialog, getHighlightTarget, RetrieveResponse, serviceCall } from '@serenity-is/corelib/q';
 import { ShiftService } from '../../../ServerTypes/Shift';
@@ -17,6 +17,8 @@ import { AnnouncementWizardService } from '../../../ServerTypes/Announcement';
 import { OTApplicationService } from '../../../ServerTypes/OTApplication';
 import {   informationDialog, notifyError, notifySuccess, successDialog, warningDialog } from "@serenity-is/corelib";
 import { confirmDialog, notifyInfo } from '@serenity-is/corelib/q';
+import { MasterPostcodeService } from '../../../ServerTypes/Master';
+import { SplitOrganisationChartRow, SplitOrganisationChartService } from '../../../ServerTypes/OrganisationChart';
 
 interface EmployeeUser {
     EmployeeRowId: number;
@@ -76,6 +78,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         }, response => {
             for (var res in response.Entities) {
                 if (response.Entities[res].UserId == self.form.UserRowID.value) {
+
                     UserService.Update({
                         EntityId: self.form.UserRowID.value,
                         Entity:
@@ -92,95 +95,219 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
 
 
     }
+    public DivisionId: number;
+    public DepartmentId: number;
+    public SectionId: number;
+    public OccupationText: string;
+
+    
     protected onSaveSuccess(response: SaveResponse): void {
-        var entity_id = response.EntityId
-        var self = this
+        var entity_id = response.EntityId;
         var originalRes = response
+        var self = this
+        SplitOrganisationChartService.List({}).then(response => {
+            function EncodeString(OriginalString, Starter, Ender) {
+                if (OriginalString.endsWith('Class')) {
+                    OriginalString = OriginalString.slice(0, -5);
+                }
+                var buffer = String.fromCharCode(Starter) + OriginalString + String.fromCharCode(Ender);
+                return buffer.replace(/\s+/g, ''); // Removes all spaces
+            }
 
-        if (this.isNew()) {
-            var UserName = Authorization.userDefinition.Username
-            var Today = new Date()
-            var Description = 'Employee ' + this.form.EmployeeName.value + ' is created by ' + UserName
-                + ' on ' + Today
-            EmployeeEditHistoryService.Create({
-                Entity:
-                {
-                    "Description": Description,
-                    "OldValue": null,
-                    "NewValue": null,
-                    "FieldName": null,
-                    "EmployeeRowId": entity_id
+            function buildRegexPattern(input: string): RegExp {
+                input = normalizeInput(input);
+                const divisionMatch = input.match(/DIVISION(\d+)/)?.[1] ?? "";
+                const departmentMatch = input.match(/DEPARTMENT(\d+)/)?.[1] ?? "";
+                const sectionMatch = input.match(/SECTION(\d+)/)?.[1] ?? "";
 
-                },
-            });
-        
+                let pattern = `DIVISION${divisionMatch}`;
+                if (departmentMatch) {
+                    pattern += `(?:[^D]*DEPARTMENT${departmentMatch}`;
+                    if (sectionMatch) {
+                        pattern += `(?:[^S]*SECTION${sectionMatch})?`;
+                    }
+                    pattern += `)?`;
+                }
+                return new RegExp(pattern);
+            }
 
-        }
-        else if (!this.isNew())//not new
-        {
-                this.Record(this.EditedValue)
-                var keys = Object.keys(this.EditedValue);
-                var UserName = Authorization.userDefinition.Username
-                var Today = new Date()
-                for (const key of keys) {
-                    if (this.EditedValue[key] != this.OriginalValue[key] && typeof this.OriginalValue[key] != "object"
-                        && typeof this.EditedValue[key] != "object") {
-                        var Word = key
-                        Word = Word.replace(/ID/g, "")
-                        if (isEmptyOrNull(this.OriginalValue[key])) {
-                            var Description = Word + ' of ' + this.form.EmployeeName.value + ' is set by ' + UserName
-                                + ' to ' + this.EditedValue[key] + ' on ' + Today
-                        }
-                        else {
-                            var Description = Word + ' of ' + this.form.EmployeeName.value + ' is changed by ' + UserName
-                                + ' from ' + this.OriginalValue[key] + ' to ' + this.EditedValue[key] + ' on ' + Today
-                        }
-                        EmployeeEditHistoryService.Create({
-                            Entity:
-                            {
-                                "Description": Description,
-                                "OldValue": this.OriginalValue[key],
-                                "NewValue": this.EditedValue[key],
-                                "FieldName": key,
-                                "EmployeeRowId": entity_id
-                            },
-                        });
+            function normalizeInput(input: string): string {
+                return input.replace(/[\x88\x99]/g, ""); // Remove special characters
+            }
+
+            function DecomposeStringToList(StringToDecompose: string, Starter, Ender) {
+                var buffer = '', start = false;
+                var bufferList: string[] = [];
+                for (let i = 0; i < StringToDecompose.length; i++) {
+                    var charCode = StringToDecompose.charCodeAt(i);
+                    if (charCode == Starter || (start == true && charCode != Ender)) {
+                        if (start == true) buffer += StringToDecompose[i];
+                        start = true;
+                    } else if (charCode == Ender) {
+                        bufferList.push(buffer);
+                        start = false;
+                        buffer = '';
                     }
                 }
-        }
+                return bufferList;
+            }
 
-        if (self.form.CreateUser.value == true && isEmptyOrNull(self.form.UserRowID.value)) {
-            UserService.Create({
-                Entity: {
-                    "Username": this.form.UserName.value,
-                    "DisplayName": this.form.EmployeeName.value,
-                    "Password": this.form.UserPassword.value,
-                    "PasswordConfirm": this.form.UserPassword.value,
-                    "Email": this.form.EmployeeEmail.value,
-                    "MobilePhoneNumber": this.form.TelNumber1.value
+            function countMatches(benchmark: string[], elements: string[]): number {
+                return benchmark.filter(item => elements.includes(item)).length;
+            }
+
+            const filteredData = response.Entities.filter(item =>
+                item.HierarchyLevel >= 1 && item.HierarchyLevel <= 3 && isEmptyOrNull(item.EmployeeRowId)
+            );
+
+            const EmployeeInOrgChart: SplitOrganisationChartRow[] = response.Entities.filter(item =>
+                item.HierarchyLevel == 4 && item.EmployeeRowId == entity_id
+            );
+
+            const PicInOrgChart: SplitOrganisationChartRow[] = response.Entities.filter(item =>
+                item.HierarchyLevel >= 1 && item.HierarchyLevel <= 3 && item.EmployeeRowId == entity_id
+            );
+
+            if (!isEmptyOrNull(PicInOrgChart)) return;
+
+            var DirectorNode = response.Entities.find(item => item.HierarchyLevel == 0);
+            console.log(DirectorNode)
+            //if (!EmployeeInOrgChart.length) return;
+            console.log('hahah')
+            var EmployeeNodeRowId;
+            var OriginalNodeId;
+
+            if (EmployeeInOrgChart.length > 0) {
+                EmployeeNodeRowId = EmployeeInOrgChart[0].Id;
+                OriginalNodeId = EmployeeInOrgChart[0].NodeId;
+            }
+            var DivPath = '', DepPath = '', SecPath = '';
+            if (isNaN(self.DivisionId) == false)
+                DivPath = EncodeString(`DIVISION${self.DivisionId}`, 0x88, 0x99);
+            if (isNaN(self.DepartmentId) == false)
+                DepPath = EncodeString(`DEPARTMENT${self.DepartmentId}`, 0x88, 0x99);
+            if (isNaN(self.SectionId) == false)
+                SecPath = EncodeString(`SECTION${self.SectionId}`, 0x88, 0x99);
+
+            var finalPath = `${DivPath}${DepPath}${SecPath}`;
+            var reg = buildRegexPattern(finalPath);
+
+            let possibleParents: SplitOrganisationChartRow[] = [];
+            var ListOfRequiredPath = DecomposeStringToList(finalPath, 0x88, 0x99);
+            var PossibleParent: SplitOrganisationChartRow = { NodeId: DirectorNode.NodeId };
+            var numberOfChildren = response.Entities.filter(el => el.ParentId === PossibleParent.NodeId).length;
+            if (ListOfRequiredPath.length > 0) {
+                filteredData.forEach(res => {
+                    var normalisedNodeId = normalizeInput(res.NodeId);
+                    if (reg.test(normalisedNodeId)) 
+                        possibleParents.push(res);
+                });
+                let highestMatch = -1;//seek highest
+                let secondFiltered: SplitOrganisationChartRow[] = [];
+                possibleParents.forEach(parent => {
+                    var Paths = DecomposeStringToList(parent.NodeId, 0x88, 0x99);
+                    var Matches = countMatches(ListOfRequiredPath, Paths);
+
+                    if (Matches>0 && Matches > highestMatch) 
+                        highestMatch = Matches;
+                    
+                });
+                possibleParents.forEach(parent => {
+                    var Paths = DecomposeStringToList(parent.NodeId, 0x88, 0x99);
+                    var Matches = countMatches(ListOfRequiredPath, Paths);
+                    if (Matches == highestMatch) 
+                        secondFiltered.push(parent)
+                });
+
+                let shortestNodeLength = 99999
+                secondFiltered.forEach(node => {
+                    var pathLength = DecomposeStringToList(node.NodeId, 0x88, 0x99).length;
+                    if (shortestNodeLength > pathLength) {
+                        PossibleParent = node;
+                        shortestNodeLength = pathLength
+                    }
+                })
+                numberOfChildren = response.Entities.filter(el => el.ParentId === PossibleParent.NodeId).length;
+                if (numberOfChildren == 1 && isEmptyOrNull(PossibleParent.EmployeeRowId)) {//check whether need to go down
+                    if (response.Entities.filter(el => el.ParentId === PossibleParent.NodeId)[0].HierarchyLevel == PossibleParent.HierarchyLevel) {
+
+                        PossibleParent = response.Entities.find(el => el.ParentId === PossibleParent.NodeId) || PossibleParent;
+                        numberOfChildren = response.Entities.filter(el => el.ParentId === PossibleParent.NodeId).length;
+
+                    }
                 }
-            }, response => {
-                var newUserId = response.EntityId; // Get the new user ID
-                EmployeeProfileService.Update({
-                    EntityId: entity_id,
-                    Entity:
-                    {
-                        "UserRowID": newUserId
-                    },
-                });
-                UserService.Update({
-                    EntityId: newUserId,
-                    Entity:
-                    {
-                        "EmployeeRowID": entity_id
-                    },
-                });
-                super.onSaveSuccess(originalRes)
+            }
+            var NewNode: SplitOrganisationChartRow = {
+                ParentId: PossibleParent.NodeId,
+                NodeId: `${PossibleParent.NodeId}${EncodeString(`EMPLOYEE${entity_id}`, 0x88, 0x99)}`,
+                Name: self.OccupationText,
+                ClassName: `EMPLOYEE${entity_id} Class`,
+                HierarchyLevel: 4,
+                childrenIndex: numberOfChildren,
+                EmployeeRowId: entity_id
+            };
+            console.log(NewNode.NodeId)
+            console.log(NewNode.NodeId === OriginalNodeId) 
+
+            if (NewNode.NodeId === OriginalNodeId) 
+                return Promise.resolve(); // Ensure the promise chain is correctly terminated
+            
+            console.log('action')
+            return (EmployeeNodeRowId
+                ? SplitOrganisationChartService.Delete({ EntityId: EmployeeNodeRowId })
+                : Promise.resolve()
+            ).then(() => {
+                return SplitOrganisationChartService.Create({ Entity: NewNode });
             });
 
-        }
-        else
-            super.onSaveSuccess(response);
+        }).then(() => {
+
+            if (self.isNew()) {
+                var UserName = Authorization.userDefinition.Username;
+                var Today = new Date();
+                var Description = `Employee ${self.EmployeeName} is created by ${UserName} on ${Today}`;
+
+                return EmployeeEditHistoryService.Create({
+                    Entity: {
+                        Description,
+                        OldValue: null,
+                        NewValue: null,
+                        FieldName: null,
+                        EmployeeRowId: entity_id
+                    }
+                });
+            } else {
+                var keys = Object.keys(self.EditedValue);
+                var UserName = Authorization.userDefinition.Username;
+                var Today = new Date();
+
+                return Promise.all(keys.map(key => {
+                    if (self.EditedValue[key] !== self.OriginalValue[key] &&
+                        typeof self.OriginalValue[key] !== "object" &&
+                        typeof self.EditedValue[key] !== "object") {
+                        var Word = key.replace(/ID/g, "");
+                        var Description = isEmptyOrNull(self.OriginalValue[key])
+                            ? `${Word} of ${self.EmployeeName} is set by ${UserName} to ${self.EditedValue[key]} on ${Today}`
+                            : `${Word} of ${self.EmployeeName} is changed by ${UserName} from ${self.OriginalValue[key]} to ${self.EditedValue[key]} on ${Today}`;
+
+                        return EmployeeEditHistoryService.Create({
+                            Entity: {
+                                Description,
+                                OldValue: self.OriginalValue[key],
+                                NewValue: self.EditedValue[key],
+                                FieldName: key,
+                                EmployeeRowId: entity_id
+                            }
+                        });
+                    }
+                    return Promise.resolve();
+                }));
+            }
+        }).then(() => {
+            super.onSaveSuccess(originalRes);
+        }).catch(error => {
+            console.error("Error during SplitOrganisationChartService operation:", error);
+        });
     }
     protected onDialogClose() {
         super.onDialogClose();
@@ -254,9 +381,16 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         
 
     }
+    public originalProbationStart: string;
+    public originalProbationEnd: string;
+    public EmployeeName: string;
+
     protected onDialogOpen() {
         super.onDialogOpen()
+     
+
         var self = this
+
         CompanySettingsService.List({
         }, response => {
             for (var key in response.Entities) {
@@ -264,11 +398,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     this.ProbationMonths = response.Entities[key].ProbationPeriod
                     this.RetireAge = response.Entities[key].RetireAge
                     if (self.isNew())
-                    self.form.ProbationPeriod.value = this.ProbationMonths
+                        self.form.ProbationPeriod.value = this.ProbationMonths
                 }
             }
         });
-        
+
         $('.UserRowID').hide()
         var EpfAccountNumberElement = document.getElementById(this.idPrefix + 'EpfAccountNumber')
         $(EpfAccountNumberElement).on('input', async function () {
@@ -278,9 +412,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             value = value.replace(/\D/g, '');
 
             // Limit to 3 characters
-            if (value.length > 19) 
+            if (value.length > 19)
                 value = value.slice(0, 19);
-            
+
 
             // Update input value
             this.value = value;
@@ -353,6 +487,24 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                 $(`.SsfwNumber`).show()
 
         })
+
+        var PostcodeIdElement = document.getElementById(`${this.idPrefix}PostcodeId`)
+        $(PostcodeIdElement).on('change', async function () {
+
+            MasterPostcodeService.Retrieve({
+                EntityId: self.form.PostcodeId.value
+            }, response => {
+                if (!isEmptyOrNull(response.Entity.MasterCity) && isEmptyOrNull(self.form.CityID.value))
+                    self.form.CityID.value = response.Entity.MasterCity.toString()
+                if (!isEmptyOrNull(response.Entity.MasterState) && isEmptyOrNull(self.form.StateID.value))
+                    self.form.StateID.value = response.Entity.MasterState.toString()
+                if (!isEmptyOrNull(response.Entity.MasterCountry) && isEmptyOrNull(self.form.CountryID.value))
+                    self.form.CountryID.value = response.Entity.MasterCountry.toString()
+
+
+            })
+        })
+
         if (!this.isNew()) {
             $(EmployeeTypeElement).trigger('change')
             var originalDivision = self.form.DivisionID.value
@@ -999,8 +1151,14 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         return opt
     }
     protected save_submitHandler(response): void {
-        console.log(this.form.ProbationPeriod.value)
         var list_of_errors: string[] = [];
+        this.EmployeeName = this.form.EmployeeName.value
+        this.Record(this.EditedValue);
+        this.DivisionId = parseInt(this.form.DivisionID.value)
+
+        this.DepartmentId = parseInt(this.form.DepartmentID.value)
+        this.SectionId = parseInt(this.form.SectionID.value)
+        this.OccupationText = this.form.OccupationID.text
         function startsWithNumber(input: string): boolean {
             // Regular expression to match any digit character at the start of the string
             const regex = /^[0-9]/;
@@ -1014,20 +1172,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         if (this.form.UserName.value == 'Username Cannot Start With Number, No Special Characters')
             this.form.UserName.value = ''
         var self = this
-        if (parseInt(self.form.EmployeeType.value) == EmployeeType.Local.valueOf()) {
-            if (isEmptyOrNull(self.form.Nric.value))
-                list_of_errors.push('Please fill in NRIC number')
-            else if (self.form.Nric.value.length < 12)
-                list_of_errors.push('The length of NRIC should be 12')
-        }
+       
 
-        else if (parseInt(self.form.EmployeeType.value) == EmployeeType.Foreigner.valueOf() ) {
-            if (isEmptyOrNull(self.form.SsfwNumber.value))
-                list_of_errors.push('Please fill in SSFW number')
-            else if (self.form.SsfwNumber.value.length < 12)
-                list_of_errors.push('The length of SSFW should be 12')
-
-        }
+ 
         
         if (this.form.CreateUser.value == true && this.form.UserPassword.value == '')
             list_of_errors.push('Please fill in UserPassword')
@@ -1047,8 +1194,17 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
         var EmployeeTypeElement = document.getElementById(this.idPrefix + 'EmployeeType')
         if ($(EmployeeTypeElement).val() == EmployeeType.Local) // if is local
         {
-            if (this.form.Nric.value == '')
-                list_of_errors.push('Please fill in the Identity Card Number')
+            if (isEmptyOrNull(self.form.Nric.value))
+                list_of_errors.push('Please fill in NRIC number')
+            else if (self.form.Nric.value.length < 12)
+                list_of_errors.push('The length of NRIC should be 12')
+        }
+        else if (parseInt(self.form.EmployeeType.value) == EmployeeType.Foreigner.valueOf()) {
+            if (isEmptyOrNull(self.form.SsfwNumber.value))
+                list_of_errors.push('Please fill in SSFW number')
+            else if (self.form.SsfwNumber.value.length < 12)
+                list_of_errors.push('The length of SSFW should be 12')
+
         }
         if (this.form.FixedOtRateOption.value == true) {
             if (isEmptyOrNull(this.form.OtRatePublicHoliday.value) || isEmptyOrNull(this.form.OtRateWeekday.value) || isEmptyOrNull(this.form.OtRateWeekend.value))
@@ -1062,6 +1218,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     list_of_errors.push("There is a active employee with the ID, please check again.")
             }
         }
+     
+
+
         if (list_of_errors.length > 0) {
             const concatenatedString: string = list_of_errors.map(item => `- ${item}`).join('\n');
             alertDialog(concatenatedString)
@@ -1101,11 +1260,11 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                                                     "Password": self.form.UserPassword.value,
                                                     "PasswordConfirm": self.form.UserPassword.value
                                                 },
+                                            }, response => {
+                                                if (self.form.ProbationPeriod.value == 0)
+                                                    self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+                                                super.save_submitHandler(res)
                                             });
-                                            if (self.form.ProbationPeriod.value == 0)
-                                                self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
-
-                                            super.save_submitHandler(res)
 
                                         }, {
                                         onNo: () => {
@@ -1147,8 +1306,9 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
                     }
                     if (self.form.ProbationPeriod.value == 0)
                         self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
-                    if (waitForConfirm == 0)
-                    super.save_submitHandler(res)
+
+                   if (waitForConfirm == 0)
+                   super.save_submitHandler(res)
 
                 });
 
@@ -1157,6 +1317,7 @@ export class EmployeeProfileDialog extends EntityDialog<EmployeeProfileRow, any>
             else {
                 if (self.form.ProbationPeriod.value == 0)
                     self.form.ProbationPeriodUntil.value = self.form.ProbationPeriodFrom.value = ''
+
                 super.save_submitHandler(res)
             }
         }

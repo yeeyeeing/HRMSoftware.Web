@@ -8,6 +8,7 @@ import { EisSubjectionService, EmployerContributionsRow, EpfSubjectionService, H
 
 import { EmployeeBasicDataDialog } from '../../EmployeeBasicData/EmployeeBasicData/EmployeeBasicDataDialog';
 import { OrganisationChartService } from '../../../ServerTypes/OrganisationChart';
+import { MoneyClaimApplicationRejectDialog } from './MoneyClaimApplicationRejectDialog';
 export interface Subjection {
     id: number;
     name: string;
@@ -219,6 +220,8 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
                 var dlg = new EmployeeBasicDataDialog(parseInt(self.form.EmployeeUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(self.form.EmployeeUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                $(".SuperiorRejectReason").show()
         }
         if (isEmptyOrNull(this.form.HrUpdatedName.value))
             $(".HrUpdatedName").hide()
@@ -228,6 +231,8 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
                 var dlg = new EmployeeBasicDataDialog(parseInt(self.form.HrUpdated.value))
                 dlg.loadByIdAndOpenDialog(parseInt(self.form.HrUpdated.value))
             })
+            if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                $(".HrRejectReason").show()
         }
         if (this.isNew()) {
             var ApproveButtons = document.querySelectorAll('.text-bg-success')
@@ -489,68 +494,87 @@ export class MoneyClaimApplicationDialog extends EntityDialog<MoneyClaimApplicat
                 icon: 'fa-times text-red',
                 onClick: () => {
                     confirm("Do you want to reject this application?", () => {
-                        let updateData: MoneyClaimApplicationRow = {};
-                        if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
-                            if (self.SuperiorPermission == true) {
-                                if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded || self.HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                    if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
-                                        updateData = {
-                                            HrStatus: MoneyClaimingStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
+                        var rejectDlg = new MoneyClaimApplicationRejectDialog()
+                        rejectDlg.dialogOpen()
+                        rejectDlg.element.on('dialogclose', () => {
+                            var rejectReason = window["rejectReason"]
+                            let updateData: MoneyClaimApplicationRow = {};
+                            if (Authorization.userDefinition.Permissions[PermissionKeys.HumanResources]) { // is HR
+                                if (self.SuperiorPermission == true) {
+                                    if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded || self.HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                        if (self.EmployeeApproval == MoneyClaimingStatus.NotNeeded) {
+                                            updateData = {
+                                                HrStatus: MoneyClaimingStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason,
+                                            };
+                                        }
+                                        else if (self.HrApproval == MoneyClaimingStatus.NotNeeded) {
+                                            updateData = {
+                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
                                     }
-                                    else if (self.HrApproval == MoneyClaimingStatus.NotNeeded) {
-                                        updateData = {
-                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
+                                    else {
+                                        if (self.HrApproval == MoneyClaimingStatus.Pending) {
+                                            updateData = {
+                                                HrStatus: MoneyClaimingStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason,
+                                            };
+                                        }
+                                        else if (self.EmployeeApproval == MoneyClaimingStatus.Pending) {
+                                            updateData = {
+                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
+                                        else {
+                                            updateData = {
+                                                EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrStatus: MoneyClaimingStatus.Rejected,
+                                                HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                                HrRejectReason: rejectReason,
+                                                SuperiorRejectReason: rejectReason
+                                            };
+                                        }
                                     }
                                 }
                                 else {
-                                    if (self.HrApproval == MoneyClaimingStatus.Pending) {
-                                        updateData = {
-                                            HrStatus: MoneyClaimingStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
-                                    else if (self.EmployeeApproval == MoneyClaimingStatus.Pending) {
-                                        updateData = {
-                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
-                                    else {
-                                        updateData = {
-                                            EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                            EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
-                                            HrStatus: MoneyClaimingStatus.Rejected,
-                                            HrUpdated: Authorization.userDefinition.EmployeeRowID,
-                                        };
-                                    }
+                                    updateData = {
+                                        HrStatus: MoneyClaimingStatus.Rejected,
+                                        HrUpdated: Authorization.userDefinition.EmployeeRowID,
+                                        HrRejectReason: rejectReason,
+                                    };
                                 }
+
                             }
                             else {
                                 updateData = {
-                                    HrStatus: MoneyClaimingStatus.Rejected,
-                                    HrUpdated: Authorization.userDefinition.EmployeeRowID
+                                    EmployeeStatus: MoneyClaimingStatus.Rejected,
+                                    EmployeeUpdated: Authorization.userDefinition.EmployeeRowID,
+                                    SuperiorRejectReason: rejectReason
                                 };
                             }
-
-                        }
-                        else {
-                            updateData = {
-                                EmployeeStatus: MoneyClaimingStatus.Rejected,
-                                EmployeeUpdated: Authorization.userDefinition.EmployeeRowID
-                            };
-                        }
-                        MoneyClaimApplicationService.Update({
-                            EntityId: self.entityId,
-                            Entity: updateData
-                        }, response => {
-                            self.loadById(response.EntityId)
-                            $('.rejectApplication, .approveApplication').hide()
+                            MoneyClaimApplicationService.Update({
+                                EntityId: self.entityId,
+                                Entity: updateData
+                            }, response => {
+                                self.loadById(response.EntityId, response => {
+                                    console.log(response)
+                                    if (!isEmptyOrNull(self.form.SuperiorRejectReason.value))
+                                        $('.SuperiorRejectReason').show()
+                                    if (!isEmptyOrNull(self.form.HrRejectReason.value))
+                                        $('.HrRejectReason').show()
+                                })
+                                $('.rejectApplication, .approveApplication').hide()
+                              
+                            })
                         })
-
                     });
                 },
             }

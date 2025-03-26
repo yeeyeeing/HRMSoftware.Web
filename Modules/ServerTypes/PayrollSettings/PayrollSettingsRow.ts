@@ -1,6 +1,11 @@
 ﻿import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface PayrollSettingsRow {
+    EpfFormatId?: number;
+    LhdnFormatId?: number;
+    EisFormatId?: number;
+    SocsoFormatId?: number;
+    AutopayFormatId?: number;
     Email?: string;
     PhoneNumber?: string;
     ContactPerson?: string;

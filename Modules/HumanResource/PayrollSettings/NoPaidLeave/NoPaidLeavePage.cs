@@ -1,9 +1,11 @@
+using HRMSoftware.Administration;
 using Microsoft.AspNetCore.Mvc;
 using Serenity.Web;
 
 namespace HRMSoftware.PayrollSettings.Pages;
 
-[PageAuthorize(typeof(NoPaidLeaveRow))]
+[PageAuthorize(PermissionKeys.HumanResources)]
+
 public class NoPaidLeavePage : Controller
 {
     [Route("PayrollSettings/NoPaidLeave")]

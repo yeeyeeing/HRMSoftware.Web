@@ -41,7 +41,7 @@ export class UserDialog extends EntityDialog<UserRow, any> {
     protected getToolbarButtons()
     {
         let buttons = super.getToolbarButtons();
-
+        /*
         buttons.push({
             title: localText(Texts.Site.UserDialog.EditPermissionsButton),
             cssClass: 'edit-permissions-button',
@@ -54,7 +54,7 @@ export class UserDialog extends EntityDialog<UserRow, any> {
                 }).dialogOpen();
             }
         });
-
+        */
         return buttons;
     }
 
@@ -75,8 +75,8 @@ export class UserDialog extends EntityDialog<UserRow, any> {
         EmployeeProfileService.List({
         }, response => {
             for (var index in response.Entities) {
-                if (response.Entities[index].CreateUser == false || response.Entities[index].Id == CurrentEmployeeRowId)//if no account yet
-                EmployeeRowEditor.addItem({ id: (response.Entities[index].Id).toString(), text: (response.Entities[index].EmployeeID).toString(), });
+                if (isEmptyOrNull(response.Entities[index].UserRowID) || response.Entities[index].Id == CurrentEmployeeRowId)//if no account yet
+                    EmployeeRowEditor.addItem({ id: (response.Entities[index].Id).toString(), text: (response.Entities[index].EmployeeID).toString(), });
             }
             if (!isEmptyOrNull(CurrentEmployeeRowId)) 
                 $(EmployeeRowID).val(CurrentEmployeeRowId.toString()).trigger('change');
@@ -104,30 +104,51 @@ export class UserDialog extends EntityDialog<UserRow, any> {
     protected onSaveSuccess(response): void {
         var self = this
         if (!isEmptyOrNull(this.form.EmployeeRowID.value)) {
-            EmployeeProfileService.Update({
-                EntityId: this.form.EmployeeRowID.value,
-                Entity:
-                {
-                    "UserRowID": self.entityId,
-                    "UserName": self.form.Username.value,
-                    "CreateUser": true,
-                    "UserPassword": self.form.Password.value
+            EmployeeProfileService.Retrieve(
+                { EntityId: self.form.EmployeeRowID.value},
+                response => {
+                    console.log(response)
+                    if (response.Entity?.IsActive === 1) {
+                    
+                        EmployeeProfileService.Update({
+                            EntityId: self.form.EmployeeRowID.value,
+                            Entity: {
+                                "UserRowID": self.entityId,
+                                "UserName": self.form.Username.value,
+                                "CreateUser": true,
+                                "UserPassword": self.form.Password.value
+                            },
+                        });
+                    }
                 },
-            });
+                { async: true }
+            );
+
         }
 
         if (self.form.EmployeeRowID.value != self.originalOwner
             && !isEmptyOrNull(self.originalOwner)) {
-            EmployeeProfileService.Update({
-                EntityId: self.originalOwner,
-                Entity:
-                {
-                    "UserRowID": null,
-                    "UserName": null,
-                    "CreateUser": false,
-                    "UserPassword": null
+            EmployeeProfileService.Retrieve(
+                { EntityId: self.originalOwner },
+                response => {
+                    console.log(response.Entity)
+                    if (response.Entity?.IsActive === 1) {
+
+                        EmployeeProfileService.Update({
+                            EntityId: self.originalOwner,
+                            Entity: {
+                                "UserRowID": null,
+                                "UserName": null,
+                                "CreateUser": false,
+                                "UserPassword": null
+
+                            },
+                        });
+                    }
                 },
-            });
+                { async: true }
+            );
+
         }
 
         super.onSaveSuccess(response)

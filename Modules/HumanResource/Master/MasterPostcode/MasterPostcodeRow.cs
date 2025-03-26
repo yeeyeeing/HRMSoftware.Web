@@ -59,6 +59,25 @@ public sealed class MasterPostcodeRow : LoggingRow<MasterPostcodeRow.RowFields>,
         set => fields.PostCode[this] = value;
     }
 
+
+
+
+
+    const string jMasterCountry = nameof(jMasterCountry);
+
+    [DisplayName("Country"), ForeignKey("MasterCountries", "ID"), LeftJoin(jMasterCountry),  NotNull]
+    [LookupEditor(typeof(MasterCountryRow))]
+    public int? MasterCountry
+    {
+        get => fields.MasterCountry[this];
+        set => fields.MasterCountry[this] = value;
+    }
+    [DisplayName("Country"), Expression($"{jMasterCountry}.[Name]")]
+    public string CountryName
+    {
+        get => fields.CountryName[this];
+        set => fields.CountryName[this] = value;
+    }
     public class RowFields : LoggingRowFields
     {
         public Int32Field Id;
@@ -67,6 +86,8 @@ public sealed class MasterPostcodeRow : LoggingRow<MasterPostcodeRow.RowFields>,
         public StringField PostCode;
         public StringField StateName;
         public StringField CityName;
+        public Int32Field MasterCountry;
+        public StringField CountryName;
 
     }
 }

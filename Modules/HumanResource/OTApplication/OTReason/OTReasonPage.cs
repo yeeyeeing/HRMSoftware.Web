@@ -1,9 +1,10 @@
+using HRMSoftware.Administration;
 using Microsoft.AspNetCore.Mvc;
 using Serenity.Web;
 
 namespace HRMSoftware.OTApplication.Pages;
 
-[PageAuthorize(typeof(OTReasonRow))]
+[PageAuthorize(PermissionKeys.HumanResources)]
 public class OTReasonPage : Controller
 {
     [Route("OTApplication/OTReason")]

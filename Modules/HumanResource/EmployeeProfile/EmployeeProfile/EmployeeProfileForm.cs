@@ -145,19 +145,23 @@ public class EmployeeProfileForm
     [HalfWidth]
     public int CityID { get; set; }
 
-    [Category("")]
 
     [Tab("Working Information")]
+    [Category("Organisation Position")]
     [HalfWidth]
-    public int Cp8dID { get; set; }
+    public int DivisionID { get; set; }
+
     [HalfWidth]
     public int DepartmentID { get; set; }
     [HalfWidth]
-    public int DivisionID { get; set; }
-    [HalfWidth]
     public int SectionID { get; set; }
+    [Category("Position Details")]
+
     [HalfWidth]
     public int JobGradeID { get; set; }
+
+    [HalfWidth]
+    public int Cp8dID { get; set; }
     [HalfWidth]
     public int OccupationID { get; set; }
     [HalfWidth]

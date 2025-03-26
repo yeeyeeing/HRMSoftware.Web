@@ -645,7 +645,7 @@ namespace HRMSoftware.EmployeeProfile
             set => fields.CountryName[this] = value;
         }
 
-        [DisplayName("Postal Code"),  ForeignKey("MasterPostCode", "ID"), LeftJoin(jPostalCode)]
+        [DisplayName("Postal Code"),  ForeignKey("MasterPostCode", "ID"), LeftJoin(jPostalCode),NotNull]
         [LookupEditor(typeof(MasterPostcodeRow))]
         public int? PostcodeId
         {

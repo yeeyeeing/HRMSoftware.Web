@@ -4,7 +4,9 @@ import { initFormType } from "@serenity-is/corelib/q";
 
 export interface LeaveApplicationForm {
     EmployeeUpdatedName: StringEditor;
+    SuperiorRejectReason: StringEditor;
     HrUpdatedName: StringEditor;
+    HrRejectReason: StringEditor;
     EmployeeUpdated: LookupEditor;
     HrUpdated: LookupEditor;
     EmployeeRowId: LookupEditor;
@@ -43,7 +45,9 @@ export class LeaveApplicationForm extends PrefixedContext {
 
             initFormType(LeaveApplicationForm, [
                 'EmployeeUpdatedName', w0,
+                'SuperiorRejectReason', w0,
                 'HrUpdatedName', w0,
+                'HrRejectReason', w0,
                 'EmployeeUpdated', w1,
                 'HrUpdated', w1,
                 'EmployeeRowId', w1,

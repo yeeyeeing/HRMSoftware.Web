@@ -26,7 +26,7 @@ export abstract class OccupationRow {
 
     static readonly deletePermission = 'Administration:HumanResources';
     static readonly insertPermission = 'Administration:HumanResources';
-    static readonly readPermission = 'Administration:HumanResources';
+    static readonly readPermission = '*';
     static readonly updatePermission = 'Administration:HumanResources';
 
     static readonly Fields = fieldsProxy<OccupationRow>();

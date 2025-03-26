@@ -687,10 +687,7 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
     }
     public onDialogOpen() {
         super.onDialogOpen()
-      
-
         var self = this
-    
         PcbSubjectionService.List({
         }, response => {
         
@@ -1906,9 +1903,11 @@ export class PayrollDialog extends EntityDialog<PayrollRow, any> {
             var criteria: any;
             EmployeeCp38Service.List({
                 Criteria: Criteria.and(criteria,
-                    [[EmployeeCp38Row.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
+                    [
+                        [EmployeeCp38Row.Fields.EmployeeRowId], '=', $(EmployeeRowIdElement).val()],
                     [[EmployeeCp38Row.Fields.EffectiveFrom], '<=', self.form.PayPeriodEnd.valueAsDate],
-                    [self.form.PayPeriodStart.valueAsDate, '<=', [EmployeeCp38Row.Fields.EffectiveUntil]],
+                    [self.form.PayPeriodStart.valueAsDate, '<=', [EmployeeCp38Row.Fields.EffectiveUntil]
+                    ],
                 )
             }, response => {
                 let TotalCp38 = 0;

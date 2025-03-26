@@ -500,8 +500,6 @@ export class PayrollGrid extends EntityGrid<PayrollRow, any> {
                                var TextWizard = new TextDownloadingWizardDialog()
                             TextWizard.dialogOpen()
                             TextWizard.element.on("dialogclose", function () {
-                                //self.refresh()
-                               // location.reload()
                                 self.internalRefresh()
 
                             })

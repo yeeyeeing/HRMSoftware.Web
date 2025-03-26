@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Net;
 
 namespace Serenity.Navigation
 {
@@ -16,7 +17,6 @@ namespace Serenity.Navigation
                 activePath = null;
             }
         }
-
         public List<NavigationItem> Items { get; set; }
         IEnumerable<NavigationItem> INavigationModel.Items => Items;
 
@@ -30,6 +30,7 @@ namespace Serenity.Navigation
                     var current = activeItem;
                     while (current != null)
                     {
+         
                         p.Add(current);
                         current = current.Parent;
                     }

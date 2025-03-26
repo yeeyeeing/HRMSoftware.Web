@@ -109,7 +109,7 @@ export class EmployeeEditHistoryDialog extends EntityDialog<EmployeeEditHistoryR
 
             }
         });
-        this.set_readOnly(true);
+        //this.set_readOnly(true);
 
     }
 }

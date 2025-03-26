@@ -1,8 +1,9 @@
-﻿import { OTApplicationStatus } from "./OTApplicationStatus";
+﻿import { OtMinuteOtHourFormatter } from "@/HumanResource/OTApplication/OTApplication/OtMinuteOtHourFormatter";
+import { OTApplicationStatus } from "./OTApplicationStatus";
 import { ApplicationStatusFormatter } from "@/HumanResource/OTApplication/OTApplication/ApplicationStatusFormatter";
 
 export class OTApplicationColumns {
     static columnsKey = 'OTApplication.OTApplication';
 }
 
-[OTApplicationStatus, ApplicationStatusFormatter]; // referenced types
+[OtMinuteOtHourFormatter, OTApplicationStatus, ApplicationStatusFormatter]; // referenced types

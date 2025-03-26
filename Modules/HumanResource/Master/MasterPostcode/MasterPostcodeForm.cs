@@ -9,5 +9,6 @@ public class MasterPostcodeForm
 {
     public int MasterCity { get; set; }
     public int MasterState { get; set; }
+    public int MasterCountry { get; set; }
     public string PostCode { get; set; }
 }

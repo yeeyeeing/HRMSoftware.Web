@@ -20,7 +20,7 @@ export class PublicHolidayGrid extends EntityGrid<PublicHolidayRow, any> {
 
     protected getButtons() {
         var buttons = super.getButtons();
-
+        var self = this
      
 
         buttons.push({
@@ -29,35 +29,52 @@ export class PublicHolidayGrid extends EntityGrid<PublicHolidayRow, any> {
             onClick: e => {
                 confirm(
                     "Do you sure you want to renew the public holiday",
-                    () => {
-                        var country
-                       
-                        CompanySettingsService.List({
-                        }, response => {
-                            country = response.Entities[0].BasedCountry
-                            console.log(country)
+                    async () => {
+                        try {
+                            let country: string | undefined;
+                            const companySettings = await new Promise<any[]>((resolve, reject) => {
+                                CompanySettingsService.List({}, response => {
+                                    resolve(response.Entities);
+                                }, error => reject(error));
+                            });
+                            for (const res of companySettings) {
+                                if (res.IsActive === 1) {
+                                    country = res.BasedCountry;
+                                    break;
+                                }
+                            }
+                            if (!country) 
+                                return;
+                            
+                            // Get all years from InitYearService
+                            const years = await new Promise<any[]>((resolve, reject) => {
+                                InitYearService.List({}, response => {
+                                    resolve(response.Entities);
+                                }, error => reject(error));
+                            });
+                            // Store promises for all service calls
+                            const servicePromises: Promise<any>[] = [];
+                            for (const yearEntry of years) {
+                                const hd = new Holidays(country);
+                                const year = yearEntry.Year;
+                                const current_year_holidays = hd.getHolidays(year);
+                                console.log(hd);
+                                console.log(current_year_holidays);
 
-                            InitYearService.List({
-                            }, response => {
+                                for (const current_holiday of current_year_holidays) {
+                                    const date = current_holiday.date.substring(0, 10);
+                                    const dateObj = new Date(date);
 
-                                for (var index in response.Entities) {
-                                    var hd = new Holidays(country)
-                                    var year = response.Entities[index].Year
-                                    var current_year_holidays = hd.getHolidays(year)
-                                    for (var current_holiday in current_year_holidays) {
-                                        var date = current_year_holidays[current_holiday].date.substring(0, 10);
-
-                                        var dateObj = new Date(date);
-
-                                        // Extract year, month, and day from the date object
-                                        var year = dateObj.getFullYear();
-                                        var month = (dateObj.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-                                        var day = dateObj.getDate().toString().padStart(2, '0');
-
-                                        // Generate the YYYY-MM-DD format string
-                                        var formattedDate = `${year}-${month}-${day}`;
-                                        var HolidayName = current_year_holidays[current_holiday].name;
-
+                                    // Format date to YYYY-MM-DD
+                                    const formattedDate = `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`;
+                                    const HolidayName = current_holiday.name;
+                                    
+                                    console.log(HolidayName);
+                                    console.log(formattedDate);
+                                    console.log(country);
+                                    
+                                    // Store each service call in the promises array
+                                    const serviceCallPromise = new Promise<void>((resolve, reject) => {
                                         serviceCall<RetrieveResponse<any>>({
                                             service: EmployeeProfileService.baseUrl + '/CreatePublicHolidayRecord',
                                             data: {
@@ -67,34 +84,25 @@ export class PublicHolidayGrid extends EntityGrid<PublicHolidayRow, any> {
                                             },
                                             method: "GET",
                                             async: false,
-                                            onSuccess: (response) => {
-                                            },
+                                            onSuccess: () => resolve(),
                                             onError: (error) => {
                                                 console.log(error.Error);
+                                                reject(error);
                                             }
                                         });
+                                    });
 
-                                    }
-
+                                    servicePromises.push(serviceCallPromise);
                                 }
-
-                                location.reload()
-
-
-
-                            });
-
-
-
-
-
-                        });
-
-                    
+                            }
+                            // Wait for all service calls to complete
+                            await Promise.all(servicePromises);
+                            self.refresh()
+                        } catch (error) {
+                            console.error("Error processing holidays:", error);
+                        }
                     }
-
-                )
-
+                );
             },
             separator: true
         });

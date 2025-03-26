@@ -3,6 +3,8 @@ import { LeaveTypes } from "./LeaveTypes";
 import { fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface LeaveApplicationRow {
+    SuperiorRejectReason?: string;
+    HrRejectReason?: string;
     EmployeeUpdatedName?: string;
     HrUpdatedName?: string;
     EmployeeUpdated?: number;

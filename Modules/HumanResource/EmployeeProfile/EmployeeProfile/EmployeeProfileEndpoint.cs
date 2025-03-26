@@ -17,6 +17,7 @@ using System.Configuration;
 using HRMSoftware.Administration;
 using HRMSoftware.Administration.Endpoints;
 using HRMSoftware.Announcement.Endpoints;
+
 namespace HRMSoftware.EmployeeProfile.Endpoints;
 
 [Route("Services/EmployeeProfile/EmployeeProfile/[action]")]
@@ -180,6 +181,7 @@ public class EmployeeProfileEndpoint : ServiceEndpoint
         return latest;
 
     }
+
 
     /*
     [HttpGet]

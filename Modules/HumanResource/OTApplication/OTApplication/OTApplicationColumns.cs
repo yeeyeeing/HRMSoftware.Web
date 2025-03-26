@@ -17,6 +17,14 @@ public class OTApplicationColumns
     [DisplayName("Date"), Width(100)]
     [EditLink, QuickFilter(CssClass = "hidden-xs")]
     public DateTime OtDate { get; set; }
+    /*
+    [Width(120), QuickFilter(true)]
+    public string DivisionName { get; set; }
+    [Width(120), QuickFilter(true)]
+    public string DepartmentName { get; set; }
+    */
+    [OtMinuteOtHourFormatter,DisplayName("Ot Hour")]
+    public float OtMinute { get; set; }
    // public string ApproveEmployeeName { get; set; }
     public string OtReason { get; set; }
     public string OTDescription { get; set; }

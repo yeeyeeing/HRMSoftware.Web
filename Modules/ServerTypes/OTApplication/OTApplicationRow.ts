@@ -2,6 +2,8 @@
 import { getLookup, getLookupAsync, fieldsProxy } from "@serenity-is/corelib/q";
 
 export interface OTApplicationRow {
+    SuperiorRejectReason?: string;
+    HrRejectReason?: string;
     WeekendOt?: boolean;
     PublicHolidayOt?: boolean;
     WeekdayOt?: boolean;
@@ -13,6 +15,7 @@ export interface OTApplicationRow {
     HrUpdated?: number;
     EmployeeStatus?: OTApplicationStatus;
     HrStatus?: OTApplicationStatus;
+    OtHourBuffer?: number;
     CostCentreID?: number;
     CostCentreName?: string;
     DepartmentID?: number;
@@ -45,6 +48,7 @@ export interface OTApplicationRow {
     Status?: OTApplicationStatus;
     OtRate?: number;
     TotalOtPay?: number;
+    OtPayBuffer?: number;
     EmployeeID?: string;
     OtReason?: string;
     OTDescription?: string;

@@ -8,7 +8,7 @@ namespace HRMSoftware.OrganisationHierarchy;
 
 [ConnectionKey("Default"), Module("OrganisationHierarchy"), TableName("HumanResourcesDivision")]
 [DisplayName("Division"), InstanceName("Division")]
-[ReadPermission("Administration:HumanResources")]
+[ReadPermission("*")]
 [ModifyPermission("Administration:HumanResources")]
 [LookupScript("Division.Division", Permission = "*")]
 

@@ -1,4 +1,7 @@
+using Bellatrix;
 using HRMSoftware.Administration;
+using HRMSoftware.EmployeeAttendance.Endpoints;
+using HRMSoftware.EmployeeProfile.Endpoints;
 using HRMSoftware.OrganisationChart.Endpoints;
 using Microsoft.AspNetCore.Mvc;
 using Serenity;
@@ -12,6 +15,7 @@ using System.Data;
 using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 using MyRow = HRMSoftware.LeaveApplication.LeaveApplicationRow;
 namespace HRMSoftware.LeaveApplication.Endpoints;
 
@@ -62,9 +66,13 @@ public class LeaveApplicationEndpoint : ServiceEndpoint
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
         {
 
-            request.Sort = new[] { new SortBy("StartDate", true) };
+           // request.Sort = new[] { new SortBy("StartDate", true) };
             return handler.List(connection, request);
         }
+        //int employeerowid 
+       
+        var EmployeeRowId = new ShiftAttendanceRecordEndpoint().GetEmployeeRowIdFromUserRowId(connection, User.GetIdentifier().ToInt());
+        /*
         ListResponse<MyRow> latest = new ListResponse<MyRow>();
         latest.Entities = (List<MyRow>)connection.Query<MyRow>("dbo.RetrieveEmployeeRowIDBasedOnUserID",
             param: new
@@ -72,16 +80,26 @@ public class LeaveApplicationEndpoint : ServiceEndpoint
                 @UserID = User.GetIdentifier()
             },
                 commandType: System.Data.CommandType.StoredProcedure);
+        */
+    
+        request.Criteria = new Criteria(LeaveApplicationRow.Fields.EmployeeRowId.Name) == EmployeeRowId;
 
+        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, EmployeeRowId, PermissionKeys.LeaveApproval);
+        //foreach (int number in ListOfEmployee)
+       // {
+       //     request.Criteria = (request.Criteria || new Criteria(LeaveApplicationRow.Fields.EmployeeRowId.Name) == number);
+       // }
 
-        request.Criteria = new Criteria("EmployeeRowID") == latest.Entities[0].EmployeeRowId.Value;
+        
+        if (ListOfEmployee.Count > 0)
+        {
+            request.Criteria = ListOfEmployee
+                .Select(number => new Criteria(LeaveApplicationRow.Fields.EmployeeRowId.Name) == number)
+                .Aggregate((current, next) => current || next);
+        }
+        
 
-        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.Entities[0].EmployeeRowId.Value, PermissionKeys.LeaveApproval);
-        foreach (int number in ListOfEmployee)
-            request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
-
-
-        request.Sort = new[] { new SortBy("StartDate", true) };
+        //request.Sort = new[] { new SortBy(LeaveApplicationRow.Fields.StartDate.Name, true) };
         return handler.List(connection, request);
     }
 

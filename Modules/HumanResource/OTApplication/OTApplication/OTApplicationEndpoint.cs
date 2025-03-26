@@ -1,7 +1,9 @@
+using Bellatrix;
 using HRMSoftware.Administration;
+using HRMSoftware.EmployeeAttendance.Endpoints;
+using HRMSoftware.EmployeeProfile.Endpoints;
 using HRMSoftware.OrganisationChart.Endpoints;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using Serenity;
 using Serenity.Data;
 using Serenity.Reporting;
@@ -11,6 +13,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using System.IO;
+using System.Threading.Tasks;
+using System.Linq;
 using MyRow = HRMSoftware.OTApplication.OTApplicationRow;
 
 namespace HRMSoftware.OTApplication.Endpoints;
@@ -93,18 +98,18 @@ public class OTApplicationEndpoint : ServiceEndpoint
 
     [HttpPost, AuthorizeList(typeof(MyRow))]
     public ListResponse<MyRow> List(IDbConnection connection, ListRequest request,
-        [FromServices] IOTApplicationListHandler handler)
+         [FromServices] IOTApplicationListHandler handler)
     {
-      
-        
+
+
         if (Permissions.HasPermission(PermissionKeys.HumanResources))//if user is HR guy
         {
-            
-            request.Sort = new[] { new SortBy("OTDate", true) };
+
+           // request.Sort = new[] { new SortBy("OTDate", true) };
             return handler.List(connection, request);
         }
-        
 
+        /*
         ListResponse<MyRow> latest = new ListResponse<MyRow>();
         latest.Entities = (List<MyRow>)connection.Query<MyRow>("dbo.RetrieveEmployeeRowIDBasedOnUserID",
             param: new
@@ -113,20 +118,25 @@ public class OTApplicationEndpoint : ServiceEndpoint
             },
 
         commandType: System.Data.CommandType.StoredProcedure);
+        */
+        var EmployeeRowId = new ShiftAttendanceRecordEndpoint().GetEmployeeRowIdFromUserRowId(connection, User.GetIdentifier().ToInt());
+
+        request.Criteria = new Criteria(OTApplicationRow.Fields.EmployeeRowId.Name) == EmployeeRowId;
+
+
+        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, EmployeeRowId, PermissionKeys.OtApproval);
+
         
-
-        request.Criteria = new Criteria("EmployeeRowID") == latest.Entities[0].EmployeeRowId.Value;
-      
-
-        var ListOfEmployee = new OrganisationChartEndpoint().GetEmployeeUserCanView(connection, latest.Entities[0].EmployeeRowId.Value, PermissionKeys.OtApproval);
-        foreach (int number in ListOfEmployee)
-            request.Criteria = (request.Criteria || new Criteria("EmployeeRowID") == number);
-       
-
-        request.Sort = new[] { new SortBy("OTDate", true) };
+        if (ListOfEmployee.Count > 0)
+        {
+            request.Criteria = ListOfEmployee
+                .Select(number => new Criteria(OTApplicationRow.Fields.EmployeeRowId.Name) == number)
+                .Aggregate((current, next) => current || next);
+        }
+        
+        //request.Sort = new[] { new SortBy("OTDate", true) };
         return handler.List(connection, request);
     }
-
     [HttpPost, AuthorizeList(typeof(MyRow))]
     public FileContentResult ListExcel(IDbConnection connection, ListRequest request,
         [FromServices] IOTApplicationListHandler handler,

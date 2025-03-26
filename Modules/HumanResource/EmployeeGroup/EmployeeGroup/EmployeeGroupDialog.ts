@@ -25,6 +25,7 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
     public EmployeeData: EmployeeProfileRow[];
     public GroupingData: EmployeeGroupingsRow[];
     public IdToBypass: number[];
+    public fullItems: Select2Item[];
 
     constructor() {
         super();
@@ -155,26 +156,19 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
     }
     return result; // No overlaps
 }
-
     protected save_submitHandler(response): void
     {
         var originalRes = response
         var self = this
-       
-
         var Results: any[] = []
-
         if(this.areAnyShiftsOverlapping(this.form.Shifts.value))//check for overlapping shift dates
             return
-        
-        
         var combined = self.form.EmployeeList.values.concat(self.form.NewAddedEmployee.values)
         ViewShiftHistoryService.List({
             Criteria: Criteria(EmployeeGroupShiftRow.Fields.EmployeeRowId).in(combined),
         }, response => {
             var listOfClashEmployee = []
             var listOfClashEmployeeRowId = []
-
             var ShiftStartList = []
             var ShiftEndList = []
             for (var res in response.Entities) {
@@ -182,7 +176,6 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
                     continue
                 var Start1 = this.parseDate(response.Entities[res].ShiftStartDate)
                 var End1 = this.parseDate(response.Entities[res].ShiftEndDate)
-             
                 for (let i = 0; i < self.form.Shifts.value.length; i++) {
                     var Start2 = this.parseDate(self.form.Shifts.value[i].ShiftStartDate)
                     var End2 = this.parseDate(self.form.Shifts.value[i].ShiftEndDate)
@@ -359,7 +352,6 @@ export class EmployeeGroupDialog extends EntityDialog<EmployeeGroupRow, any> {
         self.IdToBypass = idToBypass
         window['idToBypass'] = self.IdToBypass
     }
-    public fullItems: Select2Item[];
     protected onDialogOpen()
     {
         super.onDialogOpen()
